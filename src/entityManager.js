@@ -56,10 +56,10 @@ deferredSetup : function () {
 },
 
 init: function() {
-    this.generateCharacter({cx: 200, cy: 200});
-    
+	
+    this.generatePlayer({});
 },
-
+/*
 fireBullet: function(cx, cy, velX, velY, rotation) {
     this._bullets.push(new Bullet({
         cx   : cx,
@@ -70,9 +70,9 @@ fireBullet: function(cx, cy, velX, velY, rotation) {
         rotation : rotation
     }));
 },
-
-generateCharacter : function(descr) {
-    this._character.push(new Character(descr));
+*/
+generatePlayer : function(descr) {
+    this._character.push(new Player(descr));
 },
 
 generateEnemy : function(descr) {
@@ -117,8 +117,6 @@ render: function(ctx) {
     for (var c = 0; c < this._categories.length; ++c) {
 
         var aCategory = this._categories[c];
-        console.log(aCategory);
-        if ( aCategory == this._character) console.log("HELLO CHARACTER!");
 
         for (var i = 0; i < aCategory.length; ++i) {
             aCategory[i].render(ctx);
