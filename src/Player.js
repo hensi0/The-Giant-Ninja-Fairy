@@ -51,10 +51,12 @@ Player.prototype.SwapCD = 0;
 //fairy variables
 Player.prototype.hoverX = 0;
 Player.prototype.hoverY = 0;
+Player.prototype.pHeight = 60;
 Player.prototype.hoverXvel = 0;
 Player.prototype.hoverYvel = 0;
 Player.prototype.maxHoverHeight = 300;
 Player.prototype.hoverFuel = 0;
+Player.prototype.isJumping = false;
 
 //temp
 Player.prototype.groundHeight = 500;
@@ -227,6 +229,17 @@ Player.prototype.ninjaUpdate = function (du) {
     } else if (keys[this.KEY_RIGHT]) {
         this.velX = 2;
     }
+	
+	if (keys[this.KEY_JUMP] && this.isJumping == false) {
+		this.isJumping = true;
+		this.velY = -3;
+	}
+		
+	if ((this.cy - this.groundHeight - this.pHeight) < 0) {
+		this.cy = this.groundHeight - this.pHeight;
+		this.velY = 0;
+		this.isJumping = false;
+	}			
 	
 	if (keys[this.KEY_SHOOT]) {
 		this.shoot();
