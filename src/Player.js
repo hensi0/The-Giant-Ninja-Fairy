@@ -55,8 +55,13 @@ Player.prototype.pHeight = 60;
 Player.prototype.hoverXvel = 0;
 Player.prototype.hoverYvel = 0;
 Player.prototype.maxHoverHeight = 300;
-Player.prototype.hoverFuel = 0;
+Player.prototype.hasRealeasedUp = true;
 Player.prototype.isJumping = false;
+
+//ninja variables
+
+Player.prototype.hasDoubleJumped = false;
+
 
 //temp
 Player.prototype.groundHeight = 500;
@@ -71,22 +76,20 @@ Player.prototype.goFairy = function () {
         this.form = 0;
 		this.hoverX = 0;
 		this.hoverY = 0;
+		this.pHeight = 20;
 		var temp = 	(Math.random() >  0.5);
 		if(temp) 	this.hoverXvel =  0.4;
 		else  		this.hoverXvel = -0.4;
 		temp = 	(Math.random() >  0.5);
 		if(temp) 	this.hoverYvel =  0.4;
 		else  		this.hoverYvel = -0.4;
-		this.velX = 0;
-		this.velY = 0;
 };
 
 Player.prototype.goGiant = function () {
         this.form = 1;
 		this.hoverX = 0;
 		this.hoverY = 0;
-		this.velX = 0;
-		this.velY = 0;
+		this.pHeight = 100;
 		this.cx = this.cx + this.hoverX;
 		this.cy = this.cy + this.hoverY;
 };
@@ -95,8 +98,7 @@ Player.prototype.goNinja = function () {
         this.form = 2;
 		this.hoverX = 0;
 		this.hoverY = 0;
-		this.velX = 0;
-		this.velY = 0;
+		this.pHeight = 60;
 		this.cx = this.cx + this.hoverX;
 		this.cy = this.cy + this.hoverY;
 
@@ -111,32 +113,32 @@ Player.prototype.update = function (du) {
 	else{
 		if (keys[this.KEY_SWAP1]) {
 			this.SwapCD = 30;
-			if(this.form == 0) this.goNinja();
-			else if(this.form == 1) this.goFairy();
+			if(this.form === 0) this.goNinja();
+			else if(this.form === 1) this.goFairy();
 			else this.goGiant();
 			//smoke cloud
 		}
 		if (keys[this.KEY_SWAP2]) {
 			this.SwapCD = 30;
-			if(this.form == 0) this.goGiant();
-			else if(this.form == 1) this.goNinja();
+			if(this.form === 0) this.goGiant();
+			else if(this.form === 1) this.goNinja();
 			else this.goFairy();
 			//smoke cloud
 		}
 	}
 	
 	
-	if(this.form == 0){
+	if(this.form === 0){
 		console.log("fairy unit update");
 		this.fairyUpdate(du);
 	}
 	
-	if(this.form == 1){
+	if(this.form === 1){
 		console.log("giant unit update");
 		this.giantUpdate(du);
 	}
 	
-	if(this.form == 2){
+	if(this.form === 2){
 		console.log("ninja unit update");
 		this.ninjaUpdate(du);
 	}
@@ -147,7 +149,7 @@ Player.prototype.update = function (du) {
 Player.prototype.render = function (ctx) {
         var origScale = this.sprite.scale;
         // pass my scale into the sprite, for drawing
-        this.sprite.scale = this._scale;
+        this.sprite.scale = this._scale * (this.pHeight/60);
         this.sprite.drawCentredAt(
     	ctx, this.cx + this.hoverX, this.cy + this.hoverY, this.rotation
     );
@@ -174,15 +176,28 @@ Player.prototype.fairyUpdate = function (du) {
 	this.hoverX 	+=  scaler*this.hoverXvel;
 	this.hoverXvel 	+= -scaler*this.hoverX*0.001;
 	 
-	if (keys[this.KEY_JUMP] && this.hoverFuel > 0) {
-		this.hoverFuel--;
-		var temp = (this.maxHoverHeight / this.distToGround())
-		if(temp > 2) temp = 2;
-		this.velY  = 1 - temp;
-	} else {
-		if (this.distToGround() > 65)this.velY =  1
-		else { this.hoverFuel = 200; this.velY = 0;}
-	}
+	if (keys[this.KEY_JUMP]) {
+		if (this.isJumping){ 
+			this.velY = 0.4
+		}else {			
+			if(this.hasRealeasedUp)this.cy -= 100;
+			this.isJumping = true;				
+		}
+	} else if(!this.isJumping) this.hasRealeasedUp = true;
+	
+	if (this.isJumping){
+		if ((this.cy - (this.groundHeight - this.pHeight)) > 0) {
+			this.cy = this.groundHeight - this.pHeight;
+			this.velY = 0;
+			this.isJumping = false;
+			this.hasRealeasedUp = false;
+		} else {
+			this.velY += 0.05;
+			this.isJumping = true;			
+		}
+		
+	} 		
+	
 	
 	if (keys[this.KEY_SHOOT]) {
 		this.shoot();
@@ -209,7 +224,24 @@ Player.prototype.giantUpdate = function (du) {
         this.velX = -1;
     } else if (keys[this.KEY_RIGHT]) {
         this.velX = 1;
-    }
+    } else this.velX = 0;
+	
+	
+	if( this.isJumping ) {
+		
+		this.velY += 0.4;
+		
+	} else if (keys[this.KEY_JUMP]) {
+		this.isJumping = true;
+		this.velY = -3;
+	}
+		
+	if ((this.cy - (this.groundHeight - this.pHeight)) > 0) {
+		this.cy = this.groundHeight - this.pHeight;
+		this.velY = 0;
+		this.isJumping = false;
+	}
+	
 	
 	//this.updateJump();
 	this.cx += this.velX*du;
@@ -228,17 +260,27 @@ Player.prototype.ninjaUpdate = function (du) {
         this.velX = -2;
     } else if (keys[this.KEY_RIGHT]) {
         this.velX = 2;
-    }
+    } else this.velX = 0;
 	
-	if (keys[this.KEY_JUMP] && this.isJumping == false) {
+	if( this.isJumping ) {
+		
+		this.velY += 0.1;
+		
+		if(!this.hasDoubleJumped && keys[this.KEY_JUMP] && this.velY > -2){
+			this.velY = -3;
+			this.hasDoubleJumped = true;
+		}
+		
+	} else if (keys[this.KEY_JUMP]) {
 		this.isJumping = true;
-		this.velY = -3;
+		this.velY = -5;
 	}
 		
-	if ((this.cy - this.groundHeight - this.pHeight) < 0) {
+	if ((this.cy - (this.groundHeight - this.pHeight)) > 0) {
 		this.cy = this.groundHeight - this.pHeight;
 		this.velY = 0;
 		this.isJumping = false;
+		this.hasDoubleJumped = false;
 	}			
 	
 	if (keys[this.KEY_SHOOT]) {
