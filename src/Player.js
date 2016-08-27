@@ -61,6 +61,7 @@ Player.prototype.isJumping = false;
 //ninja variables
 
 Player.prototype.hasDoubleJumped = false;
+Player.prototype.hasNinjadUp = false;
 
 
 //temp
@@ -164,10 +165,10 @@ Player.prototype.fairyUpdate = function (du) {
 	
 	var scaler = 1;
 	if (keys[this.KEY_LEFT]) {
-        this.velX = -1;
+        this.velX = -2;
 		scaler = 0.2;
     } else if (keys[this.KEY_RIGHT]) {
-        this.velX = 1;
+        this.velX = 2;
 		scaler = 0.2;
     } else {
 		this.velX = 0;
@@ -180,17 +181,17 @@ Player.prototype.fairyUpdate = function (du) {
 		if (this.isJumping){ 
 			this.velY = 0.4
 		}else {			
-			if(this.hasRealeasedUp)this.cy -= 100;
+			this.cy -= 100;
 			this.isJumping = true;				
 		}
-	} else if(!this.isJumping) this.hasRealeasedUp = true;
+	} 
 	
 	if (this.isJumping){
-		if ((this.cy - (this.groundHeight - this.pHeight)) > 0) {
-			this.cy = this.groundHeight - this.pHeight;
+		if ((this.cy - ((this.groundHeight - this.pHeight) - 40)) > 0) {
+			this.cy = (this.groundHeight - this.pHeight) - 40;
 			this.velY = 0;
 			this.isJumping = false;
-			this.hasRealeasedUp = false;
+			
 		} else {
 			this.velY += 0.05;
 			this.isJumping = true;			
@@ -221,9 +222,9 @@ Player.prototype.fairyUpdate = function (du) {
 Player.prototype.giantUpdate = function (du) {
 	
 	if (keys[this.KEY_LEFT]) {
-        this.velX = -1;
+        this.velX = -1.6;
     } else if (keys[this.KEY_RIGHT]) {
-        this.velX = 1;
+        this.velX = 1.6;
     } else this.velX = 0;
 	
 	
@@ -231,10 +232,12 @@ Player.prototype.giantUpdate = function (du) {
 		
 		this.velY += 0.4;
 		
-	} else if (keys[this.KEY_JUMP]) {
+	} else if (keys[this.KEY_JUMP] && this.hasRealeasedUp) {
 		this.isJumping = true;
 		this.velY = -3;
-	}
+		this.hasRealeasedUp = false;
+	} else if (!keys[this.KEY_JUMP])
+		this.hasRealeasedUp = true;
 		
 	if ((this.cy - (this.groundHeight - this.pHeight)) > 0) {
 		this.cy = this.groundHeight - this.pHeight;
@@ -257,24 +260,27 @@ Player.prototype.giantUpdate = function (du) {
 Player.prototype.ninjaUpdate = function (du) {
 	
 	if (keys[this.KEY_LEFT]) {
-        this.velX = -2;
+        this.velX = -2.4;
     } else if (keys[this.KEY_RIGHT]) {
-        this.velX = 2;
+        this.velX = 2.4;
     } else this.velX = 0;
 	
 	if( this.isJumping ) {
 		
 		this.velY += 0.1;
-		
-		if(!this.hasDoubleJumped && keys[this.KEY_JUMP] && this.velY > -2){
+		if(!keys[this.KEY_JUMP]) this.hasNinjadUp = true;
+		if(!this.hasDoubleJumped && keys[this.KEY_JUMP] && this.velY > -2 && this.hasNinjadUp){
 			this.velY = -3;
 			this.hasDoubleJumped = true;
 		}
 		
-	} else if (keys[this.KEY_JUMP]) {
+	} else if (keys[this.KEY_JUMP] && this.hasRealeasedUp) {
 		this.isJumping = true;
+		this.hasRealeasedUp = false;
 		this.velY = -5;
-	}
+		this.hasNinjadUp = false;
+	} else if (keys[this.KEY_JUMP])
+		this.hasRealeasedUp = true;
 		
 	if ((this.cy - (this.groundHeight - this.pHeight)) > 0) {
 		this.cy = this.groundHeight - this.pHeight;
@@ -286,7 +292,6 @@ Player.prototype.ninjaUpdate = function (du) {
 	if (keys[this.KEY_SHOOT]) {
 		this.shoot();
 	}
-	
 	
 	//this.updateJump();
 	this.cx += this.velX*du;
