@@ -104,9 +104,14 @@ function processDiagnostics() {
 // GAME-SPECIFIC RENDERING
 
 function renderSimulation(ctx) {
-
-    entityManager.render(ctx);
-
+	
+	ctx.fillStyle = "blue";
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillStyle = "green";
+	ctx.fillRect(0, 420, ctx.canvas.width, ctx.canvas.height);
+    
+	entityManager.render(ctx);
+	
     if (g_renderSpatialDebug) spatialManager.render(ctx);
 }
 

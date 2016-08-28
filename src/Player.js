@@ -57,6 +57,7 @@ Player.prototype.hoverYvel = 0;
 Player.prototype.maxHoverHeight = 300;
 Player.prototype.hasRealeasedUp = true;
 Player.prototype.isJumping = false;
+Player.prototype.blinkCharge = 0;
 
 //ninja variables
 
@@ -78,6 +79,7 @@ Player.prototype.goFairy = function () {
 		this.hoverX = 0;
 		this.hoverY = 0;
 		this.pHeight = 20;
+		this.isJumping = true;
 		var temp = 	(Math.random() >  0.5);
 		if(temp) 	this.hoverXvel =  0.4;
 		else  		this.hoverXvel = -0.4;
@@ -89,7 +91,9 @@ Player.prototype.goFairy = function () {
 Player.prototype.goGiant = function () {
         this.form = 1;
 		this.hoverX = 0;
+		this.isJumping = true;
 		this.hoverY = 0;
+		this.blinkCharge = 0;
 		this.pHeight = 100;
 		this.cx = this.cx + this.hoverX;
 		this.cy = this.cy + this.hoverY;
@@ -99,7 +103,9 @@ Player.prototype.goNinja = function () {
         this.form = 2;
 		this.hoverX = 0;
 		this.hoverY = 0;
+		this.blinkCharge = 0;
 		this.pHeight = 60;
+		this.isJumping = true;
 		this.cx = this.cx + this.hoverX;
 		this.cy = this.cy + this.hoverY;
 
@@ -130,17 +136,15 @@ Player.prototype.update = function (du) {
 	
 	
 	if(this.form === 0){
-		console.log("fairy unit update");
+		
 		this.fairyUpdate(du);
-	}
 	
-	if(this.form === 1){
-		console.log("giant unit update");
+	} else if(this.form === 1){
+		
 		this.giantUpdate(du);
-	}
 	
-	if(this.form === 2){
-		console.log("ninja unit update");
+	} else if(this.form === 2){
+		
 		this.ninjaUpdate(du);
 	}
 	
@@ -148,12 +152,14 @@ Player.prototype.update = function (du) {
 };
 
 Player.prototype.render = function (ctx) {
-        var origScale = this.sprite.scale;
+	g_ctx.globalAlpha = Math.abs((40-this.blinkCharge)/40);
+    var origScale = this.sprite.scale;
         // pass my scale into the sprite, for drawing
-        this.sprite.scale = this._scale * (this.pHeight/60);
-        this.sprite.drawCentredAt(
+    this.sprite.scale = this._scale * (this.pHeight/60);
+	this.sprite.drawCentredAt(
     	ctx, this.cx + this.hoverX, this.cy + this.hoverY, this.rotation
-    );
+	);
+	g_ctx.globalAlpha = 1;
 };
 
 //===============================================
@@ -180,15 +186,19 @@ Player.prototype.fairyUpdate = function (du) {
 	if (keys[this.KEY_JUMP]) {
 		if (this.isJumping){ 
 			this.velY = 0.4
-		}else {			
-			this.cy -= 100;
-			this.isJumping = true;				
+		}else {
+			if(this.blinkCharge > 40){
+				this.cy -= 180;
+				this.isJumping = true;
+				this.hasDoubleJumped = false;
+				this.blinkCharge = 0;
+			} else this.blinkCharge++;
 		}
-	} 
+	} else this.blinkCharge = 0;
 	
 	if (this.isJumping){
-		if ((this.cy - ((this.groundHeight - this.pHeight) - 40)) > 0) {
-			this.cy = (this.groundHeight - this.pHeight) - 40;
+		if ((this.cy - ((this.groundHeight - 3*this.pHeight) - 40)) > 0) {
+			this.cy = (this.groundHeight - 3*this.pHeight) - 40;
 			this.velY = 0;
 			this.isJumping = false;
 			
@@ -234,13 +244,14 @@ Player.prototype.giantUpdate = function (du) {
 		
 	} else if (keys[this.KEY_JUMP] && this.hasRealeasedUp) {
 		this.isJumping = true;
-		this.velY = -3;
+		this.hasDoubleJumped = false;
+		this.velY = -6;
 		this.hasRealeasedUp = false;
 	} else if (!keys[this.KEY_JUMP])
 		this.hasRealeasedUp = true;
 		
-	if ((this.cy - (this.groundHeight - this.pHeight)) > 0) {
-		this.cy = this.groundHeight - this.pHeight;
+	if ((this.cy - (this.groundHeight - 1.1*this.pHeight)) > 0) {
+		this.cy = this.groundHeight - 1.1*this.pHeight;
 		this.velY = 0;
 		this.isJumping = false;
 	}
@@ -282,8 +293,8 @@ Player.prototype.ninjaUpdate = function (du) {
 	} else if (keys[this.KEY_JUMP])
 		this.hasRealeasedUp = true;
 		
-	if ((this.cy - (this.groundHeight - this.pHeight)) > 0) {
-		this.cy = this.groundHeight - this.pHeight;
+	if ((this.cy - (this.groundHeight - 1.2*this.pHeight)) > 0) {
+		this.cy = this.groundHeight - 1.2*this.pHeight;
 		this.velY = 0;
 		this.isJumping = false;
 		this.hasDoubleJumped = false;
