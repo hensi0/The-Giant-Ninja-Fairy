@@ -25,6 +25,9 @@ function Player(descr) {
     this._scale = 0.05;
 	this._isAlive = true;
 	this.goFairy();
+	
+	this.cx = 10;
+	this.cy = 10;
 };
 // This comes later on when Character has been implemented: 
 Player.prototype = new Character();

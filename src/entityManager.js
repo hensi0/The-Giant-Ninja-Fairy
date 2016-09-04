@@ -29,9 +29,12 @@ var entityManager = {
 
 _character   : [],
 _bullets : [],
-_level : [],
+_particles : [],
+_world: [],
+_collisionBlocks : [],
 _enemies   : [],
 _objects    : [],
+_level : 0,
 
 // "PRIVATE" METHODS
 
@@ -52,14 +55,40 @@ KILL_ME_NOW : -1,
 // i.e. thing which need `this` to be defined.
 //
 deferredSetup : function () {
-    this._categories = [this._character, this._bullets, this._level, this._enemies, this._objects];
+    this._categories = [this._objects, this._character, this._world, this._collisionBlocks,
+						this._bullets, this._particles, this._enemies];
 },
+
+
 
 init: function() {
 	
     this.generatePlayer({});
 },
-/*
+
+enterLevel: function(lvl) {
+    
+	util.resetSpatialManager();
+	
+    this._bullets = [];
+    this._enemies = [];
+    this._objects = [];
+    this._world = [];
+    this._collisionBlocks = [];
+
+    
+
+if(this._character.length === 0) this.generateCharacter({cx : 10, cy: 10 });
+    this._character[0].reset();
+
+    this._level = lvl;
+	this.generateLevel({level: this._level});
+	
+	console.log(this._level + " asd");
+	
+    this.deferredSetup();
+},
+
 fireBullet: function(cx, cy, velX, velY, rotation) {
     this._bullets.push(new Bullet({
         cx   : cx,
@@ -70,7 +99,27 @@ fireBullet: function(cx, cy, velX, velY, rotation) {
         rotation : rotation
     }));
 },
-*/
+
+generateParticle : function(x,y,angle,avgVel,maxAlpha,maxR,fillStyle){
+	var r = Math.random()*maxR;
+	var vel = avgVel + (0.5*avgVel - Math.random()*avgVel); // +- 50% velocity from avgVel
+	var alpha = Math.random()*maxAlpha;
+	var particle = new Particle({
+		cx: x,
+		cy: y,
+		r: r,
+		angle: angle,
+		vel: vel,
+		style: fillStyle,
+		alpha: alpha
+	});
+    this._particles.push(particle);
+},
+
+giveMePlayer : function(descr) {
+    return this._character[0];
+},
+
 generatePlayer : function(descr) {
     this._character.push(new Player(descr));
 },
@@ -80,12 +129,40 @@ generateEnemy : function(descr) {
 },
 
 generateLevel : function(descr) {
-    this._level.push(new Level(descr));
+    this._world.push(new World(descr));
 },
 
 generateObject : function(descr) {
     this._objects.push(new Object(descr));
 },
+
+// entities and centres have same dimensions, max 2
+setBoxCentres: function(entities, centres) {
+    for(var i=0; i<entities.length; i++){
+        for(var j=0; j<entities[i].length; j++){
+            if(entities[i][j]){
+                entities[i][j].cx = centres[i][j][0];
+                entities[i][j].cy = centres[i][j][1];
+                entities[i][j].halfWidth = this._world[0].blockDim;
+                entities[i][j].halfHeight = this._world[0].blockDim;
+            }
+        }
+    }
+},
+
+
+// entities and centres have same dimensions, max 2
+setDims: function(entities, dims) {
+    for(var i=0; i<entities.length; i++){
+        for(var j=0; j<entities[i].length; j++){
+            if(entities[i][j]){
+                entities[i][j].cx = centres[i][j][0];
+                entities[i][j].cy = centres[i][j][1];
+            }
+        }
+    }
+},
+
 
 update: function(du) {
 
@@ -108,7 +185,6 @@ update: function(du) {
             }
         }
     }
-
 },
 
 render: function(ctx) {

@@ -68,6 +68,10 @@ function updateSimulation(du) {
     
     processDiagnostics();
     
+	console.log(entityManager._character[0].cx);
+	
+	
+	if(entityManager._level != 1) entityManager.enterLevel(1);
     entityManager.update(du);
 
 }
@@ -76,7 +80,10 @@ function updateSimulation(du) {
 
 var g_allowMixedActions = true;
 var g_renderSpatialDebug = false;
+var g_viewPort = {x:0, y:0};
+var g_isMuted = false;
 
+var KEY_MUTE   = keyCode('M');
 var KEY_MIXED   = keyCode('M');
 var KEY_SPATIAL = keyCode('X');
 
@@ -104,15 +111,20 @@ function processDiagnostics() {
 // GAME-SPECIFIC RENDERING
 
 function renderSimulation(ctx) {
+	ctx.save();
 	
-	ctx.fillStyle = "blue";
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.fillStyle = "green";
-	ctx.fillRect(0, 420, ctx.canvas.width, ctx.canvas.height);
+        var dx = g_viewPort.x;
+        var dy = g_viewPort.y;
+    
+    var lvlLength = 666;        
+    
+	ctx.translate(-dx,-dy);
     
 	entityManager.render(ctx);
-	
-    if (g_renderSpatialDebug) spatialManager.render(ctx);
+            
+	if (g_renderSpatialDebug) spatialManager.render(ctx);
+    
+	ctx.restore();
 }
 
 
@@ -125,7 +137,8 @@ var g_images = {};
 function requestPreloads() {
 
     var requiredImages = {
-        marioTest: "res/images/mario.png"
+        marioTest: "res/images/mario.png",
+		bricks: "res/images/dungeonBrick.png"
     };
 
     imagesPreload(requiredImages, g_images, preloadDone);
@@ -135,7 +148,8 @@ var g_sprites = {};
 
 function preloadDone() {
 
-    g_sprites.marioTest  = new Sprite(g_images.marioTest);
+    g_sprites.marioTest  = new Sprite(g_images.marioTest),
+	g_sprites.bricks  = new Sprite(g_images.bricks);
 
     entityManager.init();
 
