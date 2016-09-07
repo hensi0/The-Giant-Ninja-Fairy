@@ -84,8 +84,6 @@ if(this._character.length === 0) this.generateCharacter({cx : 10, cy: 10 });
     this._level = lvl;
 	this.generateLevel({level: this._level});
 	
-	console.log(this._level + " asd");
-	
     this.deferredSetup();
 },
 
@@ -172,9 +170,8 @@ update: function(du) {
         var i = 0;
 
         while (i < aCategory.length) {
-
+			
             var status = aCategory[i].update(du);
-
             if (status === this.KILL_ME_NOW) {
                 // remove the dead guy, and shuffle the others down to
                 // prevent a confusing gap from appearing in the array

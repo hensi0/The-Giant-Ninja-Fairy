@@ -22,13 +22,14 @@ function Block(descr) {
 		case 0: 
 		break;
 		
-		case 6: this.sprite = g_sprites.bricks;
+		case 6: this.sprite = g_sprites.dirtM1;
 		break; 
 
 		default: this._isPassable = true;
 				 this.sprite = g_sprites.blank;
 		break;
 	}
+	
 };
 
 Block.prototype._isDeadNow = false;

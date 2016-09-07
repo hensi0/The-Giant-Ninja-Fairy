@@ -63,9 +63,9 @@ World.prototype.getLocation = function(i,j) {
 }
 
 
-World.prototype.collidesWith = function (zelda, prevX, prevY, nextX, nextY) {
-	var halfW = zelda.getSize().sizeX;
-	var halfH = zelda.getSize().sizeY;
+World.prototype.collidesWith = function (player, prevX, prevY, nextX, nextY) {
+	var halfW = player.getSize().sizeX;
+	var halfH = player.getSize().sizeY;
 	var newCoords = this.getBlockCoords(prevX,prevY+halfH/2 - 2); // off by 2 because we have off by 1 for zelda's putToGround AND regular off by 1 so we don't fall after landing.
 
 	var collidingBlocks = [];

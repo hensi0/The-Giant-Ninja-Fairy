@@ -21,7 +21,7 @@ function Character(descr) {
     //this.rememberResets();
     
     // Default sprite, if not otherwise specified
-    this._scale = 0.05;
+    this._scale = 1;
 	this.isAlive = true;
 };
 // This comes later on when Entity has been implemented: 
@@ -41,6 +41,63 @@ Character.prototype.cy = 500;
 Character.prototype.velX = 0;
 Character.prototype.velY = 0;
 Character.prototype.isAlive = true;
+
+
+//collision blocks 
+Character.prototype.proxBlocks = []; 
+
+Character.prototype.findProxBlocks = function(prevX, prevY, nextX, nextY) {
+    var collisionInfo = entityManager._world[0].collidesWith(this, prevX, prevY, nextX, nextY);
+    this.proxBlocks = collisionInfo.blocks;
+    //entityManager.setBoxCentres(this.proxBlocks, collisionInfo.coords);
+}
+
+Character.prototype.registerBlocks = function() {
+    for(var b in this.proxBlocks) if(this.proxBlocks[b]) spatialManager.register(this.proxBlocks[b]);
+}
+
+Character.prototype.unregisterBlocks = function() {
+    for(var b in this.proxBlocks) if(this.proxBlocks[b]) spatialManager.unregister(this.proxBlocks[b]);
+}
+
+Character.prototype.updateProxBlocks = function(prevX, prevY, nextX, nextY) {
+    this.unregisterBlocks();
+	if(this._isDeadNow) return;
+    this.findProxBlocks(prevX, prevY, nextX, nextY);
+    this.registerBlocks();
+}
+
+
+//=================
+// COLLISION STUFFS
+//=================
+
+Character.prototype.putToGround = function(groundY) {
+    this.state['jumping'] = false;
+    this.state['offGround'] = false;
+    this.state['onGround'] = true;
+    this.velY = 0;
+    this.cy = groundY -this.getSize().sizeY/2 + 1; // character centre coordinate on ground.
+	
+	console.log("grounded")
+}
+
+Character.prototype.handlePartialCollision = function(charX,charY,axis,callback){
+    var bEdge,lEdge,rEdge,tEdge;
+    var standingOnSomething = false;
+    var walkingIntoSomething = false;
+    if(this.isColliding(charX, charY)) {
+        var hitEntities = this.findHitEntities(charX, charY);
+        for(var hit in hitEntities) {
+            var hitEntity = hitEntities[hit];
+            var collisionVars =  this.handleCollision(hitEntity, axis);
+            standingOnSomething = standingOnSomething || collisionVars.standingOnSomething;
+            walkingIntoSomething = walkingIntoSomething || collisionVars.walkingIntoSomething;           
+        }
+    }
+    if(axis === "x") return walkingIntoSomething;
+    if(axis === "y") return standingOnSomething;
+}
 
 // Sounds (should be preloaded and initialized in constructor):
 // Character.prototype.warpSound = new Audio(

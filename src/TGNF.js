@@ -68,7 +68,6 @@ function updateSimulation(du) {
     
     processDiagnostics();
     
-	console.log(entityManager._character[0].cx);
 	
 	
 	if(entityManager._level != 1) entityManager.enterLevel(1);
@@ -137,19 +136,39 @@ var g_images = {};
 function requestPreloads() {
 
     var requiredImages = {
-        marioTest: "res/images/mario.png",
-		bricks: "res/images/dungeonBrick.png"
+        marioTest: 	"res/images/mario.png",
+		bricks: 	"res/images/dungeonBrick.png",
+		dirtM1:		"res/images/blocks/Dirtblock.png",
+		druidI:		"res/images/druidStanding.png"
     };
 
     imagesPreload(requiredImages, g_images, preloadDone);
 }
 
 var g_sprites = {};
+var g_animations = {};
+
+function makePlayerAnimation(scale) {
+    var Player = {};
+	//image, frameY, frameWidth, frameHeight, numFrames, interval, scale
+    Player.idleRight = new Animation(g_images.druidI,0,200,200,1,400,scale);
+	Player.idleLeft  = new Animation(g_images.druidI,0,200,200,1,400,-scale);
+/*    bowser.idleLeft = new Animation(g_images.bowserSpriteSheet,0,200,200,3,400,-scale);
+    bowser.attackRight = new Animation(g_images.bowserSpriteSheet,200,199,200,5,150,scale);
+    bowser.attackLeft = new Animation(g_images.bowserSpriteSheet,200,199,200,5,150,-scale);
+	bowser.takeDamageRight = new Animation(g_images.bowserSpriteSheet,400,200,200,4,150,scale);
+    bowser.takeDamageLeft = new Animation(g_images.bowserSpriteSheet,400,200,200,4,150,-scale);
+    bowser.dieRight = new Animation(g_images.bowserSpriteSheet,600,200,200,4,350,scale);
+    bowser.dieLeft = new Animation(g_images.bowserSpriteSheet,600,200,200,4,350,-scale);
+*/
+    return Player;
+};
 
 function preloadDone() {
 
     g_sprites.marioTest  = new Sprite(g_images.marioTest),
-	g_sprites.bricks  = new Sprite(g_images.bricks);
+	g_sprites.bricks  = new Sprite(g_images.bricks),
+	g_sprites.dirtM1  = new Sprite(g_images.dirtM1);
 
     entityManager.init();
 

@@ -22,12 +22,11 @@ function Player(descr) {
     
     // Default sprite, if not otherwise specified
     this.sprite = g_sprites.marioTest;
-    this._scale = 0.05;
 	this._isAlive = true;
 	this.goFairy();
 	
-	this.cx = 10;
-	this.cy = 10;
+	this.animations = makePlayerAnimation(this._scale);
+	this.animation = this.animations['idleRight'];
 };
 // This comes later on when Character has been implemented: 
 Player.prototype = new Character();
@@ -44,12 +43,21 @@ Character.prototype.KEY_SWAP2  	= 'E'.charCodeAt(0); //Jump key code
 // Initial, inheritable, default values
 Player.prototype.form = 0;
 Player.prototype.SwapCD = 0;
-
-
-
+Player.prototype.state = {jumping: true, canJump: false, pushing: false, 
+							offGround: true, casting: false, 
+							onGround: false, idle: false, 
+							facingRight: true, inWater: false}
+							
 // Sounds (should be preloaded and initialized in constructor):
 // Player.prototype.warpSound = new Audio(
 //    "sounds/PlayerWarp.ogg");
+
+//generic variables
+
+Player.prototype.maxVelX = 3.9;
+Player.prototype.maxVelY = 6.5;
+Player.prototype.maxPushHeight = 120;
+Player.prototype.tempMaxJumpHeight = 0;
 
 //fairy variables
 Player.prototype.hoverX = 0;
@@ -68,20 +76,12 @@ Player.prototype.hasDoubleJumped = false;
 Player.prototype.hasNinjadUp = false;
 
 
-//temp
-Player.prototype.groundHeight = 500;
-
-Player.prototype.distToGround = function () {
-        var temp = Math.abs(this.cy-this.groundHeight);
-		if (temp != 0) return temp;
-		else return 0.001;
-};
 
 Player.prototype.goFairy = function () {
         this.form = 0;
 		this.hoverX = 0;
 		this.hoverY = 0;
-		this.pHeight = 20;
+		this.pHeight = 15;
 		this.isJumping = true;
 		var temp = 	(Math.random() >  0.5);
 		if(temp) 	this.hoverXvel =  0.4;
@@ -97,7 +97,7 @@ Player.prototype.goGiant = function () {
 		this.isJumping = true;
 		this.hoverY = 0;
 		this.blinkCharge = 0;
-		this.pHeight = 100;
+		this.pHeight = 50;
 		this.cx = this.cx + this.hoverX;
 		this.cy = this.cy + this.hoverY;
 };
@@ -107,17 +107,43 @@ Player.prototype.goNinja = function () {
 		this.hoverX = 0;
 		this.hoverY = 0;
 		this.blinkCharge = 0;
-		this.pHeight = 60;
+		this.pHeight = 30;
 		this.isJumping = true;
 		this.cx = this.cx + this.hoverX;
 		this.cy = this.cy + this.hoverY;
 
 };
 
+Player.prototype.handleJump = function () {
+    if((!this.state['canJump'] || this.state['jumping']) && !this.state['inWater']) return;
+    else if(this.state['inWater']) {
+        this.velY = -1; 
+        this.tempMaxJumpHeight = this.cy - 1;
+        this.state['jumping'] = true;
+    } else {
+    	this.state['jumping'] = true;
+        this.velY = -6;
+    	this.tempMaxJumpHeight = this.cy - this.maxPushHeight; 
+    }
+};
 
 Player.prototype.update = function (du) {
+	if(this.cx === undefined) this.cx = 100;
+	if(this.cy === undefined) this.cy = 300;
+	
 	if(this.hp <= 0) this.isAlive = false;
 	if(!this.isAlive) return entityManager.KILL_ME_NOW;
+	
+	spatialManager.unregister(this);
+	
+	//update blocks in proximity
+    this.updateProxBlocks(this.cx, this.cy, this.cx+this.velX*du, this.cy+this.velY*du);
+	
+	if(keys[this.KEY_JUMP]) this.handleJump();
+	
+	// Update speed/location and handle jumps/collisions
+    this.updateVelocity(du);
+	
 	
 	if(this.SwapCD > 0) this.SwapCD--;
 	else{
@@ -137,6 +163,15 @@ Player.prototype.update = function (du) {
 		}
 	}
 	
+	var prevX = this.cx;
+	var prevY = this.cy;
+	var nextX = this.cx + this.velX*du;
+	var nextY = this.cy + this.velY*du;
+	var bEdge;
+	
+	//check left/right collisions first and then top/bottom
+    if(this.handlePartialCollision(nextX,prevY,"x")) this.velX = 0;
+	bEdge = this.handlePartialCollision(prevX,nextY,"y");
 	
 	if(this.form === 0){
 		
@@ -151,9 +186,20 @@ Player.prototype.update = function (du) {
 		this.ninjaUpdate(du);
 	}
 	
+	this.updateLocation(du);
 	
+    this.updateJump(bEdge);
+
+    if(this.cy > g_canvas.height + 42){
+        this._isDeadNow = true;
+    }
+
+	this.updateStatus();
+	
+	spatialManager.register(this);
 };
 
+/*
 Player.prototype.render = function (ctx) {
 	g_ctx.globalAlpha = Math.abs((40-this.blinkCharge)/40);
     var origScale = this.sprite.scale;
@@ -164,7 +210,50 @@ Player.prototype.render = function (ctx) {
 	);
 	g_ctx.globalAlpha = 1;
 };
+*/
 
+Player.prototype.render = function (ctx) {
+    this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
+};
+
+Player.prototype.updateLocation = function(du) {
+    var lvlLength = entityManager._world[0].blocks[13].length*(g_canvas.height/14);
+	var halfWidth = this.getSize().sizeX/2;
+    this.cx += this.velX*du;
+	this.cx = Math.min(this.cx, lvlLength-halfWidth);
+	this.cx = Math.max(this.cx, halfWidth);
+    this.cy += this.velY*du;
+};
+
+Player.prototype.updateJump = function(bEdge) {
+    // If colliding with bottom edge, stop 'jumping'.	
+	if(bEdge) { 
+        this.state['jumping'] = false;
+        this.state['pushing'] = false;
+        this.state['offGround'] = false;
+        if(!(keys[this.KEY_LEFT] || keys[this.KEY_RIGHT])) this.velX = 0;
+    }else{
+		this.state['jumping'] = true;
+	}
+	
+    // Set offGround to true so that we can't keep pushing while in air.
+    if(this.cy <= this.tempMaxJumpHeight) {
+        this.state['offGround'] = true;
+    }
+};
+
+Player.prototype.handleJump = function () {
+    if((!this.state['canJump'] || this.state['jumping']) && !this.state['inWater']) return;
+    else if(this.state['inWater']) {
+        this.velY = -1; 
+        this.tempMaxJumpHeight = this.cy - 1;
+        this.state['jumping'] = true;
+    } else {
+    	this.state['jumping'] = true;
+        this.velY = -6;
+    	this.tempMaxJumpHeight = this.cy - this.maxPushHeight; 
+    }
+}
 //===============================================
 // ******************FAIRY***********************
 //===============================================
@@ -174,18 +263,23 @@ Player.prototype.fairyUpdate = function (du) {
 	
 	var scaler = 1;
 	if (keys[this.KEY_LEFT]) {
-        this.velX = -2;
+        //this.velX = -2;
 		scaler = 0.2;
     } else if (keys[this.KEY_RIGHT]) {
-        this.velX = 2;
+        //this.velX = 2;
 		scaler = 0.2;
     } else {
-		this.velX = 0;
+		//this.velX = 0;
 	}
 	
 	this.hoverX 	+=  scaler*this.hoverXvel;
 	this.hoverXvel 	+= -scaler*this.hoverX*0.001;
-	 
+	
+	//hover-stuff
+	this.hoverY += this.hoverYvel;
+	this.hoverYvel += -this.hoverY*0.0005;
+	
+	/*
 	if (keys[this.KEY_JUMP]) {
 		if (this.isJumping){ 
 			this.velY = 0.4
@@ -217,14 +311,13 @@ Player.prototype.fairyUpdate = function (du) {
 		this.shoot();
 	}
 	
-	//hover-stuff
-	this.hoverY += this.hoverYvel;
-	this.hoverYvel += -this.hoverY*0.0005;
+	
 	
 	
 	//this.updateJump();
 	this.cx += this.velX*du;
-	this.cy += this.velY*du;	
+	this.cy += this.velY*du;
+	*/
 };
 
 //===============================================
@@ -233,7 +326,7 @@ Player.prototype.fairyUpdate = function (du) {
 
 
 Player.prototype.giantUpdate = function (du) {
-	
+	/*
 	if (keys[this.KEY_LEFT]) {
         this.velX = -1.6;
     } else if (keys[this.KEY_RIGHT]) {
@@ -250,7 +343,7 @@ Player.prototype.giantUpdate = function (du) {
 		this.hasDoubleJumped = false;
 		this.velY = -6;
 		this.hasRealeasedUp = false;
-	} else if (!keys[this.KEY_JUMP])
+	} else if (!keys[this.KEY_JUMP]) 
 		this.hasRealeasedUp = true;
 		
 	if ((this.cy - (this.groundHeight - 1.1*this.pHeight)) > 0) {
@@ -263,6 +356,7 @@ Player.prototype.giantUpdate = function (du) {
 	//this.updateJump();
 	this.cx += this.velX*du;
 	this.cy += this.velY*du;	
+	*/
 };
 
 
@@ -272,7 +366,7 @@ Player.prototype.giantUpdate = function (du) {
 
 
 Player.prototype.ninjaUpdate = function (du) {
-	
+	/*
 	if (keys[this.KEY_LEFT]) {
         this.velX = -2.4;
     } else if (keys[this.KEY_RIGHT]) {
@@ -309,5 +403,167 @@ Player.prototype.ninjaUpdate = function (du) {
 	
 	//this.updateJump();
 	this.cx += this.velX*du;
-	this.cy += this.velY*du;	
+	this.cy += this.velY*du;
+	*/
 };
+//=============================
+//===========collsion logic====
+//=============================
+
+
+
+Player.prototype.handleCollision = function(hitEntity, axis) {
+    var bEdge,lEdge,rEdge,tEdge;
+    var standingOnSomething;
+    var walkingIntoSomething;
+
+
+
+        // Lots of vars for type of collision: top, bottom, same column, same row, going by Player center coordinate, left coordinate, right, etc.
+        var charCoords = entityManager._world[0].getBlockCoords(this.cx, this.cy); //This is going by char's center, which is her lower half. Upper half needs to be in i, j-1.
+        var charCoordsLeft = entityManager._world[0].getBlockCoords(this.cx-this.getSize().sizeX/2, this.cy); //This is going by char's bottom left corner
+        var charCoordsRight = entityManager._world[0].getBlockCoords(this.cx+this.getSize().sizeX/2, this.cy); //This is going by char's bottom right corner
+        var hitCoords = (hitEntity instanceof Block ? [hitEntity.i, hitEntity.j] : entityManager._world[0].getBlockCoords(hitEntity.cx, hitEntity.cy));
+
+        var charAbove = (hitCoords[0] > charCoords[0]); // char block coordinates lower because y-axis points down.
+        var charBelow = (hitCoords[0] < charCoords[0]);
+        var charToLeft = (hitCoords[1] > charCoords[1]); // char column coords must be lower.
+        var charToRight = (hitCoords[1] < charCoords[1]);
+        var sameCol = (hitCoords[1] == charCoordsLeft[1] || hitCoords[1] == charCoordsRight[1]);
+        var sameRow = (hitCoords[0] == charCoords[0] || hitCoords[0] == charCoords[0]-1) || this.state['jumping'];
+
+        lEdge = charToRight && sameRow;
+        rEdge = charToLeft && sameRow;
+        tEdge = charBelow && sameCol;
+        bEdge = charAbove && sameCol;
+		
+		
+        // Bad fix to make Character decide what happens to it's subclasses (Enemy, Player, Projectile)
+        if(hitEntity instanceof Block) {
+            var dir = 0; //direction of hit
+            if(!hitEntity._isPassable) {
+                standingOnSomething = standingOnSomething || bEdge;
+                if(lEdge && this.velX < 0 && axis === "x") {
+                    walkingIntoSomething = walkingIntoSomething || true;
+                }
+                if(rEdge && this.velX > 0 && axis === "x") {
+                    walkingIntoSomething = walkingIntoSomething || true;
+                }
+                if(bEdge && this.velY > 0 && axis === "y") {
+                    this.tempMaxJumpHeight = this.cy - this.maxPushHeight; 
+                    var groundY = entityManager._world[0].getLocation((hitEntity.i), (hitEntity.j))[1] // block top y coordinate
+                    this.putToGround(groundY);
+                    dir = 4;
+                } 
+                if(tEdge && this.velY < 0  && axis === "y"){// && this.velY < 0) {
+                    this.velY *= -1;
+					this.velY = Math.max(this.velY,5);
+                    dir = 1;
+                    this.state['offGround'] = true;
+                }
+            }
+            hitEntity.activate(this, dir);
+
+        /*
+		}else if(hitEntity instanceof Enemy) {
+			// check to see if we jumped on his head
+            if(bEdge) {
+                util.play(g_audio.boop);
+                hitEntity.takeHit();
+                this.velY = -4;
+                if(hitEntity instanceof Shooter) g_score.add(100);
+                else g_score.add(50);
+            } else {
+				// if not it hurts
+                this.takeHit();
+            }
+        */
+		}
+		
+    
+
+    return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};
+}
+
+Player.prototype.updateStatus = function() {
+    var wasMovingRight = (this.velX >= 0);
+    var wasMovingLeft = (this.velX < 0);
+
+    // figure out our status
+    var nextStatus = this.status;
+	var dir;
+	if(this.velX === 0) dir = (this.state['facingRight'] ? "Right" : "Left");
+	else{
+		dir = (this.velX > 0 ? "Right" : "Left");
+		this.state['facingRight'] = (dir==="Right");
+	}
+    var atMaxVel = (Math.abs(this.velX)>=(this.maxVelX*0.9))
+    if(this.state['jumping']) nextStatus = "inAir"+dir;
+    else if(this.state['casting']) nextStatus = "magic" + dir;
+    else if(this.velX === 0 && !this.state['jumping']) nextStatus = "idle"+(wasMovingLeft?"Left":dir);
+    else if(atMaxVel && !this.state['jumping'] && !this.state['inWater']) nextStatus = "running"+dir;
+    else if(!this.state['jumping']) nextStatus = "walking"+dir;
+
+    // Update animation
+    if(nextStatus!==this.status){
+        this.status = nextStatus;
+        this.animation = this.animations["idleRight"];
+    }    
+}
+
+Player.prototype.updateVelocity = function(du) {
+    var NOMINAL_FORCE = +0.15;
+
+    var wasMovingRight = (this.velX > 0);
+    var wasMovingLeft = (this.velX < 0);
+    var movingRight = keys[this.KEY_RIGHT];
+    var movingLeft = keys[this.KEY_LEFT];
+    
+    // Check if the Player is still in range of the ground
+    // to be able to push of it (=> jump higher)
+    if(this.state['jumping'] && !keys[this.KEY_JUMP]) {
+        this.state['offGround'] = true;
+    }
+
+    // We can keep 'pushing' off ground to manage a higher jump so long as we're
+    // not too high in the air, i.e. 'offGround'.
+	// We can only start "pushing" if we can jump:
+	if(!this.state['pushing']) this.state['pushing'] = keys[this.KEY_JUMP] && this.state['canJump'] && this.state['jumping'];
+	// if we're already pushing we can keep pushing by these constraints:
+	else  this.state['pushing'] = keys[this.KEY_JUMP] && !this.state['offGround'];
+    
+    // To be able to change direction in midair:
+    if((movingRight && wasMovingLeft && !this.state['inWater']) || (movingLeft && wasMovingRight && !this.state['inWater'])) this.velX = 0;
+
+    // Increase speed to the right:
+    if(movingRight && this.velX < this.maxVelX || this.velX <  - this.maxVelX) {
+        this.velX += NOMINAL_FORCE*du;
+    } 
+
+    // Increase speed to the left:
+    if(movingLeft && this.velX > - this.maxVelX || this.velX >  this.maxVelX) {
+        this.velX -= NOMINAL_FORCE*du;
+    }
+
+    // Velocity is zero if we're not moving anywhere or floating in air:
+    if(!this.state['jumping'] && !(movingRight || movingLeft)) {
+        this.velX = 0;
+    }
+	
+
+
+    // Start accelerating down as soon as we've "stopped state['pushing']"
+    if(this.state['jumping'] && !this.state['pushing'] && this.velY < TERMINAL_VELOCITY) {
+        if(!this.state['inWater'])this.velY += NOMINAL_GRAVITY*du;
+        else this.velY += (NOMINAL_GRAVITY*du)/10;
+    }else if(this.state['jumping'] && this.state['pushing']){
+		this.velY = -6;
+	}else if(!this.state['jumping']){
+        this.velY = 0;
+    }
+}
+
+Player.prototype.getSize = function(){
+    var size = {sizeX:16*this._scale,sizeY:42*this._scale};
+    return size;
+}
