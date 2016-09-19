@@ -117,8 +117,7 @@ function renderSimulation(ctx) {
     
     var lvlLength = 666;        
     
-	ctx.translate(-dx,-dy);
-    
+
 	entityManager.render(ctx);
             
 	if (g_renderSpatialDebug) spatialManager.render(ctx);
@@ -151,8 +150,8 @@ var g_animations = {};
 function makePlayerAnimation(scale) {
     var Player = {};
 	//image, frameY, frameWidth, frameHeight, numFrames, interval, scale
-    Player.idleRight = new Animation(g_images.druidI,0,200,200,1,400,scale);
-	Player.idleLeft  = new Animation(g_images.druidI,0,200,200,1,400,-scale);
+    Player.idleRight = new Animation(g_images.druidI,0,24,64,1,400,scale);
+	Player.idleLeft  = new Animation(g_images.druidI,0,16,64,1,400,-scale);
 /*    bowser.idleLeft = new Animation(g_images.bowserSpriteSheet,0,200,200,3,400,-scale);
     bowser.attackRight = new Animation(g_images.bowserSpriteSheet,200,199,200,5,150,scale);
     bowser.attackLeft = new Animation(g_images.bowserSpriteSheet,200,199,200,5,150,-scale);

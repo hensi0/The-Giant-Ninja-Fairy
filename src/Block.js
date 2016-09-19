@@ -23,6 +23,7 @@ function Block(descr) {
 		break;
 		
 		case 6: this.sprite = g_sprites.dirtM1;
+				this.rndRotation();
 		break; 
 
 		default: this._isPassable = true;
@@ -32,6 +33,8 @@ function Block(descr) {
 	
 };
 
+
+Block.prototype.rotation = 0;
 Block.prototype._isDeadNow = false;
 Block.prototype._isPassable = false;
 Block.prototype.dim = g_canvas.height/14;
@@ -44,12 +47,23 @@ Block.prototype.update = function (du) {
 };
 
 
+Block.prototype.rndRotation = function () {
+	if(Math.random() < 0.25)
+		this.rotation = 0;
+	else if(Math.random() < 0.33)
+		this.rotation = 0.5*Math.PI;
+	else if(Math.random() < 0.5)
+		this.rotation = Math.PI;
+	else this.rotation = Math.PI*1.5;
+	
+};
+
 Block.prototype.render = function (ctx,x,y,w,h) {
 	
 	var img_h = this.sprite.height;
 	var scale = h/img_h;
 	this.sprite.scale = scale;
-	this.sprite.drawCentredAt(ctx,x+w/2,y+h/2);
+	this.sprite.drawCentredAt(ctx,x+w/2,y+h/2, this.rotation);
 	
 };
 

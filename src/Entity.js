@@ -74,20 +74,22 @@ Entity.prototype.getSize = function () {
 
 Entity.prototype.findHitEntity = function (nextX, nextY) {
     var size = this.getSize();
-    return spatialManager.findEntityInRange(
-        nextX, nextY, size.sizeX, size.sizeY , this.getRadius()
+	return spatialManager.findEntityInRange(
+        nextX, nextY, size.sizeX, size.sizeY 
     );
 };
 
 Entity.prototype.findHitEntities = function (nextX, nextY) {
     var size = this.getSize();
-    return spatialManager.findEntitiesInRange(
-        nextX, nextY, size.sizeX, size.sizeY , this.getRadius()
+    
+	return spatialManager.findEntitiesInRange(
+        nextX, nextY, size.sizeX, size.sizeY
     );
 };
 
 // This is just little "convenience wrapper"
 Entity.prototype.isColliding = function (nextX, nextY) {
+	console.log(this.findHitEntity(nextX, nextY));
     return this.findHitEntity(nextX, nextY);
 };
 

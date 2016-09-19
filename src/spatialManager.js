@@ -49,22 +49,24 @@ unregister: function(entity) {
 	this._entities[spatialID] = undefined;
 },
  //circular collision detection
-findEntityInRange: function(posX, posY, radius) {
-	var posX2,
+findEntityInRange: function(posX, posY, sizeX, sizeY) {
+		var posX2,
 		posY2,
-		radius2;
+		sizeX2,
+		sizeY2;
 	for(var i = 1 ; i < this._entities.length; i++){
 		if(this._entities[i]){
 			var pos = this._entities[i].getPos();
 			posX2 = pos.posX;
 			posY2 = pos.posY;
-			radius2 = this._entities[i].getRadius();
-			var distSq = util.wrappedDistSq(
-            posX, posY, 
-            posX2, posY2,
-            g_canvas.width, g_canvas.height);
+			var size = this._entities[i].getSize();
+			sizeX2 = size.sizeX;
+			sizeY2 = size.sizeY;
+			
+			var Xcollision = Math.abs(posX - posX2) - sizeX/2 - sizeX2/2;
+			var Ycollision = Math.abs(posY - posY2) - sizeY/2 - sizeY2/2;
 
-			if(util.square(radius + radius2) >= distSq){ 
+			if(Xcollision <= 0 && Ycollision <= 0){ 
 			return this._entities[i];
 			}
 		}	
@@ -88,7 +90,10 @@ findEntitiesInRange: function(posX, posY, sizeX, sizeY) {
 			
 			var Xcollision = Math.abs(posX - posX2) - sizeX/2 - sizeX2/2;
 			var Ycollision = Math.abs(posY - posY2) - sizeY/2 - sizeY2/2;
-
+			
+			console.log("yCol: " + Ycollision)
+			
+			
 			if(Xcollision <= 0 && Ycollision <= 0){ 
 				entities.push(this._entities[i])
 			}

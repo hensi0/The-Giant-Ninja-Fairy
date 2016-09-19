@@ -77,9 +77,8 @@ Character.prototype.putToGround = function(groundY) {
     this.state['offGround'] = false;
     this.state['onGround'] = true;
     this.velY = 0;
-    this.cy = groundY -this.getSize().sizeY/2 + 1; // character centre coordinate on ground.
-	
-	console.log("grounded")
+    this.cy = groundY - this.getSize().sizeY/2 - 1; // character centre coordinate on ground.
+
 }
 
 Character.prototype.handlePartialCollision = function(charX,charY,axis,callback){

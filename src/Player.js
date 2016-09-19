@@ -67,7 +67,6 @@ Player.prototype.hoverXvel = 0;
 Player.prototype.hoverYvel = 0;
 Player.prototype.maxHoverHeight = 300;
 Player.prototype.hasRealeasedUp = true;
-Player.prototype.isJumping = false;
 Player.prototype.blinkCharge = 0;
 
 //ninja variables
@@ -82,7 +81,7 @@ Player.prototype.goFairy = function () {
 		this.hoverX = 0;
 		this.hoverY = 0;
 		this.pHeight = 15;
-		this.isJumping = true;
+		this.state['jumping'] = true;
 		var temp = 	(Math.random() >  0.5);
 		if(temp) 	this.hoverXvel =  0.4;
 		else  		this.hoverXvel = -0.4;
@@ -94,7 +93,7 @@ Player.prototype.goFairy = function () {
 Player.prototype.goGiant = function () {
         this.form = 1;
 		this.hoverX = 0;
-		this.isJumping = true;
+		this.state['jumping'] = true;
 		this.hoverY = 0;
 		this.blinkCharge = 0;
 		this.pHeight = 50;
@@ -108,7 +107,7 @@ Player.prototype.goNinja = function () {
 		this.hoverY = 0;
 		this.blinkCharge = 0;
 		this.pHeight = 30;
-		this.isJumping = true;
+		this.state['jumping'] = true;
 		this.cx = this.cx + this.hoverX;
 		this.cy = this.cy + this.hoverY;
 
@@ -128,6 +127,7 @@ Player.prototype.handleJump = function () {
 };
 
 Player.prototype.update = function (du) {
+	
 	if(this.cx === undefined) this.cx = 100;
 	if(this.cy === undefined) this.cy = 300;
 	
@@ -136,15 +136,16 @@ Player.prototype.update = function (du) {
 	
 	spatialManager.unregister(this);
 	
+	
 	//update blocks in proximity
-    this.updateProxBlocks(this.cx, this.cy, this.cx+this.velX*du, this.cy+this.velY*du);
+    this.updateProxBlocks(this.cx, this.cy, 
+						  this.cx+this.velX*du, this.cy + this.velY*du);
 	
 	if(keys[this.KEY_JUMP]) this.handleJump();
 	
 	// Update speed/location and handle jumps/collisions
     this.updateVelocity(du);
-	
-	
+
 	if(this.SwapCD > 0) this.SwapCD--;
 	else{
 		if (keys[this.KEY_SWAP1]) {
@@ -172,6 +173,9 @@ Player.prototype.update = function (du) {
 	//check left/right collisions first and then top/bottom
     if(this.handlePartialCollision(nextX,prevY,"x")) this.velX = 0;
 	bEdge = this.handlePartialCollision(prevX,nextY,"y");
+	
+	
+	this.state['canJump'] = (!this.state['jumping'] && !keys[this.KEY_JUMP]);
 	
 	if(this.form === 0){
 		
@@ -418,9 +422,8 @@ Player.prototype.handleCollision = function(hitEntity, axis) {
     var walkingIntoSomething;
 
 
-
         // Lots of vars for type of collision: top, bottom, same column, same row, going by Player center coordinate, left coordinate, right, etc.
-        var charCoords = entityManager._world[0].getBlockCoords(this.cx, this.cy); //This is going by char's center, which is her lower half. Upper half needs to be in i, j-1.
+        var charCoords = entityManager._world[0].getBlockCoords(this.cx, this.cy); //This is going by char's center, which is it's lower half. Upper half needs to be in i, j-1.
         var charCoordsLeft = entityManager._world[0].getBlockCoords(this.cx-this.getSize().sizeX/2, this.cy); //This is going by char's bottom left corner
         var charCoordsRight = entityManager._world[0].getBlockCoords(this.cx+this.getSize().sizeX/2, this.cy); //This is going by char's bottom right corner
         var hitCoords = (hitEntity instanceof Block ? [hitEntity.i, hitEntity.j] : entityManager._world[0].getBlockCoords(hitEntity.cx, hitEntity.cy));
@@ -564,6 +567,6 @@ Player.prototype.updateVelocity = function(du) {
 }
 
 Player.prototype.getSize = function(){
-    var size = {sizeX:16*this._scale,sizeY:42*this._scale};
+    var size = {sizeX:16*this._scale,sizeY:64*this._scale};
     return size;
 }
