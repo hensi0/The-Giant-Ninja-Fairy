@@ -89,7 +89,6 @@ Entity.prototype.findHitEntities = function (nextX, nextY) {
 
 // This is just little "convenience wrapper"
 Entity.prototype.isColliding = function (nextX, nextY) {
-	console.log(this.findHitEntity(nextX, nextY));
     return this.findHitEntity(nextX, nextY);
 };
 

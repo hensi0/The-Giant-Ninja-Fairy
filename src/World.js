@@ -34,7 +34,32 @@ function World(descr) {
 				entityManager.generateEnemy({cx: location[0], cy: location[1]});
 			} 
 			*/
-			this.blocks[i][j] = (s === 0 ? null : new Block({i: i, j: j, type: s}));
+			
+			//above, left, right and below
+			var a = false;
+			var l = false;
+			var r = false;
+			var b = false;
+
+			if(j > 0) 
+					l = (this.world[i][j-1] === 0);
+			if(i > 0) 
+					a = (this.world[i-1][j] === 0);
+			if(i < (this.world.length -1)) 
+					b = (this.world[i+1][j] === 0);
+			if(j < (this.world[0].length -1))
+					r = (this.world[i][j+1] === 0);
+		
+			var adjBlocks = {
+				above : a,
+				left: 	l,
+				right: 	r,
+				below:	b
+			}
+			
+			
+			
+			this.blocks[i][j] = (s === 0 ? null : new Block({i: i, j: j, type: s, status: adjBlocks}));
 		}
 	}
 }

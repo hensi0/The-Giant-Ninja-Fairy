@@ -22,8 +22,7 @@ function Block(descr) {
 		case 0: 
 		break;
 		
-		case 6: this.sprite = g_sprites.dirtM1;
-				this.rndRotation();
+		case 6: this.sprite = this.mudBlockLogic(this.status);
 		break; 
 
 		default: this._isPassable = true;
@@ -46,6 +45,20 @@ Block.prototype.update = function (du) {
 	else return false;
 };
 
+Block.prototype.mudBlockLogic = function (status) {
+	if(status.above){
+		if(status.left)
+			return g_sprites.dirtMTL;
+		else if(status.right)
+			return g_sprites.dirtMTR;
+		else
+			return g_sprites.dirtMT;
+	}
+	this.rndRotation();
+	return g_sprites.dirtM1;
+	
+	
+};
 
 Block.prototype.rndRotation = function () {
 	if(Math.random() < 0.25)

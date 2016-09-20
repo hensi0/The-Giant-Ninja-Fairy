@@ -567,6 +567,6 @@ Player.prototype.updateVelocity = function(du) {
 }
 
 Player.prototype.getSize = function(){
-    var size = {sizeX:16*this._scale,sizeY:64*this._scale};
+    var size = {sizeX:12*this._scale,sizeY:64*this._scale};
     return size;
 }

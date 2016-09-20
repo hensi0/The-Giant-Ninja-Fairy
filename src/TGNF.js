@@ -117,7 +117,8 @@ function renderSimulation(ctx) {
     
     var lvlLength = 666;        
     
-
+	g_sprites.skybox.drawCentredAt( ctx, g_canvas.width/2, g_canvas.height/2, 0 );
+	
 	entityManager.render(ctx);
             
 	if (g_renderSpatialDebug) spatialManager.render(ctx);
@@ -136,8 +137,16 @@ function requestPreloads() {
 
     var requiredImages = {
         marioTest: 	"res/images/mario.png",
+		skyBox: 	"res/images/skybox.png",
 		bricks: 	"res/images/dungeonBrick.png",
+		//tilesets
+		//mud-tileset
 		dirtM1:		"res/images/blocks/Dirtblock.png",
+		dirtMT:		"res/images/blocks/Grass1Flat.png",
+		dirtMTL:	"res/images/blocks/EdgeblockLeft.png",
+		dirtMTR:	"res/images/blocks/EdgeblockRight.png",
+		
+		//Player-Sprites
 		druidI:		"res/images/druidStanding.png"
     };
 
@@ -150,8 +159,8 @@ var g_animations = {};
 function makePlayerAnimation(scale) {
     var Player = {};
 	//image, frameY, frameWidth, frameHeight, numFrames, interval, scale
-    Player.idleRight = new Animation(g_images.druidI,0,24,64,1,400,scale);
-	Player.idleLeft  = new Animation(g_images.druidI,0,16,64,1,400,-scale);
+    Player.idleRight = new Animation(g_images.druidI,0,24,64,1,400, scale);
+	Player.idleLeft  = new Animation(g_images.druidI,0,16,64,1,400, -scale);
 /*    bowser.idleLeft = new Animation(g_images.bowserSpriteSheet,0,200,200,3,400,-scale);
     bowser.attackRight = new Animation(g_images.bowserSpriteSheet,200,199,200,5,150,scale);
     bowser.attackLeft = new Animation(g_images.bowserSpriteSheet,200,199,200,5,150,-scale);
@@ -167,7 +176,13 @@ function preloadDone() {
 
     g_sprites.marioTest  = new Sprite(g_images.marioTest),
 	g_sprites.bricks  = new Sprite(g_images.bricks),
-	g_sprites.dirtM1  = new Sprite(g_images.dirtM1);
+	g_sprites.skybox  = new Sprite(g_images.skyBox),
+	
+	//tileset-mud
+	g_sprites.dirtM1  = new Sprite(g_images.dirtM1),
+	g_sprites.dirtMT  = new Sprite(g_images.dirtMT),
+	g_sprites.dirtMTL  = new Sprite(g_images.dirtMTL),
+	g_sprites.dirtMTR  = new Sprite(g_images.dirtMTR);
 
     entityManager.init();
 

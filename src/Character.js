@@ -77,7 +77,7 @@ Character.prototype.putToGround = function(groundY) {
     this.state['offGround'] = false;
     this.state['onGround'] = true;
     this.velY = 0;
-    this.cy = groundY - this.getSize().sizeY/2 - 1; // character centre coordinate on ground.
+    this.cy = groundY - this.getSize().sizeY/2; // character centre coordinate on ground.
 
 }
 
