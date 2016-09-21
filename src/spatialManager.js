@@ -48,7 +48,8 @@ unregister: function(entity) {
     var spatialID = entity.getSpatialID();
 	this._entities[spatialID] = undefined;
 },
- //circular collision detection
+
+ //collision detection for a singular entity
 findEntityInRange: function(posX, posY, sizeX, sizeY) {
 		var posX2,
 		posY2,

@@ -115,9 +115,13 @@ function renderSimulation(ctx) {
         var dx = g_viewPort.x;
         var dy = g_viewPort.y;
     
-    var lvlLength = 666;        
+    var lvlLength;        
+	lvlLength = entityManager._world[0].blocks[13].length*(g_canvas.height/14) - g_canvas.width;
     
 	g_sprites.skybox.drawCentredAt( ctx, g_canvas.width/2, g_canvas.height/2, 0 );
+	 
+	ctx.translate(-dx,-dy);
+    entityManager.render(ctx);
 	
 	entityManager.render(ctx);
             
@@ -147,7 +151,8 @@ function requestPreloads() {
 		dirtMTR:	"res/images/blocks/EdgeblockRight.png",
 		
 		//Player-Sprites
-		druidI:		"res/images/druidStanding.png"
+		druidI:		"res/images/druidStanding.png",
+		goatI:		"res/images/goatStanding.png"
     };
 
     imagesPreload(requiredImages, g_images, preloadDone);
@@ -156,11 +161,11 @@ function requestPreloads() {
 var g_sprites = {};
 var g_animations = {};
 
-function makePlayerAnimation(scale) {
+function makePlayerAnimationGoat(scale) {
     var Player = {};
 	//image, frameY, frameWidth, frameHeight, numFrames, interval, scale
-    Player.idleRight = new Animation(g_images.druidI,0,24,64,1,400, scale);
-	Player.idleLeft  = new Animation(g_images.druidI,0,16,64,1,400, -scale);
+    Player.idleRight = new Animation(g_images.goatI,0,32,96,1,400, scale);
+	Player.idleLeft  = new Animation(g_images.goatI,0,32,96,1,400, -scale);
 /*    bowser.idleLeft = new Animation(g_images.bowserSpriteSheet,0,200,200,3,400,-scale);
     bowser.attackRight = new Animation(g_images.bowserSpriteSheet,200,199,200,5,150,scale);
     bowser.attackLeft = new Animation(g_images.bowserSpriteSheet,200,199,200,5,150,-scale);
@@ -169,6 +174,24 @@ function makePlayerAnimation(scale) {
     bowser.dieRight = new Animation(g_images.bowserSpriteSheet,600,200,200,4,350,scale);
     bowser.dieLeft = new Animation(g_images.bowserSpriteSheet,600,200,200,4,350,-scale);
 */
+    return Player;
+};
+function makePlayerAnimationDruid(scale) {
+    var Player = {};
+	
+	//image, frameY, frameWidth, frameHeight, numFrames, interval, scale
+    Player.idleRight = new Animation(g_images.druidI,0,24,64,1,400, scale);
+	Player.idleLeft  = new Animation(g_images.druidI,0,16,64,1,400, -scale);
+	
+    return Player;
+};
+function makePlayerAnimationFairy(scale) {
+    var Player = {};
+	
+	//image, frameY, frameWidth, frameHeight, numFrames, interval, scale
+    Player.idleRight = new Animation(g_images.bricks,0,32,32,1,400, scale);
+	Player.idleLeft  = new Animation(g_images.bricks,0,32,32,1,400, -scale);
+
     return Player;
 };
 

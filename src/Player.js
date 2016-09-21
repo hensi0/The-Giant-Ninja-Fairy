@@ -23,10 +23,14 @@ function Player(descr) {
     // Default sprite, if not otherwise specified
     this.sprite = g_sprites.marioTest;
 	this._isAlive = true;
-	this.goFairy();
 	
-	this.animations = makePlayerAnimation(this._scale);
+	
+	this.animationsD =  makePlayerAnimationDruid(this._scale);
+	this.animationsF =  makePlayerAnimationFairy(0.5*this._scale);
+	this.animationsG =  makePlayerAnimationGoat(this._scale);
+	this.animations = this.animationsD;
 	this.animation = this.animations['idleRight'];
+	this.goFairy();
 };
 // This comes later on when Character has been implemented: 
 Player.prototype = new Character();
@@ -36,8 +40,8 @@ Character.prototype.KEY_LEFT   	= 'A'.charCodeAt(0); //Left key code
 Character.prototype.KEY_RIGHT  	= 'D'.charCodeAt(0); //Right key code
 Character.prototype.KEY_DOWN 	= 'S'.charCodeAt(0); //Down key code
 Character.prototype.KEY_JUMP   	= 'W'.charCodeAt(0); //Jump key code
-Character.prototype.KEY_SWAP1  	= 'Q'.charCodeAt(0); //Jump key code
-Character.prototype.KEY_SWAP2  	= 'E'.charCodeAt(0); //Jump key code
+Character.prototype.KEY_SWAP1  	= ' '.charCodeAt(0); //Swap-form key code
+Character.prototype.KEY_SWAP2  	= 'E'.charCodeAt(0); //2ndary swap
 
 
 // Initial, inheritable, default values
@@ -58,6 +62,9 @@ Player.prototype.maxVelX = 3.9;
 Player.prototype.maxVelY = 6.5;
 Player.prototype.maxPushHeight = 120;
 Player.prototype.tempMaxJumpHeight = 0;
+Player.prototype.animationsG;
+Player.prototype.animationsD;
+Player.prototype.animationsF;
 
 //fairy variables
 Player.prototype.hoverX = 0;
@@ -80,8 +87,9 @@ Player.prototype.goFairy = function () {
         this.form = 0;
 		this.hoverX = 0;
 		this.hoverY = 0;
-		this.pHeight = 15;
+		this.animations = this.animationsF;
 		this.state['jumping'] = true;
+		this.animation = this.animations['idleRight'];
 		var temp = 	(Math.random() >  0.5);
 		if(temp) 	this.hoverXvel =  0.4;
 		else  		this.hoverXvel = -0.4;
@@ -90,9 +98,16 @@ Player.prototype.goFairy = function () {
 		else  		this.hoverYvel = -0.4;
 };
 
-Player.prototype.goGiant = function () {
-        this.form = 1;
+Player.prototype.goGoat = function () {
+		//var cords = entityManager._world[0].getBlockCoords(this.cx , this.cy - 40);
+		
+        //if(entityManager._world[0].blocks[cords.row][cords.col])
+		//	if(entityManager._world[0].blocks[cords.row][cords.col]._isPassable != true) return;
+		this.form = 1;
 		this.hoverX = 0;
+		this.cy -= 38; 
+		this.animations = this.animationsG;
+		this.animation = this.animations['idleRight'];
 		this.state['jumping'] = true;
 		this.hoverY = 0;
 		this.blinkCharge = 0;
@@ -101,10 +116,12 @@ Player.prototype.goGiant = function () {
 		this.cy = this.cy + this.hoverY;
 };
 
-Player.prototype.goNinja = function () {
+Player.prototype.goDruid = function () {
         this.form = 2;
 		this.hoverX = 0;
 		this.hoverY = 0;
+		this.animations = this.animationsD;
+		this.animation = this.animations['idleRight'];
 		this.blinkCharge = 0;
 		this.pHeight = 30;
 		this.state['jumping'] = true;
@@ -150,18 +167,24 @@ Player.prototype.update = function (du) {
 	else{
 		if (keys[this.KEY_SWAP1]) {
 			this.SwapCD = 30;
-			if(this.form === 0) this.goNinja();
-			else if(this.form === 1) this.goFairy();
-			else this.goGiant();
+			if(this.form === 1){
+				this.goDruid();
+			}else if(this.form === 2){ 
+				this.goFairy();
+			}else {
+				this.goGoat();
+			}
 			//smoke cloud
 		}
+		/* Maybe use later, gameplay seems more fun with swap only going one way
 		if (keys[this.KEY_SWAP2]) {
 			this.SwapCD = 30;
-			if(this.form === 0) this.goGiant();
-			else if(this.form === 1) this.goNinja();
+			if(this.form === 0) this.goGoat();
+			else if(this.form === 1) this.goDruid();
 			else this.goFairy();
 			//smoke cloud
 		}
+		*/
 	}
 	
 	var prevX = this.cx;
@@ -201,6 +224,8 @@ Player.prototype.update = function (du) {
 	this.updateStatus();
 	
 	spatialManager.register(this);
+	
+	this.updateViewport();
 };
 
 /*
@@ -421,9 +446,8 @@ Player.prototype.handleCollision = function(hitEntity, axis) {
     var standingOnSomething;
     var walkingIntoSomething;
 
-
-        // Lots of vars for type of collision: top, bottom, same column, same row, going by Player center coordinate, left coordinate, right, etc.
-        var charCoords = entityManager._world[0].getBlockCoords(this.cx, this.cy); //This is going by char's center, which is it's lower half. Upper half needs to be in i, j-1.
+		// Lots of vars for type of collision: top, bottom, same column, same row, going by Player center coordinate, left coordinate, right, etc.
+        var charCoords = entityManager._world[0].getBlockCoords(this.cx, (this.cy + this.getSize().sizeY/2) - 5); //This is going by char's center, which is it's lower half. Upper half needs to be in i, j-1.
         var charCoordsLeft = entityManager._world[0].getBlockCoords(this.cx-this.getSize().sizeX/2, this.cy); //This is going by char's bottom left corner
         var charCoordsRight = entityManager._world[0].getBlockCoords(this.cx+this.getSize().sizeX/2, this.cy); //This is going by char's bottom right corner
         var hitCoords = (hitEntity instanceof Block ? [hitEntity.i, hitEntity.j] : entityManager._world[0].getBlockCoords(hitEntity.cx, hitEntity.cy));
@@ -567,6 +591,27 @@ Player.prototype.updateVelocity = function(du) {
 }
 
 Player.prototype.getSize = function(){
-    var size = {sizeX:12*this._scale,sizeY:64*this._scale};
+    var size = {sizeX:12*this._scale,sizeY:18*this._scale};
+	if(this.form === 1) size = {sizeX:32*this._scale,sizeY:96*this._scale};
+	if(this.form === 2) size = {sizeX:12*this._scale,sizeY:64*this._scale};
     return size;
+}
+
+Player.prototype.updateViewport = function(){
+    var nextViewX = this.cx - g_canvas.width/2;
+    var lvlLength = entityManager._world[0].blocks[13].length*(g_canvas.height/14) - g_canvas.width;
+    if (nextViewX < 0) {
+        g_viewPort.x = 0;
+    } else if (nextViewX > lvlLength) {
+        g_viewPort.x = lvlLength;
+    } else {
+        g_viewPort.x = nextViewX;
+    }
+	
+    var nextViewY = this.cy - g_canvas.height/2;
+	if (nextViewY > 0) {
+        g_viewPort.y = 0;
+    } else {
+        g_viewPort.y = nextViewY;
+    }
 }
