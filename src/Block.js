@@ -46,6 +46,7 @@ Block.prototype.update = function (du) {
 };
 
 Block.prototype.mudBlockLogic = function (status) {
+	//simple logic that might be implemented and improved uppon with diffrent tile-sets 
 	if(status.above){
 		if(status.left)
 			return g_sprites.dirtMTL;

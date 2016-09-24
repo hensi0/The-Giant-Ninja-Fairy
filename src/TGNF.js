@@ -117,7 +117,8 @@ function renderSimulation(ctx) {
     
     var lvlLength;        
 	lvlLength = entityManager._world[0].blocks[13].length*(g_canvas.height/14) - g_canvas.width;
-    
+	
+    //current background for the game. To be replaced with multi-layered background later
 	g_sprites.skybox.drawCentredAt( ctx, g_canvas.width/2, g_canvas.height/2, 0 );
 	 
 	ctx.translate(-dx,-dy);

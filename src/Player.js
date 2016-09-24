@@ -73,6 +73,7 @@ Player.prototype.pHeight = 60;
 Player.prototype.hoverXvel = 0;
 Player.prototype.hoverYvel = 0;
 Player.prototype.maxHoverHeight = 300;
+Player.prototype.fairyHoverHeight = 25;
 Player.prototype.hasRealeasedUp = true;
 Player.prototype.blinkCharge = 0;
 
@@ -99,10 +100,10 @@ Player.prototype.goFairy = function () {
 };
 
 Player.prototype.goGoat = function () {
-		//var cords = entityManager._world[0].getBlockCoords(this.cx , this.cy - 40);
-		
-        //if(entityManager._world[0].blocks[cords.row][cords.col])
-		//	if(entityManager._world[0].blocks[cords.row][cords.col]._isPassable != true) return;
+		//prevents transforming if blocks are in the way
+		var cords = entityManager._world[0].getBlockCoords(this.cx , (this.cy - this.getSize().sizeY/2));
+        if(!entityManager._world[0].isSafeToTransform(cords[0] -1, cords[1])) return;
+		if(!entityManager._world[0].isSafeToTransform(cords[0] -2, cords[1])) return;
 		this.form = 1;
 		this.hoverX = 0;
 		this.cy -= 38; 
@@ -225,7 +226,6 @@ Player.prototype.update = function (du) {
 	
 	spatialManager.register(this);
 	
-	this.updateViewport();
 };
 
 /*
@@ -242,7 +242,8 @@ Player.prototype.render = function (ctx) {
 */
 
 Player.prototype.render = function (ctx) {
-    this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
+    if(this.form === 0) this.animation.renderAt(ctx, this.cx + this.hoverX, this.cy + this.hoverY - this.fairyHoverHeight, this.rotation);
+	else this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
 };
 
 Player.prototype.updateLocation = function(du) {
@@ -457,7 +458,11 @@ Player.prototype.handleCollision = function(hitEntity, axis) {
         var charToLeft = (hitCoords[1] > charCoords[1]); // char column coords must be lower.
         var charToRight = (hitCoords[1] < charCoords[1]);
         var sameCol = (hitCoords[1] == charCoordsLeft[1] || hitCoords[1] == charCoordsRight[1]);
-        var sameRow = (hitCoords[0] == charCoords[0] || hitCoords[0] == charCoords[0]-1) || this.state['jumping'];
+		var sameRow
+		if(this.form === 1)  
+			sameRow = (hitCoords[0] == charCoords[0] || hitCoords[0] == charCoords[0]-1 || hitCoords[0] == charCoords[0]-2) || this.state['jumping'];
+		else sameRow = (hitCoords[0] == charCoords[0] || hitCoords[0] == charCoords[0]-1) || this.state['jumping'];
+ 
 
         lEdge = charToRight && sameRow;
         rEdge = charToLeft && sameRow;
@@ -465,7 +470,6 @@ Player.prototype.handleCollision = function(hitEntity, axis) {
         bEdge = charAbove && sameCol;
 		
 		
-        // Bad fix to make Character decide what happens to it's subclasses (Enemy, Player, Projectile)
         if(hitEntity instanceof Block) {
             var dir = 0; //direction of hit
             if(!hitEntity._isPassable) {
@@ -513,6 +517,8 @@ Player.prototype.handleCollision = function(hitEntity, axis) {
 }
 
 Player.prototype.updateStatus = function() {
+	//will play a bigger part when I manage to fool my friend into finishing one of the sprite-sheets
+	
     var wasMovingRight = (this.velX >= 0);
     var wasMovingLeft = (this.velX < 0);
 
@@ -576,6 +582,9 @@ Player.prototype.updateVelocity = function(du) {
     if(!this.state['jumping'] && !(movingRight || movingLeft)) {
         this.velX = 0;
     }
+	if(this.state['jumping'] && !(movingRight || movingLeft)) {
+        this.velX *= 0.98;
+    }
 	
 
 
@@ -591,27 +600,11 @@ Player.prototype.updateVelocity = function(du) {
 }
 
 Player.prototype.getSize = function(){
-    var size = {sizeX:12*this._scale,sizeY:18*this._scale};
-	if(this.form === 1) size = {sizeX:32*this._scale,sizeY:96*this._scale};
-	if(this.form === 2) size = {sizeX:12*this._scale,sizeY:64*this._scale};
+	//alternating hitboxes between forms just the hight for now to 
+	//prevent a lot of collission headache regarding changing form mid-air
+    var size = {sizeX:20*this._scale,sizeY:18*this._scale};
+	if(this.form === 1) size = {sizeX:20*this._scale,sizeY:96*this._scale};
+	if(this.form === 2) size = {sizeX:20*this._scale,sizeY:64*this._scale};
     return size;
 }
 
-Player.prototype.updateViewport = function(){
-    var nextViewX = this.cx - g_canvas.width/2;
-    var lvlLength = entityManager._world[0].blocks[13].length*(g_canvas.height/14) - g_canvas.width;
-    if (nextViewX < 0) {
-        g_viewPort.x = 0;
-    } else if (nextViewX > lvlLength) {
-        g_viewPort.x = lvlLength;
-    } else {
-        g_viewPort.x = nextViewX;
-    }
-	
-    var nextViewY = this.cy - g_canvas.height/2;
-	if (nextViewY > 0) {
-        g_viewPort.y = 0;
-    } else {
-        g_viewPort.y = nextViewY;
-    }
-}

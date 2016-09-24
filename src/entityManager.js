@@ -56,7 +56,7 @@ KILL_ME_NOW : -1,
 //
 deferredSetup : function () {
     this._categories = [this._objects, this._character, this._world, this._collisionBlocks,
-						this._bullets, this._particles, this._enemies];
+						this._bullets, this._particles, this._enemies, this._viewBox];
 },
 
 
@@ -74,13 +74,16 @@ enterLevel: function(lvl) {
     this._enemies = [];
     this._objects = [];
     this._world = [];
+	this._viewBox = [];
     this._collisionBlocks = [];
 
     
 
-if(this._character.length === 0) this.generateCharacter({cx : 10, cy: 10 });
+    if(this._character.length === 0) this.generateCharacter({cx : 10, cy: 10 });
     this._character[0].reset();
 
+	if(this._viewBox.length === 0) this.generateViewBox();
+	
     this._level = lvl;
 	this.generateLevel({level: this._level});
 	
@@ -132,6 +135,10 @@ generateLevel : function(descr) {
 
 generateObject : function(descr) {
     this._objects.push(new Object(descr));
+},
+
+generateViewBox : function(descr) {
+    this._viewBox.push(new viewBox(descr));
 },
 
 // entities and centres have same dimensions, max 2
