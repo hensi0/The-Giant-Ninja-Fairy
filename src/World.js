@@ -140,7 +140,7 @@ World.prototype.update = function (du) {
 
 World.prototype.isSafeToTransform = function ( x, y) {
 	//to prevent players clipping into terrain by changing hitbox-sizes
-	if(x < 0 || x > 13) return true;
+	if(x < 0 || x > (this.world.length - 1)) return true;
 	if (this.blocks[x][y]){ 
 		if(this.blocks[x][y].isPassable) return true;
 		else return false;
@@ -166,6 +166,201 @@ World.prototype.render = function(ctx) {
 // VARIOUS WORLD PARTS DEFINED
 // ======================
 
+World.prototype.generateLevel = function( roomsX, roomsY){
+	var Rooms = new Array(roomsX);
+	for(var i = 0 ; i < roomsX ; i++) 
+		Rooms[i] = new Array(roomsY);
+	for(var i = 0; i < roomsX; i++) {
+		for(var j = 0; j < roomsY; j++) {
+			Rooms[i][j] = 0;
+		}
+	}
+	
+	var startingRoom = Math.floor(Math.random()*roomsX);
+	
+	Rooms[startingRoom][roomsY - 1] = 'S' 
+	Rooms = this.findNextRooms(Rooms, startingRoom, roomsY - 1 , 'S', roomsX, roomsY);
+	
+	return Rooms;
+	var Level = [
+	]
+};	
+
+World.prototype.findNextRooms = function( rooms, x , y, last, mX, mY){
+	var l = false;
+	var r = false;
+	var u = false;
+	var d = false;
+
+	if(x > 0) 		if(rooms[x-1][y] === 0) 				l = true;
+	if(x < (mX -1)) if(rooms[x+1][y] === 0) 				r = true;
+	if(y > 0) 		if(rooms[x][y-1] === 0) 				u = true;
+	if(y < (mY - 1)) if(rooms[x][y+1] === 0 && last != 'u') d = true;
+	if(last === 'up' || last === 'S' || last === 'I') 		u = false;
+	
+	var ways = '';
+	if(l) ways += 'l'; 
+	if(r) ways += 'r';
+	if(u) ways += 'u';
+	if(d) ways += 'd';
+	console.log(ways);
+	switch(ways) {
+	case '':
+		rooms[x][y] = 'E'; 
+		return rooms;
+		break;
+		//one-option
+	case 'l':
+		if(last === 'up') rooms[x][y] = 'q';
+		else if (last === 'l') rooms[x][y] = '-';
+		else if (last === 'd') rooms[x][y] = 'J';
+		return this.findNextRooms(rooms, x-1, y, 'l', mX, mY);
+		break;
+	case 'r':
+		if(last === 'up') rooms[x][y] = 'p';
+		else if (last === 'r') rooms[x][y] = '-';
+		else if (last === 'd') rooms[x][y] = 'L';
+		return this.findNextRooms(rooms, x+1, y, 'r', mX, mY);
+		break;
+	case 'u':
+		if (last === 'l' || last === 'S') rooms[x][y] = 'L';
+		else if (last === 'r' || last === 'S') rooms[x][y] = 'J';
+		return this.findNextRooms(rooms, x, y-1, 'up', mX, mY);
+		break;
+	case 'd':
+		if (last === 'l') rooms[x][y] = 'p';
+		else if (last === 'r') rooms[x][y] = 'q';
+		else if (last === 'd') rooms[x][y] = 'I';
+		return this.findNextRooms(rooms, x, y+1, 'd', mX, mY);
+		break;
+		// two-options
+	case 'lr':
+		if(Math.random() > 0.5) {
+			//left
+			if(last === 'up') 		rooms[x][y] = 'q';
+			else if(last != 'S') 	rooms[x][y] = 'J';
+			return this.findNextRooms(rooms, x-1, y, 'l', mX, mY);
+		}else { 
+			//right
+			if(last === 'up') 		rooms[x][y] = 'p';
+			else if(last != 'S')	rooms[x][y] = 'L';
+			return this.findNextRooms(rooms, x+1, y, 'r', mX, mY);
+		}
+		break;
+	case 'lu':
+		if(Math.random() > 0.4) {
+			//left
+			rooms[x][y] = '-';
+			return this.findNextRooms(rooms, x-1, y, 'l', mX, mY);
+		}else {
+			//up
+			rooms[x][y] = 'L';
+			return this.findNextRooms(rooms, x, y-1, 'up', mX, mY);
+		}
+		break;
+	case 'ld':
+		if(Math.random() > 0.4) {
+			//left
+			if(last === 'l') rooms[x][y] = '-';
+			else rooms[x][y] = 'J'
+			return this.findNextRooms(rooms, x-1, y, 'l', mX, mY);
+		}else {
+			//down
+			if(last === 'l') rooms[x][y] = 'p';
+			else rooms[x][y] = 'I';
+			return this.findNextRooms(rooms, x, y+1, 'd', mX, mY);
+		}
+		break;
+	case 'rd':
+		if(Math.random() > 0.4) {
+			//right
+			if(last === 'r') rooms[x][y] = '-';
+			else rooms[x][y] = 'L'
+			return this.findNextRooms(rooms, x+1, y, 'r', mX, mY);
+		}else {
+			//down
+			if(last === 'r') rooms[x][y] = 'q';
+			else rooms[x][y] = 'I';
+			return this.findNextRooms(rooms, x, y+1, 'd', mX, mY);
+		}
+		break;
+	case 'ru':
+		if(Math.random() > 0.4) {
+			//right
+			rooms[x][y] = '-';
+			return this.findNextRooms(rooms, x+1, y, 'r', mX, mY);
+		}else {
+			//up
+			rooms[x][y] = 'J';
+			return this.findNextRooms(rooms, x, y-1, 'up', mX, mY);
+		}
+		break;
+	case 'ud':
+		if(Math.random() > 0.4) {
+			//up
+			if(last === 'l') rooms[x][y] = 'L';
+			else rooms[x][y] = 'J';
+			return this.findNextRooms(rooms, x, y-1, 'up', mX, mY);
+		}else {
+			//down
+			if(last === 'l') rooms[x][y] = 'p';
+			else rooms[x][y] = 'q';
+			return this.findNextRooms(rooms, x, y+1, 'd', mX, mY);
+		}
+		break;
+	//aaaaaaaand 3-way-options
+	case 'rud':
+		if(Math.random() > 0.4) {
+			//right
+			rooms[x][y] = '-';
+			return this.findNextRooms(rooms, x+1, y, 'r', mX, mY);
+		}else if(Math.random() > 0.5){
+			//up
+			rooms[x][y] = 'J';
+			return this.findNextRooms(rooms, x, y-1, 'u', mX, mY);
+		} else {
+			//down
+			rooms[x][y] = 'q';
+			return this.findNextRooms(rooms, x, y+1, 'd', mX, mY);
+		}
+		break;
+	case 'lud':
+		if(Math.random() > 0.4) {
+			//left
+			rooms[x][y] = '-';
+			return this.findNextRooms(rooms, x-1, y, 'l', mX, mY);
+		}else if(Math.random() > 0.5){
+			//up
+			rooms[x][y] = 'L';
+			return this.findNextRooms(rooms, x, y-1, 'u', mX, mY);
+		} else {
+			//down
+			rooms[x][y] = 'p';
+			return this.findNextRooms(rooms, x, y+1, 'd', mX, mY);
+		}
+		break;
+	case 'lrd':
+		if(Math.random() > 0.3) {
+			//down
+			rooms[x][y] = 'I';
+			return this.findNextRooms(rooms, x, y+1, 'd', mX, mY);
+		}else if(Math.random() > 0.5){
+			//left
+			rooms[x][y] = 'J';
+			return this.findNextRooms(rooms, x-1, y, 'l', mX, mY);
+		} else {
+			//right
+			rooms[x][y] = 'L';
+			return this.findNextRooms(rooms, x+1, y, 'r', mX, mY);
+		}
+		break;
+	default:
+		console.log("panic" + last);
+		return rooms;
+	}
+
+	
+};
 
 World.prototype.Worlds =  {
 	//current shitty - handcrafted level
