@@ -73,8 +73,6 @@ World.prototype = new Entity();
 // Initial, inheritable, default values
 World.prototype.height = 14 //Able to fit 14 blocks on the height of the canvas.
 World.prototype.blocks; 
-World.prototype.numRooms = 0; 
-World.prototype.mainWayReady = false; 
 World.prototype.blockDim = g_canvas.height/14;
 
 
@@ -168,11 +166,6 @@ World.prototype.render = function(ctx) {
 // VARIOUS WORLD PARTS DEFINED
 // ======================
 
-// q,p,L,J,-,I are all refering to shape of the corresponding Two-way room and where you can enter it
-// K, R, T , W are threeway tiles
-// S is start, E is finish and B are bonus-rooms.
-
-
 World.prototype.generateLevel = function( roomsX, roomsY){
 	var Rooms = new Array(roomsX);
 	for(var i = 0 ; i < roomsX ; i++) 
@@ -182,126 +175,16 @@ World.prototype.generateLevel = function( roomsX, roomsY){
 			Rooms[i][j] = 0;
 		}
 	}
-	this.numRooms = 0;
+	
 	var startingRoom = Math.floor(Math.random()*roomsX);
 	
 	Rooms[startingRoom][roomsY - 1] = 'S' 
 	Rooms = this.findNextRooms(Rooms, startingRoom, roomsY - 1 , 'S', roomsX, roomsY);
 	
-	for(var i = 0; i < roomsX; i++) {
-		for(var j = 0; j < roomsY; j++) {
-			if(Rooms[i][j] === 0) 
-				this.checkForConnections(i,j, Rooms, roomsX, roomsY);
-
-		}
-	}
-	
-	return this.createTheLevel(Rooms, roomsX, roomsY);
+	return Rooms;
+	var Level = [
+	]
 };	
-
-//Makes a level out of an array of rooms  
-World.prototype.createTheLevel = function( rooms, mX, mY){
-	var newGrid = new Array(14*mX);
-	for(var i = 0 ; i < 14*mX ; i++) 
-		newGrid[i] = new Array(14*mY);
-	for(var i = 0 ; i < mX ; i++)
-		for(var j = 0 ; j < mY ; j++)
-			this.fillRoom(newGrid, 14*i, 14*j, rooms[i][j]);
-	//asdasd
-	
-};	
-
-//sorts room -blocks into an array 
-World.prototype.fillRoom = function( grid, x, y, type){
-	if(type === 'S') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.Worlds.S[0][i][j];
-	if(type === 'E') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.Worlds.E[0][i][j];
-	if(type === 'I') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.Worlds.I[0][i][j];
-	if(type === '-') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.rotateGrid(this.Worlds.I[0][i][j] , 1);
-	if(type === 'J') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.Worlds.J[0][i][j];
-	if(type === 'L') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.rotateGrid(this.Worlds.J[0][i][j], 1);
-	if(type === 'p') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.rotateGrid(this.Worlds.J[0][i][j], 2);
-	if(type === 'q') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.rotateGrid(this.Worlds.J[0][i][j], 3);
-	if(type === 'T') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.Worlds.T[0][i][j];
-	if(type === 'R') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.rotateGrid(this.Worlds.T[0][i][j], 1);
-	if(type === 'W') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.rotateGrid(this.Worlds.T[0][i][j], 2);			
-	if(type === 'K') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.rotateGrid(this.Worlds.T[0][i][j], 3);
-	
-};	
-
-//after a maze has been constructed this function adds random "wrong" pathways.
-World.prototype.checkForConnections = function(x,y, Rooms , roomsX, roomsY) {
-	var l = false;
-	var r = false;
-	var u = false;
-	var d = false;
-	
-	if(x > 0) 				if(Rooms[x-1][y] != 0) 		return this.shapeAndGo(Rooms, x,y,'l', roomsX, roomsY);
-	if(x < (roomsX -1)) 	if(Rooms[x+1][y] != 0) 		return this.shapeAndGo(Rooms, x,y,'r', roomsX, roomsY);
-	if(y > 0) 				if(Rooms[x][y-1] != 0) 		return this.shapeAndGo(Rooms, x,y,'u', roomsX, roomsY);
-	if(y < (roomsY - 1)) 	if(Rooms[x][y+1] != 0) 		return this.shapeAndGo(Rooms, x,y,'d', roomsX, roomsY);
-	
-	return Rooms
-}
-
-World.prototype.shapeAndGo = function(Rooms,x,y,p, roomsX, roomsY) {
-	
-	if(p === 'l'){
-		if(Rooms[x-1][y] === 'J') Rooms[x-1][y] = 'W';
-		if(Rooms[x-1][y] === 'q') Rooms[x-1][y] = 'T';
-		Rooms = this.findNextRooms(Rooms, x, y, 'r', roomsX, roomsY);
-	} else if(p === 'r'){
-		if(Rooms[x+1][y] === 'L') Rooms[x+1][y] = 'W';
-		if(Rooms[x+1][y] === 'p') Rooms[x+1][y] = 'T';
-		Rooms = this.findNextRooms(Rooms, x, y, 'l', roomsX, roomsY);
-	} else if(p === 'u'){
-		if(Rooms[x][y-1] === 'L') Rooms[x][y-1] = 'K';
-		if(Rooms[x][y-1] === 'J') Rooms[x][y-1] = 'R';
-		Rooms = this.findNextRooms(Rooms, x, y, 'd', roomsX, roomsY);
-	} else if(p === 'd'){
-		if(Rooms[x][y+1] === 'q') Rooms[x][y+1] = 'R';
-		if(Rooms[x][y+1] === 'p') Rooms[x][y+1] = 'K';
-		Rooms = this.findNextRooms(Rooms, x, y, 'up', roomsX, roomsY);
-	} else return Rooms;
-	
-}
-
-//makes a randomized snake-like path from a block until it get's stuck
 
 World.prototype.findNextRooms = function( rooms, x , y, last, mX, mY){
 	var l = false;
@@ -309,8 +192,6 @@ World.prototype.findNextRooms = function( rooms, x , y, last, mX, mY){
 	var u = false;
 	var d = false;
 
-	this.numRooms++;
-	
 	if(x > 0) 		if(rooms[x-1][y] === 0) 				l = true;
 	if(x < (mX -1)) if(rooms[x+1][y] === 0) 				r = true;
 	if(y > 0) 		if(rooms[x][y-1] === 0) 				u = true;
@@ -322,15 +203,10 @@ World.prototype.findNextRooms = function( rooms, x , y, last, mX, mY){
 	if(r) ways += 'r';
 	if(u) ways += 'u';
 	if(d) ways += 'd';
-
+	console.log(ways);
 	switch(ways) {
 	case '':
-		if(this.mainWayReady){
-			rooms[x][y] = 'B';
-		} else {
-			rooms[x][y] = 'E'; 
-			this.mainWayReady = true;
-		}
+		rooms[x][y] = 'E'; 
 		return rooms;
 		break;
 		//one-option
@@ -359,7 +235,7 @@ World.prototype.findNextRooms = function( rooms, x , y, last, mX, mY){
 		break;
 		// two-options
 	case 'lr':
-		if(Math.random() < (x/mX)) {
+		if(Math.random() > 0.5) {
 			//left
 			if(last === 'up') 		rooms[x][y] = 'q';
 			else if(last != 'S') 	rooms[x][y] = 'J';
@@ -441,7 +317,7 @@ World.prototype.findNextRooms = function( rooms, x , y, last, mX, mY){
 		}else if(Math.random() > 0.5){
 			//up
 			rooms[x][y] = 'J';
-			return this.findNextRooms(rooms, x, y-1, 'up', mX, mY);
+			return this.findNextRooms(rooms, x, y-1, 'u', mX, mY);
 		} else {
 			//down
 			rooms[x][y] = 'q';
@@ -456,7 +332,7 @@ World.prototype.findNextRooms = function( rooms, x , y, last, mX, mY){
 		}else if(Math.random() > 0.5){
 			//up
 			rooms[x][y] = 'L';
-			return this.findNextRooms(rooms, x, y-1, 'up', mX, mY);
+			return this.findNextRooms(rooms, x, y-1, 'u', mX, mY);
 		} else {
 			//down
 			rooms[x][y] = 'p';
@@ -464,7 +340,7 @@ World.prototype.findNextRooms = function( rooms, x , y, last, mX, mY){
 		}
 		break;
 	case 'lrd':
-		if(Math.random() < 0.3) {
+		if(Math.random() > 0.3) {
 			//down
 			rooms[x][y] = 'I';
 			return this.findNextRooms(rooms, x, y+1, 'd', mX, mY);
@@ -504,115 +380,4 @@ World.prototype.Worlds =  {
 	[6,6,6,6,6,6,6,6,6,6,6,6,6,6,0,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6],
 	[6,6,6,6,6,6,6,6,6,6,6,6,6,6,0,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6]
 	],
-	
-	'S' : [
-	[
-	[6,6,6,6,6,6,6,6,6,6,6,6,6,6],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,6,0,0,0,0,6,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,6,0,0,0,0,0,0,0,0,6,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[6,6,6,6,6,6,6,6,6,6,6,6,6,6]
-	]
-	],
-	
-	'E' : [
-	[
-	[6,6,6,6,6,0,0,0,0,0,6,6,6,6],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,6,0,0,0,0,6,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,6,0,0,0,0,0,0,0,0,6,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[6,6,6,6,0,0,0,0,0,0,6,6,6,6]
-	]
-	],
-	
-	'I' : [
-	[
-	[6,0,0,0,0,0,0,0,0,0,0,0,0,6],
-	[6,0,0,0,0,0,0,0,0,0,0,0,0,6],
-	[6,0,0,0,0,0,0,0,0,0,0,0,0,6],
-	[6,0,0,0,0,0,0,0,0,0,0,0,0,6],
-	[6,0,0,0,0,0,0,0,0,0,0,0,0,6],
-	[6,0,0,0,0,6,6,6,6,6,0,0,0,6],
-	[6,0,0,0,0,0,0,6,0,0,0,0,0,6],
-	[6,0,0,0,0,0,0,6,0,0,0,0,0,6],
-	[6,0,0,6,0,0,0,6,0,0,0,0,0,6],
-	[6,0,0,0,0,0,0,6,0,0,0,0,0,6],
-	[6,0,0,0,0,6,6,6,6,6,0,0,0,6],
-	[6,0,0,0,0,0,0,0,0,0,0,0,0,6],
-	[6,0,0,0,0,0,0,0,0,0,0,0,0,6],
-	[6,0,0,0,0,0,0,0,0,0,0,0,0,6]
-	]
-	],
-	
-	
-	'J' : [
-	[
-	[6,6,6,6,6,6,0,0,0,0,0,0,6,6],
-	[6,6,6,0,0,0,0,0,0,0,0,0,0,6],
-	[6,6,6,0,0,0,0,0,0,6,0,0,0,6],
-	[6,6,0,0,0,0,0,0,6,0,0,0,0,6],
-	[6,0,0,0,0,0,0,0,6,0,0,0,0,6],
-	[0,0,0,0,0,0,0,0,0,6,0,0,0,6],
-	[0,0,0,0,0,0,0,6,6,6,0,0,0,6],
-	[0,0,0,0,0,0,6,0,0,0,0,0,0,6],
-	[0,0,0,6,0,0,0,0,0,0,0,0,0,6],
-	[0,0,6,0,0,0,6,0,0,0,0,0,0,6],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,6],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,6],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,6],
-	[6,6,6,6,6,6,6,6,6,6,6,6,6,6]
-	]
-	],
-	
-	'T' : [
-	[
-	[6,6,6,6,6,6,6,6,6,6,6,6,6,6],
-	[6,6,6,0,0,0,0,0,0,0,0,0,0,6],
-	[6,6,6,0,0,0,0,0,0,0,0,0,0,6],
-	[6,6,0,0,0,6,6,6,6,6,0,0,0,6],
-	[6,0,0,0,0,0,0,6,0,0,0,0,0,6],
-	[0,0,0,0,0,0,0,6,0,0,0,0,0,6],
-	[0,0,0,0,0,0,0,6,0,0,0,0,0,6],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,6,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,6,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,6],
-	[6,6,6,0,0,0,0,0,0,0,6,6,6,6]
-	]
-	],
-}
-
-World.prototype.rotateGrid = function(grid, numb) {
-	if(numb === 0) return grid;
-	var newGrid = new Array(14);
-	for(var i = 0 ; i < 14 ; i++) 
-		newGrid[i] = new Array(14);
-	
-	for(var i = 0; i < 14; i++) {
-		for(var j = 0; j < 14; j++) {
-			newGrid[i][j] = grid[13-j][13-i];
-		}
-	}
-	numb--;
-	return rotateGrid(newGrid, numb);
-};
+};		
