@@ -17,7 +17,8 @@ function World(descr) {
     // Common inherited setup logic from Entity
     this.setup(descr);
     // Define current level:
-    this.world = this.Worlds[descr.level];
+	this.Worlds[1] = this.generateLevel(descr.x, descr.y);
+    this.world = this.Worlds[1];
 
     this.blocks = [];
 	var s = 0;	
@@ -75,6 +76,7 @@ World.prototype.height = 14 //Able to fit 14 blocks on the height of the canvas.
 World.prototype.blocks; 
 World.prototype.numRooms = 0; 
 World.prototype.mainWayReady = false; 
+World.prototype.map; 
 World.prototype.blockDim = g_canvas.height/14;
 
 
@@ -99,6 +101,7 @@ World.prototype.collidesWith = function (player, prevX, prevY, nextX, nextY) {
 	var collidingBlocks = [];
 	var collidingCoords = [];
 	var row = newCoords[0]-3;
+	
 	var col = newCoords[1]-1;
 	for(var i = 0; i < 5; i++) {
 		for(var j = 0; j < 3; j++) {
@@ -187,7 +190,10 @@ World.prototype.generateLevel = function( roomsX, roomsY){
 	
 	Rooms[startingRoom][roomsY - 1] = 'S' 
 	Rooms = this.findNextRooms(Rooms, startingRoom, roomsY - 1 , 'S', roomsX, roomsY);
+
+
 	
+
 	for(var i = 0; i < roomsX; i++) {
 		for(var j = 0; j < roomsY; j++) {
 			if(Rooms[i][j] === 0) 
@@ -196,7 +202,19 @@ World.prototype.generateLevel = function( roomsX, roomsY){
 		}
 	}
 	
-	return this.createTheLevel(Rooms, roomsX, roomsY);
+	var newGrid = new Array(roomsY);
+	for(var i = 0 ; i < roomsY ; i++) 
+		newGrid[i] = new Array(roomsX);
+	
+
+	
+	for(var i = 0; i < roomsY; i++) {
+		for(var j = 0; j < roomsX; j++) {
+			newGrid[i][j] = Rooms[j][i];
+		}
+	}
+	
+	return this.createTheLevel(newGrid, roomsY, roomsX);
 };	
 
 //Makes a level out of an array of rooms  
@@ -204,64 +222,125 @@ World.prototype.createTheLevel = function( rooms, mX, mY){
 	var newGrid = new Array(14*mX);
 	for(var i = 0 ; i < 14*mX ; i++) 
 		newGrid[i] = new Array(14*mY);
+	
 	for(var i = 0 ; i < mX ; i++)
-		for(var j = 0 ; j < mY ; j++)
-			this.fillRoom(newGrid, 14*i, 14*j, rooms[i][j]);
-	//asdasd
+		for(var j = 0 ; j < mY ; j++){
+			newGrid = this.fillRoom(newGrid, 14*i, 14*j, rooms[i][j]);
+		}
+	this.map = rooms
+	
+	return newGrid;
 	
 };	
 
+World.prototype.returnStartLocation = function(){
+	for(var i = 0; i < this.map.length ; i++)
+		for(var j = 0; j < this.map[0].length; j++)
+			if(this.map[i][j] === 'S') return {x: 40*(7+(14*j)), y: 40*(7+14*i)};
+	return {x: 0, y: 0};
+};	
+
 //sorts room -blocks into an array 
-World.prototype.fillRoom = function( grid, x, y, type){
-	if(type === 'S') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.Worlds.S[0][i][j];
-	if(type === 'E') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.Worlds.E[0][i][j];
-	if(type === 'I') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.Worlds.I[0][i][j];
-	if(type === '-') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.rotateGrid(this.Worlds.I[0][i][j] , 1);
-	if(type === 'J') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.Worlds.J[0][i][j];
-	if(type === 'L') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.rotateGrid(this.Worlds.J[0][i][j], 1);
-	if(type === 'p') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.rotateGrid(this.Worlds.J[0][i][j], 2);
-	if(type === 'q') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.rotateGrid(this.Worlds.J[0][i][j], 3);
-	if(type === 'T') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.Worlds.T[0][i][j];
-	if(type === 'R') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.rotateGrid(this.Worlds.T[0][i][j], 1);
-	if(type === 'W') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.rotateGrid(this.Worlds.T[0][i][j], 2);			
-	if(type === 'K') 
-		for(var i = 0 ; i < 14 ; i++)
-			for(var j = 0 ; j < 14 ; j++)
-				grid[i][j] = this.rotateGrid(this.Worlds.T[0][i][j], 3);
+World.prototype.fillRoom = function( level, x, y, type){
 	
+	var grid = new Array(14);
+	for(var i = 0 ; i < 14 ; i++) 
+		grid[i] = new Array(14);
+	
+	
+	switch(type) {
+	case 'S': 
+		for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				grid[i][j] = this.Worlds.S[0][j][i];
+			grid = this.rotateGrid(grid, 1);
+		break;
+	case 'E':
+		for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				grid[i][j] = this.Worlds.E[0][j][i];
+			grid = this.rotateGrid(grid, 1);
+		break;
+	case 'B':
+		for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				grid[i][j] = this.Worlds.E[0][j][i];
+			grid = this.rotateGrid(grid, 1);
+		break;
+	case 0:
+		for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				grid[i][j] = this.Worlds.O[0][j][i];
+			grid = this.rotateGrid(grid, 1);
+		break;
+	case 'I':
+		for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				grid[i][j] = this.Worlds.I[0][j][i];
+			grid = this.rotateGrid(grid, 1);
+		break;
+	case '-': 
+		for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				grid[i][j] = this.Worlds.I[0][j][i];
+
+		break;
+	case 'J': 
+		for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				grid[i][j] = this.Worlds.J[0][j][i];
+		break;
+	case 'L': 
+		for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				grid[i][j] = this.Worlds.J[0][j][i];
+			grid = this.rotateGrid(grid, 1);
+		break;
+	case 'p':
+		for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				grid[i][j] = this.Worlds.J[0][j][i];
+			grid = this.rotateGrid(grid, 2);
+		break;
+	case 'q':
+		for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				grid[i][j] = this.Worlds.J[0][j][i];
+			grid = this.rotateGrid(grid, 3);
+		break;
+	case 'T':
+		for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				grid[i][j] = this.Worlds.T[0][j][i];
+			grid = this.rotateGrid(grid, 1);
+		break;
+	case 'R':
+		for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				grid[i][j] = this.Worlds.T[0][j][i];
+			grid = this.rotateGrid(grid, 2);
+		break;
+	case 'W':
+		for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				grid[i][j] = this.Worlds.T[0][j][i];
+			grid = this.rotateGrid(grid, 3);
+		break;
+	case 'K':
+		for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				grid[i][j] = this.Worlds.T[0][j][i];
+			grid = this.rotateGrid(grid, 4);
+		break;
+	default:
+		console.log("panic: " + type);
+	}
+	
+	
+	for(var i = 0 ; i < 14 ; i++)
+			for(var j = 0 ; j < 14 ; j++)
+				level[x+i][y+j] = grid[i][j];
+	return level;
 };	
 
 //after a maze has been constructed this function adds random "wrong" pathways.
@@ -543,6 +622,25 @@ World.prototype.Worlds =  {
 	]
 	],
 	
+	'O' : [
+	[
+	[6,6,6,6,6,6,6,6,6,6,6,6,6,6],
+	[6,6,6,0,0,0,0,0,0,0,0,0,0,6],
+	[6,6,6,0,0,0,0,0,0,6,0,0,0,6],
+	[6,6,0,0,0,0,0,0,6,0,0,0,0,6],
+	[6,0,0,0,0,0,0,0,6,0,0,0,0,6],
+	[6,0,0,0,0,0,0,0,0,6,0,0,0,6],
+	[6,0,0,0,0,0,0,6,6,6,0,0,0,6],
+	[6,0,0,0,0,0,6,0,0,0,0,0,0,6],
+	[6,0,0,6,0,0,0,0,0,0,0,0,0,6],
+	[6,0,6,0,0,0,6,0,0,0,0,0,0,6],
+	[6,0,0,0,0,0,0,0,0,0,0,0,0,6],
+	[6,0,0,0,0,0,0,0,0,0,0,0,0,6],
+	[6,0,0,0,0,0,0,0,0,0,0,0,0,6],
+	[6,6,6,6,6,6,6,6,6,6,6,6,6,6]
+	]
+	],
+	
 	'I' : [
 	[
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,6],
@@ -610,9 +708,13 @@ World.prototype.rotateGrid = function(grid, numb) {
 	
 	for(var i = 0; i < 14; i++) {
 		for(var j = 0; j < 14; j++) {
-			newGrid[i][j] = grid[13-j][13-i];
+			newGrid[i][j] = grid[13-j][i];
 		}
 	}
 	numb--;
-	return rotateGrid(newGrid, numb);
+	return this.rotateGrid(newGrid, numb);
 };
+
+World.prototype.printMap = function(){
+	util.printTwoDimentionalArray(this.map);
+};	

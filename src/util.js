@@ -73,6 +73,16 @@ square: function(x) {
     return x*x;
 },
 
+printTwoDimentionalArray: function(x) {
+    for(var i = 0; i < x.length ; i++){
+		var string = "";
+		
+		for(var j = 0; j < x[0].length ; j++){
+			var string = string + x[i][j];
+		}
+		console.log(string);
+	}
+},
 
 // DISTANCES
 // =========

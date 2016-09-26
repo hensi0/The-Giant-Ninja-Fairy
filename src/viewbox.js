@@ -30,30 +30,27 @@ viewBox.prototype.update = function(du){
 		this.xVel -= (this.cx - Player.cx)/1000;
 		this.xVel *= 0.5 + 0.48*((Math.abs(this.cx - Player.cx))/(1+ Math.abs(this.cx - Player.cx)));
 		
-		this.yVel -= (this.cy - Player.cy + 50)/1000;
-		this.yVel *= 0.5 + 0.48*((Math.abs(this.cy - Player.cy + 50))/(1+ Math.abs(this.cy - Player.cy + 50)));
+		
 		 
 			//the boundries are so that the camera doesn't move around to fast,
 			//	f.ex. when moveing out of the grace-box
 			var temp = 0.05*((this.screenX - Player.cx) + 2.4*(this.cx - Player.cx));
+			if(Math.abs(temp)  > 100) this.reset();
 			var limit = 5 + 3 *(Math.abs(Player.velX) / (4 + Math.abs(Player.velX))); 
 			if(temp > limit) temp = limit;
 			if(temp < -limit) temp = -limit;
 			this.screenX -=  temp;
 			
-			var temp2 = 0.05*((this.screenY - Player.cy) + 2.4*(this.cy - Player.cy + 50));
-			if(temp2 > 2) temp2 = 2;
-			if(temp2 < -2) temp2 = -2;
-			this.screenY -=  temp2;
+			
 		
-		if(Math.abs(this.xVel) < 0.03 && Math.abs(this.yVel) < 0.03) this.chasing = false;
+		if(Math.abs(this.xVel) < 0.03) this.chasing = false;
 		
 		this.cx += this.xVel * du;
-		this.cy += this.yVel * du;	
+		
 	
 		//updates the global wievport camera variables
 		var nextViewX = (this.screenX - g_canvas.width/2);
-		var nextViewY = (this.screenY - g_canvas.height/2 + 80);
+		
 		
 		var lvlLength = entityManager._world[0].blocks[13].length*(g_canvas.height/14) - g_canvas.width;
 		
@@ -65,13 +62,24 @@ viewBox.prototype.update = function(du){
 			g_viewPort.x = nextViewX;
 		}
 	
-		if (nextViewY > 0) {
-			g_viewPort.y = 0;
-		} else {
-			g_viewPort.y = nextViewY;
-		}
-	}
+		
 	
+}
+	this.yVel -= (this.cy - Player.cy + 50)/1000;
+	this.yVel *= 0.5 + 0.48*((Math.abs(this.cy - Player.cy + 50))/(1+ Math.abs(this.cy - Player.cy + 50)));
+	
+	var temp2 = 0.05*((this.screenY - Player.cy) + 2.4*(this.cy - Player.cy + 50));
+	if(Math.abs(temp2)  > 100) this.reset();
+	if(temp2 > 2) temp2 = 2;
+	if(temp2 < -4) temp2 = -4;
+	this.screenY -=  temp2;
+	
+	this.cy += this.yVel * du;	
+	
+	var nextViewY = (this.screenY - g_canvas.height/2 + 80);
+	var temp3 = entityManager._world[0].returnStartLocation().y - g_canvas.height/2;
+	if(nextViewY > temp3) g_viewPort.y = temp3;
+	else 	g_viewPort.y = nextViewY;
 };
 
 viewBox.prototype.render = function(ctx){
@@ -90,4 +98,16 @@ viewBox.prototype.render = function(ctx){
 		ctx.restore();
 		ctx.beginPath();
 	}
+};
+
+viewBox.prototype.reset = function(){
+
+	var x = entityManager._world[0].returnStartLocation().x;
+	var y = entityManager._world[0].returnStartLocation().y;
+	this.cx = x;
+	this.cy = y;
+	this.screenY = y;
+	this.screenX = x;
+	g_viewPort.y = y;
+	g_viewPort.x = x;
 };

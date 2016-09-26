@@ -82,7 +82,10 @@ Player.prototype.blinkCharge = 0;
 Player.prototype.hasDoubleJumped = false;
 Player.prototype.hasNinjadUp = false;
 
-
+Character.prototype.reset = function () {
+	var pos = entityManager._world[0].returnStartLocation();
+    this.setPos(pos.x, pos.y);
+};
 
 Player.prototype.goFairy = function () {
         this.form = 0;
@@ -218,9 +221,6 @@ Player.prototype.update = function (du) {
 	
     this.updateJump(bEdge);
 
-    if(this.cy > g_canvas.height + 42){
-        this._isDeadNow = true;
-    }
 
 	this.updateStatus();
 	

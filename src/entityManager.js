@@ -79,13 +79,15 @@ enterLevel: function(lvl) {
 
     
 
-    if(this._character.length === 0) this.generateCharacter({cx : 10, cy: 10 });
-    this._character[0].reset();
+    
 
 	if(this._viewBox.length === 0) this.generateViewBox();
 	
     this._level = lvl;
-	this.generateLevel({level: this._level});
+	this.generateLevel({x: 6, y: 5});
+	
+	if(this._character.length === 0) this.generateCharacter({cx : 10, cy: 10 });
+    this._character[0].reset();
 	
     this.deferredSetup();
 },
