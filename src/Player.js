@@ -142,8 +142,16 @@ Player.prototype.handleJump = function () {
         this.state['jumping'] = true;
     } else {
     	this.state['jumping'] = true;
-        this.velY = -6;
-    	this.tempMaxJumpHeight = this.cy - this.maxPushHeight; 
+        if(this.form === 2){
+			this.velY = -6;
+			this.tempMaxJumpHeight = this.cy - this.maxPushHeight; 
+		} else if(this.form === 1){
+			this.velY = -4;
+			this.tempMaxJumpHeight = this.cy - 0.6*this.maxPushHeight; 
+		} else if(this.form === 0){
+			this.velY = -5;
+			this.tempMaxJumpHeight = this.cy - 0.8*this.maxPushHeight; 
+		} 
     }
 };
 
@@ -272,18 +280,6 @@ Player.prototype.updateJump = function(bEdge) {
     }
 };
 
-Player.prototype.handleJump = function () {
-    if((!this.state['canJump'] || this.state['jumping']) && !this.state['inWater']) return;
-    else if(this.state['inWater']) {
-        this.velY = -1; 
-        this.tempMaxJumpHeight = this.cy - 1;
-        this.state['jumping'] = true;
-    } else {
-    	this.state['jumping'] = true;
-        this.velY = -6;
-    	this.tempMaxJumpHeight = this.cy - this.maxPushHeight; 
-    }
-}
 //===============================================
 // ******************FAIRY***********************
 //===============================================
@@ -593,7 +589,10 @@ Player.prototype.updateVelocity = function(du) {
         if(!this.state['inWater'])this.velY += NOMINAL_GRAVITY*du;
         else this.velY += (NOMINAL_GRAVITY*du)/10;
     }else if(this.state['jumping'] && this.state['pushing']){
-		this.velY = -6;
+		
+		if(this.form === 2) this.velY = -6;
+		else if(this.form === 1) this.velY = -4;
+		else if(this.form === 0) this.velY = -5;
 	}else if(!this.state['jumping']){
         this.velY = 0;
     }

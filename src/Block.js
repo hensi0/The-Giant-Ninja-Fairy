@@ -24,7 +24,10 @@ function Block(descr) {
 		
 		case 6: this.sprite = this.mudBlockLogic(this.status);
 		break; 
-
+		
+		case 2: this.sprite = g_sprites.bricks;
+		break; 
+		
 		default: this._isPassable = true;
 				 this.sprite = g_sprites.blank;
 		break;
@@ -88,7 +91,11 @@ Block.prototype.activate = function (Char, direction) {
 		this.tryToBreak();
 	}
 	if(this.type === 2){
-		if(Char instanceof Player) Char.takeHit();
+		if(Char instanceof Player){
+			Char.takeHit();
+			
+		} 
+
 	}
 };
 

@@ -81,6 +81,10 @@ Character.prototype.putToGround = function(groundY) {
 
 }
 
+Character.prototype.takeHit = function() {
+    console.log("OOOUCH");
+}
+
 Character.prototype.handlePartialCollision = function(charX,charY,axis,callback){
     var bEdge,lEdge,rEdge,tEdge;
     var standingOnSomething = false;

@@ -21,7 +21,7 @@ viewBox.prototype.update = function(du){
 	var Player = entityManager._character[0];
 	
 	
-	if(Math.abs(this.cx - Player.cx) > this.sizeX/2 || Math.abs(this.cy - Player.cy  + 50) > this.sizeY/2)
+	if(Math.abs(this.cx - Player.cx) > this.sizeX/2 || Math.abs(this.cy - Player.cy) > this.sizeY/2)
 		this.chasing = true;
 	//while player stays within the inner box camera stays still
 	if(this.chasing){
@@ -65,13 +65,13 @@ viewBox.prototype.update = function(du){
 		
 	
 }
-	this.yVel -= (this.cy - Player.cy + 50)/1000;
-	this.yVel *= 0.5 + 0.48*((Math.abs(this.cy - Player.cy + 50))/(1+ Math.abs(this.cy - Player.cy + 50)));
+	this.yVel -= (this.cy - Player.cy)/1000;
+	this.yVel *= 0.5 + 0.48*((Math.abs(this.cy - Player.cy))/(1+ Math.abs(this.cy - Player.cy)));
 	
-	var temp2 = 0.05*((this.screenY - Player.cy) + 2.4*(this.cy - Player.cy + 50));
+	var temp2 = 0.05*((this.screenY - Player.cy) + 2.4*(this.cy - Player.cy));
 	if(Math.abs(temp2)  > 100) this.reset();
-	if(temp2 > 2) temp2 = 2;
-	if(temp2 < -4) temp2 = -4;
+	if(temp2 > 3) temp2 = 3;
+	if(temp2 < -3) temp2 = -3;
 	this.screenY -=  temp2;
 	
 	this.cy += this.yVel * du;	
