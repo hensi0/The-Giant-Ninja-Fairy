@@ -60,7 +60,7 @@ Player.prototype.state = {jumping: true, canJump: false, pushing: false,
 
 Player.prototype.maxVelX = 3.9;
 Player.prototype.maxVelY = 6.5;
-Player.prototype.maxPushHeight = 120;
+Player.prototype.maxPushHeight = 120000000;  //fix
 Player.prototype.tempMaxJumpHeight = 0;
 Player.prototype.animationsG;
 Player.prototype.animationsD;

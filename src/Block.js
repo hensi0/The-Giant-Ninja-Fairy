@@ -61,7 +61,6 @@ Block.prototype.mudBlockLogic = function (status) {
 	this.rndRotation();
 	return g_sprites.dirtM1;
 	
-	
 };
 
 Block.prototype.rndRotation = function () {
