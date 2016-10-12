@@ -28,6 +28,9 @@ function Block(descr) {
 		case 2: this.sprite = g_sprites.bricks;
 		break; 
 		
+		case 'E':this.sprite = g_sprites.bricks;
+		break;
+		
 		default: this._isPassable = true;
 				 this.sprite = g_sprites.blank;
 		break;

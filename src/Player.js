@@ -45,7 +45,7 @@ Character.prototype.KEY_SWAP2  	= 'E'.charCodeAt(0); //2ndary swap
 
 
 // Initial, inheritable, default values
-Player.prototype.form = 0;
+Player.prototype.form = 'fairy';
 Player.prototype.SwapCD = 0;
 Player.prototype.state = {jumping: true, canJump: false, pushing: false, 
 							offGround: true, casting: false, 
@@ -77,10 +77,10 @@ Player.prototype.fairyHoverHeight = 25;
 Player.prototype.hasRealeasedUp = true;
 Player.prototype.blinkCharge = 0;
 
-//ninja variables
+//Druid variables
 
 Player.prototype.hasDoubleJumped = false;
-Player.prototype.hasNinjadUp = false;
+Player.prototype.hasDruiddUp = false;
 
 Character.prototype.reset = function () {
 	var pos = entityManager._world[0].returnStartLocation();
@@ -88,7 +88,7 @@ Character.prototype.reset = function () {
 };
 
 Player.prototype.goFairy = function () {
-        this.form = 0;
+        this.form = 'fairy';
 		this.hoverX = 0;
 		this.hoverY = 0;
 		this.animations = this.animationsF;
@@ -107,7 +107,7 @@ Player.prototype.goGoat = function () {
 		var cords = entityManager._world[0].getBlockCoords(this.cx , (this.cy - this.getSize().sizeY/2));
         if(!entityManager._world[0].isSafeToTransform(cords[0] -1, cords[1])) return;
 		if(!entityManager._world[0].isSafeToTransform(cords[0] -2, cords[1])) return;
-		this.form = 1;
+		this.form = 'goat';
 		this.hoverX = 0;
 		this.cy -= 38; 
 		this.animations = this.animationsG;
@@ -121,7 +121,7 @@ Player.prototype.goGoat = function () {
 };
 
 Player.prototype.goDruid = function () {
-        this.form = 2;
+        this.form = 'druid';
 		this.hoverX = 0;
 		this.hoverY = 0;
 		this.animations = this.animationsD;
@@ -142,13 +142,13 @@ Player.prototype.handleJump = function () {
         this.state['jumping'] = true;
     } else {
     	this.state['jumping'] = true;
-        if(this.form === 2){
+        if(this.form === 'druid'){
 			this.velY = -6;
 			this.tempMaxJumpHeight = this.cy - this.maxPushHeight; 
-		} else if(this.form === 1){
+		} else if(this.form === 'goat'){
 			this.velY = -4;
 			this.tempMaxJumpHeight = this.cy - 0.6*this.maxPushHeight; 
-		} else if(this.form === 0){
+		} else if(this.form === 'fairy'){
 			this.velY = -5;
 			this.tempMaxJumpHeight = this.cy - 0.8*this.maxPushHeight; 
 		} 
@@ -179,9 +179,9 @@ Player.prototype.update = function (du) {
 	else{
 		if (keys[this.KEY_SWAP1]) {
 			this.SwapCD = 30;
-			if(this.form === 1){
+			if(this.form === 'goat'){
 				this.goDruid();
-			}else if(this.form === 2){ 
+			}else if(this.form === 'druid'){ 
 				this.goFairy();
 			}else {
 				this.goGoat();
@@ -191,8 +191,8 @@ Player.prototype.update = function (du) {
 		/* Maybe use later, gameplay seems more fun with swap only going one way
 		if (keys[this.KEY_SWAP2]) {
 			this.SwapCD = 30;
-			if(this.form === 0) this.goGoat();
-			else if(this.form === 1) this.goDruid();
+			if(this.form === 'fairy') this.goGoat();
+			else if(this.form === 'goat') this.goDruid();
 			else this.goFairy();
 			//smoke cloud
 		}
@@ -212,17 +212,17 @@ Player.prototype.update = function (du) {
 	
 	this.state['canJump'] = (!this.state['jumping'] && !keys[this.KEY_JUMP]);
 	
-	if(this.form === 0){
+	if(this.form === 'fairy'){
 		
 		this.fairyUpdate(du);
 	
-	} else if(this.form === 1){
+	} else if(this.form === 'goat'){
 		
 		this.giantUpdate(du);
 	
-	} else if(this.form === 2){
+	} else if(this.form === 'druid'){
 		
-		this.ninjaUpdate(du);
+		this.druidUpdate(du);
 	}
 	
 	this.updateLocation(du);
@@ -250,7 +250,7 @@ Player.prototype.render = function (ctx) {
 */
 
 Player.prototype.render = function (ctx) {
-    if(this.form === 0) this.animation.renderAt(ctx, this.cx + this.hoverX, this.cy + this.hoverY - this.fairyHoverHeight, this.rotation);
+    if(this.form === 'fairy') this.animation.renderAt(ctx, this.cx + this.hoverX, this.cy + this.hoverY - this.fairyHoverHeight, this.rotation);
 	else this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
 };
 
@@ -387,11 +387,11 @@ Player.prototype.giantUpdate = function (du) {
 
 
 //===============================================
-// ******************NINJA***********************
+// ******************Druid***********************
 //===============================================
 
 
-Player.prototype.ninjaUpdate = function (du) {
+Player.prototype.druidUpdate = function (du) {
 	/*
 	if (keys[this.KEY_LEFT]) {
         this.velX = -2.4;
@@ -402,8 +402,8 @@ Player.prototype.ninjaUpdate = function (du) {
 	if( this.isJumping ) {
 		
 		this.velY += 0.1;
-		if(!keys[this.KEY_JUMP]) this.hasNinjadUp = true;
-		if(!this.hasDoubleJumped && keys[this.KEY_JUMP] && this.velY > -2 && this.hasNinjadUp){
+		if(!keys[this.KEY_JUMP]) this.hasDruiddUp = true;
+		if(!this.hasDoubleJumped && keys[this.KEY_JUMP] && this.velY > -2 && this.hasDruiddUp){
 			this.velY = -3;
 			this.hasDoubleJumped = true;
 		}
@@ -412,7 +412,7 @@ Player.prototype.ninjaUpdate = function (du) {
 		this.isJumping = true;
 		this.hasRealeasedUp = false;
 		this.velY = -5;
-		this.hasNinjadUp = false;
+		this.hasDruiddUp = false;
 	} else if (keys[this.KEY_JUMP])
 		this.hasRealeasedUp = true;
 		
@@ -455,7 +455,7 @@ Player.prototype.handleCollision = function(hitEntity, axis) {
         var charToRight = (hitCoords[1] < charCoords[1]);
         var sameCol = (hitCoords[1] == charCoordsLeft[1] || hitCoords[1] == charCoordsRight[1]);
 		var sameRow
-		if(this.form === 1)  
+		if(this.form === 'goat')  
 			sameRow = (hitCoords[0] == charCoords[0] || hitCoords[0] == charCoords[0]-1 || hitCoords[0] == charCoords[0]-2) || this.state['jumping'];
 		else sameRow = (hitCoords[0] == charCoords[0] || hitCoords[0] == charCoords[0]-1) || this.state['jumping'];
  
@@ -590,9 +590,9 @@ Player.prototype.updateVelocity = function(du) {
         else this.velY += (NOMINAL_GRAVITY*du)/10;
     }else if(this.state['jumping'] && this.state['pushing']){
 		
-		if(this.form === 2) this.velY = -6;
-		else if(this.form === 1) this.velY = -4;
-		else if(this.form === 0) this.velY = -5;
+		if(this.form === 'druid') this.velY = -6;
+		else if(this.form === 'goat') this.velY = -4;
+		else if(this.form === 'fairy') this.velY = -5;
 	}else if(!this.state['jumping']){
         this.velY = 0;
     }
@@ -602,8 +602,8 @@ Player.prototype.getSize = function(){
 	//alternating hitboxes between forms just the hight for now to 
 	//prevent a lot of collission headache regarding changing form mid-air
     var size = {sizeX:20*this._scale,sizeY:18*this._scale};
-	if(this.form === 1) size = {sizeX:20*this._scale,sizeY:96*this._scale};
-	if(this.form === 2) size = {sizeX:20*this._scale,sizeY:64*this._scale};
+	if(this.form === 'goat') size = {sizeX:20*this._scale,sizeY:96*this._scale};
+	if(this.form === 'druid') size = {sizeX:20*this._scale,sizeY:64*this._scale};
     return size;
 }
 

@@ -118,17 +118,30 @@ function renderSimulation(ctx) {
     var lvlLength;        
 	lvlLength = entityManager._world[0].blocks[13].length*(g_canvas.height/14) - g_canvas.width;
 	
-    //current background for the game. To be replaced with multi-layered background later
+	//current background for the game. To be replaced with multi-layered background later
 	g_sprites.skybox.drawCentredAt( ctx, g_canvas.width/2, g_canvas.height/2, 0 );
-	 
+	
+	
+	var scale = g_CameraZoom;
+    ctx.scale(scale, scale);
+	ctx.translate((1 - g_CameraZoom)*0.5*g_canvas.width, -(1 - g_CameraZoom)*0.25*g_canvas.height);
+	
+     
 	ctx.translate(-dx,-dy);
-    entityManager.render(ctx);
+    
+	//here we handle the zoom
+	
+    
 	
 	entityManager.render(ctx);
-            
+    
+	
 	if (g_renderSpatialDebug) spatialManager.render(ctx);
     
 	ctx.restore();
+	
+	
+	
 }
 
 

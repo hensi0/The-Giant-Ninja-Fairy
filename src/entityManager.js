@@ -59,7 +59,9 @@ deferredSetup : function () {
 						this._bullets, this._particles, this._enemies, this._viewBox];
 },
 
-
+resetAll : function () {
+	console.log("not implemented yet");
+},
 
 init: function() {
 	
