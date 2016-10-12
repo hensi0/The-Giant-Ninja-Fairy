@@ -22,17 +22,18 @@ function Block(descr) {
 		case 0: 
 		break;
 		
-		case 6: this.sprite = this.mudBlockLogic(this.status);
+		case 6: 	this.sprite = this.mudBlockLogic(this.status);
 		break; 
 		
-		case 2: this.sprite = g_sprites.bricks;
+		case 2: 	this.sprite = g_sprites.spikes;
 		break; 
 		
-		case 'E':this.sprite = g_sprites.bricks;
+		case 'E':	this.sprite = g_sprites.door;
+					this._isPassable = true;
 		break;
 		
-		default: this._isPassable = true;
-				 this.sprite = g_sprites.blank;
+		default: 	this._isPassable = true;
+					this.sprite = g_sprites.blank;
 		break;
 	}
 	

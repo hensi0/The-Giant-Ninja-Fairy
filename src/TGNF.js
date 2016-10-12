@@ -124,7 +124,7 @@ function renderSimulation(ctx) {
 	
 	var scale = g_CameraZoom;
     ctx.scale(scale, scale);
-	ctx.translate((1 - g_CameraZoom)*0.5*g_canvas.width, -(1 - g_CameraZoom)*0.25*g_canvas.height);
+	ctx.translate((1 - g_CameraZoom)*0.5*g_canvas.width, 0);
 	
      
 	ctx.translate(-dx,-dy);
@@ -158,6 +158,9 @@ function requestPreloads() {
 		skyBox: 	"res/images/skybox.png",
 		bricks: 	"res/images/dungeonBrick.png",
 		//tilesets
+		spikes:		"res/images/blocks/spikes.png",
+		door:		"res/images/blocks/door.png",
+		
 		//mud-tileset
 		dirtM1:		"res/images/blocks/Dirtblock.png",
 		dirtMT:		"res/images/blocks/Grass1Flat.png",
@@ -213,6 +216,8 @@ function preloadDone() {
 
     g_sprites.marioTest  = new Sprite(g_images.marioTest),
 	g_sprites.bricks  = new Sprite(g_images.bricks),
+	g_sprites.spikes  = new Sprite(g_images.spikes),
+	g_sprites.door    = new Sprite(g_images.door),
 	g_sprites.skybox  = new Sprite(g_images.skyBox),
 	
 	//tileset-mud

@@ -286,7 +286,7 @@ Player.prototype.updateJump = function(bEdge) {
 
 
 Player.prototype.fairyUpdate = function (du) {
-	
+	/*
 	var scaler = 1;
 	if (keys[this.KEY_LEFT]) {
         //this.velX = -2;
