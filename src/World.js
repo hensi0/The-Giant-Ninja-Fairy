@@ -267,7 +267,7 @@ World.prototype.fillRoom = function( level, x, y, type, mX, mY){
 	for(var i = 0 ; i < 14 ; i++) 
 		grid[i] = new Array(14);
 	
-	
+	console.log(type);
 	switch(type) {
 	case 'S': 
 		var roomType = this.WhereIsTheExit('S', x/14, y/14, mX, mY);
@@ -405,7 +405,8 @@ World.prototype.WhereIsTheExit = function(type, y, x, mY, mX){
 		if(dir === 'left')	return this.Worlds.Sl;
 		if(dir === 'right')	return this.Worlds.Sr;
 
-	} else return this.Worlds.O;
+	} 
+	return this.Worlds.O;
 }
 //makes a randomized snake-like path from a block until it get's stuck
 World.prototype.findNextRooms = function( rooms, x , y, last, mX, mY){

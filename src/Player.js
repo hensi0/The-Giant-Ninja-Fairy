@@ -49,7 +49,7 @@ Player.prototype.form = 'fairy';
 Player.prototype.SwapCD = 0;
 Player.prototype.state = {jumping: true, canJump: false, pushing: false, 
 							offGround: true, casting: false, 
-							onGround: false, idle: false, 
+							onGround: false, idle: false, flying: false, 
 							facingRight: true, inWater: false}
 							
 // Sounds (should be preloaded and initialized in constructor):
@@ -60,7 +60,7 @@ Player.prototype.state = {jumping: true, canJump: false, pushing: false,
 
 Player.prototype.maxVelX = 3.9;
 Player.prototype.maxVelY = 6.5;
-Player.prototype.maxPushHeight = 120000000;  //fix
+Player.prototype.maxPushHeight = 120; 
 Player.prototype.tempMaxJumpHeight = 0;
 Player.prototype.animationsG;
 Player.prototype.animationsD;
@@ -87,12 +87,19 @@ Character.prototype.reset = function () {
     this.setPos(pos.x, pos.y);
 };
 
+
+Player.prototype.resetStates = function () {
+       this.state = {jumping: true, canJump: false, pushing: false, 
+							offGround: true, casting: false, 
+							onGround: false, idle: false, flying: false, 
+							facingRight: true, inWater: false}
+};
+
 Player.prototype.goFairy = function () {
         this.form = 'fairy';
 		this.hoverX = 0;
 		this.hoverY = 0;
 		this.animations = this.animationsF;
-		this.state['jumping'] = true;
 		this.animation = this.animations['idleRight'];
 		var temp = 	(Math.random() >  0.5);
 		if(temp) 	this.hoverXvel =  0.4;
@@ -100,6 +107,7 @@ Player.prototype.goFairy = function () {
 		temp = 	(Math.random() >  0.5);
 		if(temp) 	this.hoverYvel =  0.4;
 		else  		this.hoverYvel = -0.4;
+		this.resetStates();
 };
 
 Player.prototype.goGoat = function () {
@@ -112,12 +120,12 @@ Player.prototype.goGoat = function () {
 		this.cy -= 38; 
 		this.animations = this.animationsG;
 		this.animation = this.animations['idleRight'];
-		this.state['jumping'] = true;
 		this.hoverY = 0;
 		this.blinkCharge = 0;
 		this.pHeight = 50;
 		this.cx = this.cx + this.hoverX;
 		this.cy = this.cy + this.hoverY;
+		this.resetStates();
 };
 
 Player.prototype.goDruid = function () {
@@ -128,13 +136,14 @@ Player.prototype.goDruid = function () {
 		this.animation = this.animations['idleRight'];
 		this.blinkCharge = 0;
 		this.pHeight = 30;
-		this.state['jumping'] = true;
 		this.cx = this.cx + this.hoverX;
 		this.cy = this.cy + this.hoverY;
-
+		this.resetStates();
 };
 
 Player.prototype.handleJump = function () {
+	//console.log(!this.state['canJump'] + " " + this.state['jumping'] + " " + !this.state['inWater']);
+	if(this.form === 'fairy'){ this.state['canJump'] = true; this.state['flying'] = true;}
     if((!this.state['canJump'] || this.state['jumping']) && !this.state['inWater']) return;
     else if(this.state['inWater']) {
         this.velY = -1; 
@@ -149,10 +158,19 @@ Player.prototype.handleJump = function () {
 			this.velY = -4;
 			this.tempMaxJumpHeight = this.cy - 0.6*this.maxPushHeight; 
 		} else if(this.form === 'fairy'){
-			this.velY = -5;
-			this.tempMaxJumpHeight = this.cy - 0.8*this.maxPushHeight; 
+			this.velY = -3;
+			this.tempMaxJumpHeight = 0; 
+			this.fly();
 		} 
     }
+	
+};
+
+Player.prototype.fly = function () {
+    this.state['canJump'] = true;
+	this.state['flying'] = true;
+	this.velY -= 0.05*(this.velY + 2.5);
+
 };
 
 Player.prototype.update = function (du) {
@@ -210,7 +228,7 @@ Player.prototype.update = function (du) {
 	bEdge = this.handlePartialCollision(prevX,nextY,"y");
 	
 	
-	this.state['canJump'] = (!this.state['jumping'] && !keys[this.KEY_JUMP]);
+	this.state['canJump'] = (!this.state['jumping'] && !keys[this.KEY_JUMP]) || this.state['flying'];
 	
 	if(this.form === 'fairy'){
 		
@@ -236,21 +254,9 @@ Player.prototype.update = function (du) {
 	
 };
 
-/*
-Player.prototype.render = function (ctx) {
-	g_ctx.globalAlpha = Math.abs((40-this.blinkCharge)/40);
-    var origScale = this.sprite.scale;
-        // pass my scale into the sprite, for drawing
-    this.sprite.scale = this._scale * (this.pHeight/60);
-	this.sprite.drawCentredAt(
-    	ctx, this.cx + this.hoverX, this.cy + this.hoverY, this.rotation
-	);
-	g_ctx.globalAlpha = 1;
-};
-*/
 
 Player.prototype.render = function (ctx) {
-    if(this.form === 'fairy') this.animation.renderAt(ctx, this.cx + this.hoverX, this.cy + this.hoverY - this.fairyHoverHeight, this.rotation);
+    if(this.form === 'fairy') this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
 	else this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
 };
 
@@ -266,6 +272,7 @@ Player.prototype.updateLocation = function(du) {
 Player.prototype.updateJump = function(bEdge) {
     // If colliding with bottom edge, stop 'jumping'.	
 	if(bEdge) { 
+		this.state['flying'] = false;
         this.state['jumping'] = false;
         this.state['pushing'] = false;
         this.state['offGround'] = false;
@@ -286,64 +293,7 @@ Player.prototype.updateJump = function(bEdge) {
 
 
 Player.prototype.fairyUpdate = function (du) {
-	/*
-	var scaler = 1;
-	if (keys[this.KEY_LEFT]) {
-        //this.velX = -2;
-		scaler = 0.2;
-    } else if (keys[this.KEY_RIGHT]) {
-        //this.velX = 2;
-		scaler = 0.2;
-    } else {
-		//this.velX = 0;
-	}
-	
-	this.hoverX 	+=  scaler*this.hoverXvel;
-	this.hoverXvel 	+= -scaler*this.hoverX*0.001;
-	
-	//hover-stuff
-	this.hoverY += this.hoverYvel;
-	this.hoverYvel += -this.hoverY*0.0005;
-	
-	/*
-	if (keys[this.KEY_JUMP]) {
-		if (this.isJumping){ 
-			this.velY = 0.4
-		}else {
-			if(this.blinkCharge > 40){
-				this.cy -= 180;
-				this.isJumping = true;
-				this.hasDoubleJumped = false;
-				this.blinkCharge = 0;
-			} else this.blinkCharge++;
-		}
-	} else this.blinkCharge = 0;
-	
-	if (this.isJumping){
-		if ((this.cy - ((this.groundHeight - 3*this.pHeight) - 40)) > 0) {
-			this.cy = (this.groundHeight - 3*this.pHeight) - 40;
-			this.velY = 0;
-			this.isJumping = false;
-			
-		} else {
-			this.velY += 0.05;
-			this.isJumping = true;			
-		}
-		
-	} 		
-	
-	
-	if (keys[this.KEY_SHOOT]) {
-		this.shoot();
-	}
-	
-	
-	
-	
-	//this.updateJump();
-	this.cx += this.velX*du;
-	this.cy += this.velY*du;
-	*/
+
 };
 
 //===============================================
@@ -352,37 +302,7 @@ Player.prototype.fairyUpdate = function (du) {
 
 
 Player.prototype.giantUpdate = function (du) {
-	/*
-	if (keys[this.KEY_LEFT]) {
-        this.velX = -1.6;
-    } else if (keys[this.KEY_RIGHT]) {
-        this.velX = 1.6;
-    } else this.velX = 0;
-	
-	
-	if( this.isJumping ) {
-		
-		this.velY += 0.4;
-		
-	} else if (keys[this.KEY_JUMP] && this.hasRealeasedUp) {
-		this.isJumping = true;
-		this.hasDoubleJumped = false;
-		this.velY = -6;
-		this.hasRealeasedUp = false;
-	} else if (!keys[this.KEY_JUMP]) 
-		this.hasRealeasedUp = true;
-		
-	if ((this.cy - (this.groundHeight - 1.1*this.pHeight)) > 0) {
-		this.cy = this.groundHeight - 1.1*this.pHeight;
-		this.velY = 0;
-		this.isJumping = false;
-	}
-	
-	
-	//this.updateJump();
-	this.cx += this.velX*du;
-	this.cy += this.velY*du;	
-	*/
+
 };
 
 
@@ -392,51 +312,12 @@ Player.prototype.giantUpdate = function (du) {
 
 
 Player.prototype.druidUpdate = function (du) {
-	/*
-	if (keys[this.KEY_LEFT]) {
-        this.velX = -2.4;
-    } else if (keys[this.KEY_RIGHT]) {
-        this.velX = 2.4;
-    } else this.velX = 0;
-	
-	if( this.isJumping ) {
-		
-		this.velY += 0.1;
-		if(!keys[this.KEY_JUMP]) this.hasDruiddUp = true;
-		if(!this.hasDoubleJumped && keys[this.KEY_JUMP] && this.velY > -2 && this.hasDruiddUp){
-			this.velY = -3;
-			this.hasDoubleJumped = true;
-		}
-		
-	} else if (keys[this.KEY_JUMP] && this.hasRealeasedUp) {
-		this.isJumping = true;
-		this.hasRealeasedUp = false;
-		this.velY = -5;
-		this.hasDruiddUp = false;
-	} else if (keys[this.KEY_JUMP])
-		this.hasRealeasedUp = true;
-		
-	if ((this.cy - (this.groundHeight - 1.2*this.pHeight)) > 0) {
-		this.cy = this.groundHeight - 1.2*this.pHeight;
-		this.velY = 0;
-		this.isJumping = false;
-		this.hasDoubleJumped = false;
-	}			
-	
-	if (keys[this.KEY_SHOOT]) {
-		this.shoot();
-	}
-	
-	//this.updateJump();
-	this.cx += this.velX*du;
-	this.cy += this.velY*du;
-	*/
+
 };
+
 //=============================
 //===========collsion logic====
 //=============================
-
-
 
 Player.prototype.handleCollision = function(hitEntity, axis) {
     var bEdge,lEdge,rEdge,tEdge;
@@ -483,8 +364,8 @@ Player.prototype.handleCollision = function(hitEntity, axis) {
                     dir = 4;
                 } 
                 if(tEdge && this.velY < 0  && axis === "y"){// && this.velY < 0) {
-                    this.velY *= -1;
-					this.velY = Math.max(this.velY,5);
+                    this.velY *= -0.8;
+					//this.velY = Math.max(this.velY,5);
                     dir = 1;
                     this.state['offGround'] = true;
                 }
@@ -548,6 +429,7 @@ Player.prototype.updateVelocity = function(du) {
     var movingRight = keys[this.KEY_RIGHT];
     var movingLeft = keys[this.KEY_LEFT];
     
+	
     // Check if the Player is still in range of the ground
     // to be able to push of it (=> jump higher)
     if(this.state['jumping'] && !keys[this.KEY_JUMP]) {
@@ -559,18 +441,21 @@ Player.prototype.updateVelocity = function(du) {
 	// We can only start "pushing" if we can jump:
 	if(!this.state['pushing']) this.state['pushing'] = keys[this.KEY_JUMP] && this.state['canJump'] && this.state['jumping'];
 	// if we're already pushing we can keep pushing by these constraints:
-	else  this.state['pushing'] = keys[this.KEY_JUMP] && !this.state['offGround'];
+	else  if(!this.state['flying']) this.state['pushing'] = keys[this.KEY_JUMP] && !this.state['offGround'];
+	else this.state['pushing'] = keys[this.KEY_JUMP];
     
     // To be able to change direction in midair:
     if((movingRight && wasMovingLeft && !this.state['inWater']) || (movingLeft && wasMovingRight && !this.state['inWater'])) this.velX = 0;
-
+	
+	//a scaling variant to allow larger forms more max speed
+	var Xscaler = (0.5 + (this.getSize().sizeY/100))*this.maxVelX;
     // Increase speed to the right:
-    if(movingRight && this.velX < this.maxVelX || this.velX <  - this.maxVelX) {
+    if(movingRight && this.velX < Xscaler || this.velX <  - Xscaler) {
         this.velX += NOMINAL_FORCE*du;
     } 
 
     // Increase speed to the left:
-    if(movingLeft && this.velX > - this.maxVelX || this.velX >  this.maxVelX) {
+    if(movingLeft && this.velX > - Xscaler || this.velX >  Xscaler) {
         this.velX -= NOMINAL_FORCE*du;
     }
 
@@ -581,18 +466,17 @@ Player.prototype.updateVelocity = function(du) {
 	if(this.state['jumping'] && !(movingRight || movingLeft)) {
         this.velX *= 0.98;
     }
-	
-
 
     // Start accelerating down as soon as we've "stopped state['pushing']"
-    if(this.state['jumping'] && !this.state['pushing'] && this.velY < TERMINAL_VELOCITY) {
-        if(!this.state['inWater'])this.velY += NOMINAL_GRAVITY*du;
+    if(this.state['jumping'] && !this.state['pushing'] && this.velY < (this.getSize().sizeY/40)*TERMINAL_VELOCITY) {
+        if(!this.state['inWater'])
+				this.velY += (this.getSize().sizeY/64)*NOMINAL_GRAVITY*du;
         else this.velY += (NOMINAL_GRAVITY*du)/10;
     }else if(this.state['jumping'] && this.state['pushing']){
 		
 		if(this.form === 'druid') this.velY = -6;
 		else if(this.form === 'goat') this.velY = -4;
-		else if(this.form === 'fairy') this.velY = -5;
+		else if(this.form === 'fairy') this.fly();
 	}else if(!this.state['jumping']){
         this.velY = 0;
     }
@@ -602,8 +486,8 @@ Player.prototype.getSize = function(){
 	//alternating hitboxes between forms just the hight for now to 
 	//prevent a lot of collission headache regarding changing form mid-air
     var size = {sizeX:20*this._scale,sizeY:18*this._scale};
-	if(this.form === 'goat') size = {sizeX:20*this._scale,sizeY:96*this._scale};
-	if(this.form === 'druid') size = {sizeX:20*this._scale,sizeY:64*this._scale};
+	if(this.form === 'goat') size = {sizeX:20*this._scale,sizeY:64*this._scale};
+	if(this.form === 'druid') size = {sizeX:20*this._scale,sizeY:40*this._scale};
     return size;
 }
 

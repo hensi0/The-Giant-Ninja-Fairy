@@ -112,11 +112,11 @@ viewBox.prototype.adjustZoom = function(outOrIn){
 	//adjusts the zoom depending if you are moveing or not
 	var vel = 0
 	if(outOrIn === 'out'){
-		vel = 0.01*(g_CameraZoom - 0.9);
+		vel = 0.005*(g_CameraZoom - 0.9);
 		if(vel > 0.001) vel = 0.001;
 		g_CameraZoom -= vel; 
 	} else if (outOrIn === 'in'){
-		vel = 0.01*(1.2 - g_CameraZoom);
+		vel = 0.005*(1.2 - g_CameraZoom);
 		if(vel > 0.0005) vel = 0.0005;
 		g_CameraZoom += vel;
 	}
