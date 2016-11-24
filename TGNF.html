@@ -6,10 +6,16 @@
   </head>
   <body>
 
-	<canvas id="myCanvas" width="1000" height="560" style="border: 1px solid black;">
+	<canvas id="myCanvas" width="1366" height="770" style="border: 1px solid black;">
 	Sorry, but your browser does not support the HTML5 canvas tag.
 	</canvas>
-
+		<div id="disclaimer" align="center">
+			<p>Welcome to Sage-Quest</p>
+			<p>Press "Play" to begin your journey</p>
+			<p><button onclick="goFullScreen();">Play</button></p>
+			<p>Note that your browser might prompt you to allow Full-screen</p>
+			<p>Have fun and feel free to send any and all suggestions to "hthj6@hi.is"</p>
+		</div>
     <div id="output"></div>
 
     <script src="src/globals.js"></script>
@@ -27,7 +33,9 @@
     <script src="src/Block.js"></script>
 
     <script src="src/Character.js"></script>
+	<script src="src/Projectile.js"></script>
     <script src="src/Player.js"></script>    
+	<script src="src/dog.js"></script>   
 	<script src="src/World.js"></script>
 	<script src="src/viewbox.js"></script>
 	

@@ -132,3 +132,4 @@ main.init = function () {
 
     this._requestNextIteration();
 };
+

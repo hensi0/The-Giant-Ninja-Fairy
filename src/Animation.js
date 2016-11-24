@@ -12,7 +12,7 @@ function Animation (image, frameY, frameWidth, frameHeight, numFrames, interval,
 	this.image = image;
     this.sprites = this.loadSprites(frameY,frameWidth,frameHeight,numFrames,scale);
     this.numFrames = numFrames;
-    this.interval = (interval/1000)*SECS_TO_NOMINALS; // The input interval should be in milliseconds
+    this.interval = (interval/1000)*60; // The input interval should be in milliseconds
     this.frameTimeLeft = this.interval;
     this.direction = Math.sign(scale);
 }

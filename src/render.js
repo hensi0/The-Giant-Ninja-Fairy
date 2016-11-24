@@ -67,3 +67,17 @@ function render(ctx) {
     
     ++g_frameCounter;
 }
+
+//Full screen handler
+
+
+function goFullScreen(){
+    //var canvas = document.getElementById("screen");
+    if(canvas.requestFullScreen)
+        g_canvas.requestFullScreen();
+    else if(canvas.webkitRequestFullScreen)
+        g_canvas.webkitRequestFullScreen();
+    else if(canvas.mozRequestFullScreen)
+        g_canvas.mozRequestFullScreen();
+	g_canvas.style.display = g_oldCanvasStyle;
+}

@@ -11,12 +11,10 @@
 12345678901234567890123456789012345678901234567890123456789012345678901234567890
 */
 
-
 // Construct a "sprite" from the given `image`,
 //
 function Sprite(image) {
     this.image = image;
-
     this.width = image.width;
     this.height = image.height;
     this.scale = 1;
@@ -28,7 +26,9 @@ Sprite.prototype.drawAt = function (ctx, x, y) {
 };
 
 Sprite.prototype.drawCentredAt = function (ctx, cx, cy, rotation) {
-    if (rotation === undefined) rotation = 0;
+    var defaultRotation = 0;
+	
+	if (rotation === undefined) rotation = defaultRotation;
     
     var w = this.width,
         h = this.height;
@@ -36,12 +36,10 @@ Sprite.prototype.drawCentredAt = function (ctx, cx, cy, rotation) {
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(rotation);
-    ctx.scale(this.scale, this.scale);
-    
+    ctx.scale(this.scale, Math.abs(this.scale));
     // drawImage expects "top-left" coords, so we offset our destination
     // coords accordingly, to draw our sprite centred at the origin
-    ctx.drawImage(this.image,-w/2, -h/2);
-    
+    this.drawAt(ctx,-w/2, -h/2);  
     ctx.restore();
 };  
 

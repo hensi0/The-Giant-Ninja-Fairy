@@ -26,9 +26,6 @@ er með hér inná öll helper functions frá Pat til að passa uppá compatabil
 
 /* jshint browser: true, devel: true, globalstrict: true */
 
-var g_canvas = document.getElementById("myCanvas");
-var g_ctx = g_canvas.getContext("2d");
-
 /*
 0        1         2         3         4         5         6         7         8
 12345678901234567890123456789012345678901234567890123456789012345678901234567890
@@ -116,15 +113,17 @@ function renderSimulation(ctx) {
         var dy = g_viewPort.y;
     
     var lvlLength;        
-	lvlLength = entityManager._world[0].blocks[13].length*(g_canvas.height/14) - g_canvas.width;
+	lvlLength = entityManager._world[0].blocks[0].length*(g_canvas.height/14) - g_canvas.width;
 	
 	//current background for the game. To be replaced with multi-layered background later
-	g_sprites.skybox.drawCentredAt( ctx, g_canvas.width/2, g_canvas.height/2, 0 );
-	
+	ctx.fillStyle = "cyan";	
+	ctx.fillRect(0,0,g_canvas.width,g_canvas.height);
+	ctx.fillStyle = "red";	
+	util.fillCircle(ctx,g_mouseX2,g_mouseY2,8);
 	
 	var scale = g_CameraZoom;
     ctx.scale(scale, scale);
-	ctx.translate((1 - g_CameraZoom)*0.5*g_canvas.width, 0);
+	ctx.translate((1 - g_CameraZoom)*0.5*g_canvas.width, (1 - g_CameraZoom)*0.5*g_canvas.height);
 	
      
 	ctx.translate(-dx,-dy);
@@ -157,6 +156,7 @@ function requestPreloads() {
         marioTest: 	"res/images/mario.png",
 		skyBox: 	"res/images/skybox.png",
 		bricks: 	"res/images/dungeonBrick.png",
+		
 		//tilesets
 		spikes:		"res/images/blocks/spikes.png",
 		door:		"res/images/blocks/door.png",
@@ -169,7 +169,13 @@ function requestPreloads() {
 		
 		//Player-Sprites
 		druidI:		"res/images/druidStanding.png",
-		goatI:		"res/images/goatStanding.png"
+		goatI:		"res/images/goatStanding.png",
+		pixie:		"res/images/Pixie.png",
+		
+		//enemie-sprites:
+		dawg: 			"res/images/dawg.png",
+		princeSpriteSheet: "res/images/patss.png"
+		
     };
 
     imagesPreload(requiredImages, g_images, preloadDone);
@@ -183,7 +189,15 @@ function makePlayerAnimationGoat(scale) {
 	//image, frameY, frameWidth, frameHeight, numFrames, interval, scale
     Player.idleRight = new Animation(g_images.goatI,0,32,96,1,400, scale);
 	Player.idleLeft  = new Animation(g_images.goatI,0,32,96,1,400, -scale);
-/*    bowser.idleLeft = new Animation(g_images.bowserSpriteSheet,0,200,200,3,400,-scale);
+	Player.inAirRight = new Animation(g_images.goatI,0,32,96,1,400, scale);
+	Player.inAirLeft  = new Animation(g_images.goatI,0,32,96,1,400, -scale);
+	Player.walkingRight = new Animation(g_images.goatI,0,32,96,1,400, scale);
+	Player.walkingLeft  = new Animation(g_images.goatI,0,32,96,1,400, -scale);
+    Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,130, scale);
+	Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,130, -scale);
+	
+	
+	/*    bowser.idleLeft = new Animation(g_images.bowserSpriteSheet,0,200,200,3,400,-scale);
     bowser.attackRight = new Animation(g_images.bowserSpriteSheet,200,199,200,5,150,scale);
     bowser.attackLeft = new Animation(g_images.bowserSpriteSheet,200,199,200,5,150,-scale);
 	bowser.takeDamageRight = new Animation(g_images.bowserSpriteSheet,400,200,200,4,150,scale);
@@ -199,17 +213,48 @@ function makePlayerAnimationDruid(scale) {
 	//image, frameY, frameWidth, frameHeight, numFrames, interval, scale
     Player.idleRight = new Animation(g_images.druidI,0,24,64,1,400, scale);
 	Player.idleLeft  = new Animation(g_images.druidI,0,16,64,1,400, -scale);
+	Player.walkingRight = new Animation(g_images.druidI,0,24,64,1,400, scale);
+	Player.walkingLeft  = new Animation(g_images.druidI,0,16,64,1,400, -scale);
+	Player.inAirRight = new Animation(g_images.druidI,0,24,64,1,400, scale);
+	Player.inAirLeft  = new Animation(g_images.druidI,0,16,64,1,400, -scale);
+	Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,130, scale);
+	Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,130, -scale);
 	
     return Player;
 };
+
 function makePlayerAnimationFairy(scale) {
     var Player = {};
 	
 	//image, frameY, frameWidth, frameHeight, numFrames, interval, scale
-    Player.idleRight = new Animation(g_images.bricks,0,32,32,1,400, scale);
-	Player.idleLeft  = new Animation(g_images.bricks,0,32,32,1,400, -scale);
-
+    Player.idleRight = new Animation(g_images.pixie,0,72,69,1,500, scale);
+	Player.idleLeft  = new Animation(g_images.pixie,0,72,69,1,500, -scale);
+	Player.inAirRight = new Animation(g_images.pixie,140,72,69,6,160, scale);
+	Player.inAirLeft  = new Animation(g_images.pixie,140,72,69,6,160, -scale);
+	Player.shootingRight = new Animation(g_images.pixie,70,72,69,3,133, scale);
+	Player.shootingLeft  = new Animation(g_images.pixie,70,72,69,3,133, -scale);
+	Player.walkingRight = new Animation(g_images.pixie,0,72,69,6,200, scale);
+	Player.walkingLeft  = new Animation(g_images.pixie,0,72,69,6,200, -scale);
+	Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,130, scale);
+	Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,130, -scale);
+	
     return Player;
+};
+
+function makeDogAnimation(scale) {
+    var Dog = {};
+	
+	//image, frameX, frameY, frameWidth, frameHeight, numFrames, interval, scale
+    Dog.walkingRight = new Animation(g_images.dawg,0,45,48,4,400, scale);
+	Dog.walkingLeft  = new Animation(g_images.dawg,0,45,48,4,400, -scale);
+	Dog.inAirRight = new Animation(g_images.bricks,0,32,32,1,400, scale);
+	Dog.inAirLeft  = new Animation(g_images.bricks,0,32,32,1,400, -scale);
+	Dog.swimmingRight = new Animation(g_images.bricks,0,32,32,1,400, scale);
+	Dog.swimmingLeft  = new Animation(g_images.bricks,0,32,32,1,400, -scale);
+
+    
+
+    return Dog;
 };
 
 function preloadDone() {

@@ -94,14 +94,14 @@ enterLevel: function(lvl) {
     this.deferredSetup();
 },
 
-fireBullet: function(cx, cy, velX, velY, rotation) {
-    this._bullets.push(new Bullet({
+fireBullet: function(cx, cy, velX, velY, rotation, shooter) {
+    this._bullets.push(new Projectile({
         cx   : cx,
         cy   : cy,
         velX : velX,
         velY : velY,
-
-        rotation : rotation
+        rotation : rotation,
+        shooter : shooter
     }));
 },
 
@@ -129,9 +129,10 @@ generatePlayer : function(descr) {
     this._character.push(new Player(descr));
 },
 
-generateEnemy : function(descr) {
-    this._enemies.push(new Enemy(descr));
+generateDog : function(descr) {
+    this._enemies.push(new Dog(descr));
 },
+
 
 generateLevel : function(descr) {
     this._world.push(new World(descr));

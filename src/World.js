@@ -28,13 +28,11 @@ function World(descr) {
 		for(var j = 0; j < this.world[i].length; j++) {
 			s = this.world[i][j];
 			var location = this.getLocation(i,j);
-			/* how we generated map - defined enemies in prinsess Avokado.
-			Might get used later if they will be bound to rooms and not spreaded 
-			randomly throughout the world
-			if(s === 'a'){
-				entityManager.generateEnemy({cx: location[0], cy: location[1]});
+			
+			if(s === 'D'){
+				entityManager.generateDog({cx: location[0], cy: location[1]});
+				s = 0;
 			} 
-			*/			
 			//above, left, right and below
 			var a = false;
 			var l = false;
@@ -233,7 +231,7 @@ World.prototype.createTheLevel = function( rooms, mX, mY){
 		for(var j = 0 ; j < mY ; j++){
 			newGrid = this.fillRoom(newGrid, 14*i, 14*j, rooms[i][j], mX, mY);
 		}
-	console.log("y: " + mY + " x: " + mX);
+	//console.log("y: " + mY + " x: " + mX);
 	for(var i = 0 ; i < 14*mY ; i++) newGrid[0][i] = 6;
 	for(var i = 0 ; i < 14*mX ; i++) newGrid[i][((14*mY)-1)] = 6;
 		
@@ -242,9 +240,10 @@ World.prototype.createTheLevel = function( rooms, mX, mY){
 };	
 //Returns the x/y c.o. for the middle of the starting room looked up in the "map"
 World.prototype.returnStartLocation = function(){
+	var BS = g_canvas.height/14; //blockSize
 	for(var i = 0; i < this.map.length ; i++)
 		for(var j = 0; j < this.map[0].length; j++)
-			if(this.map[i][j] === 'S') return {x: 40*(7+(14*j)), y: 40*(7+14*i)};
+			if(this.map[i][j] === 'S') return {x: BS*(7+(14*j)), y: BS*(7+14*i)};
 	return {x: 0, y: 0};
 };	
 
@@ -267,7 +266,7 @@ World.prototype.fillRoom = function( level, x, y, type, mX, mY){
 	for(var i = 0 ; i < 14 ; i++) 
 		grid[i] = new Array(14);
 	
-	console.log(type);
+	//console.log(type);
 	switch(type) {
 	case 'S': 
 		var roomType = this.WhereIsTheExit('S', x/14, y/14, mX, mY);
@@ -386,7 +385,7 @@ World.prototype.WhereIsTheExit = function(type, y, x, mY, mX){
 		var t = this.map[y][x+1];
 		if(t==='q' || t==='R' || t==='J' || t==='-' || t==='T' || t==='W')		dir = 'right';
 	}
-	console.log("(x,y): (" + x + "," + y + ") dir: " + dir);
+	//console.log("(x,y): (" + x + "," + y + ") dir: " + dir);
 	
 	
 	
@@ -623,7 +622,7 @@ World.prototype.Worlds =  {
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[0,0,6,0,0,0,0,0,0,0,0,6,0,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0,0,0,0,'D',0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,7],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,7],
 	[7,0,7,0,0,0,0,0,0,0,0,0,0,7],
@@ -644,7 +643,7 @@ World.prototype.Worlds =  {
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,7,0,0,0,0,0,0,0,0,0,0,0,0],
-	[6,7,0,0,0,0,0,0,0,0,0,0,0,0],
+	[6,7,0,0,0,0,0,0,0,0,0,0,'D',0],
 	[6,7,7,0,0,0,0,0,0,0,0,0,0,7],
 	[6,6,6,6,6,6,6,6,6,6,6,6,6,6]
 	]

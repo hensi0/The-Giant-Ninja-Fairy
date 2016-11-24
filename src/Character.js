@@ -21,7 +21,7 @@ function Character(descr) {
     //this.rememberResets();
     
     // Default sprite, if not otherwise specified
-    this._scale = 1;
+    this._scale = g_canvas.height / 768;
 	this.isAlive = true;
 };
 // This comes later on when Entity has been implemented: 
@@ -82,7 +82,9 @@ Character.prototype.putToGround = function(groundY) {
 }
 
 Character.prototype.takeHit = function() {
-    console.log("OOOUCH");
+	this.hp--;
+	if(this.hp <= 0) this._isDeadNow = true;
+	// skoppa burt frá spikes
 }
 
 Character.prototype.handlePartialCollision = function(charX,charY,axis,callback){

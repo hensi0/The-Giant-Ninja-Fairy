@@ -28,6 +28,11 @@ function Block(descr) {
 		case 2: 	this.sprite = g_sprites.spikes;
 		break; 
 		
+		case 3:	this.sprite = g_sprites.bricks;
+					this._isPassable = false;
+					this._isBreakable = true;
+		break;
+		
 		case 'E':	this.sprite = g_sprites.door;
 					this._isPassable = true;
 		break;
@@ -43,6 +48,7 @@ function Block(descr) {
 Block.prototype.rotation = 0;
 Block.prototype._isDeadNow = false;
 Block.prototype._isPassable = false;
+Block.prototype._isBreakable = false;
 Block.prototype.dim = g_canvas.height/14;
 
 Block.prototype = new Entity();
