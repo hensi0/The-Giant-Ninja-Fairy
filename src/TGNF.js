@@ -227,8 +227,8 @@ function makePlayerAnimationFairy(scale) {
     var Player = {};
 	
 	//image, frameY, frameWidth, frameHeight, numFrames, interval, scale
-    Player.idleRight = new Animation(g_images.pixie,0,72,69,1,500, scale);
-	Player.idleLeft  = new Animation(g_images.pixie,0,72,69,1,500, -scale);
+    Player.idleRight = new Animation(g_images.pixie,0,72,69,1,600, scale);
+	Player.idleLeft  = new Animation(g_images.pixie,0,72,69,1,600, -scale);
 	Player.inAirRight = new Animation(g_images.pixie,140,72,69,6,160, scale);
 	Player.inAirLeft  = new Animation(g_images.pixie,140,72,69,6,160, -scale);
 	Player.shootingRight = new Animation(g_images.pixie,70,72,69,3,133, scale);
@@ -255,6 +255,15 @@ function makeDogAnimation(scale) {
     
 
     return Dog;
+};
+
+function makeBombAnimation(scale) {
+    var bomb = {};	
+	//image, frameX, frameY, frameWidth, frameHeight, numFrames, interval, scale
+    bomb.boom = new Animation(g_images.pixie,434,40,40,8,50, scale);
+	bomb.flash = new Animation(g_images.pixie,474,40,40,10,80, scale);
+
+    return bomb;
 };
 
 function preloadDone() {

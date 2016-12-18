@@ -58,7 +58,8 @@ Player.prototype.state = {jumping: true, canJump: false, pushing: false,
 //    "sounds/PlayerWarp.ogg");
 
 //generic variables
-
+Player.prototype.hp = 100;
+Player.prototype.maxhp = 100;
 Player.prototype.maxVelX = 3.9;
 Player.prototype.maxVelY = 6.5;
 Player.prototype.maxPushHeight = 120; 
@@ -78,6 +79,7 @@ Player.prototype.fairyHoverHeight = 25;
 Player.prototype.hasRealeasedUp = true;
 Player.prototype.blinkCharge = 0;
 Player.prototype.plasmaTimer = 1;
+Player.prototype.teleportCD = 1;
 
 //Druid variables
 
@@ -85,11 +87,12 @@ Player.prototype.hasDoubleJumped = false;
 Player.prototype.hasDruiddUp = false;
 
 Character.prototype.reset = function () {
+	this.hp = this.maxhp;
 	var pos = entityManager._world[0].returnStartLocation();
     this.setPos(pos.x, pos.y);
 };
 
-
+//to be used when spawning/swithcing forms
 Player.prototype.resetStates = function () {
        this.state = {jumping: true, canJump: false, pushing: false, 
 							offGround: true, casting: false, hasJumped: false,
@@ -97,6 +100,7 @@ Player.prototype.resetStates = function () {
 							facingRight: true, inWater: false, fairyFire: false,
 							spawning: true }
 };
+
 
 Player.prototype.goFairy = function () {
         this.form = 'fairy';
@@ -144,6 +148,7 @@ Player.prototype.goDruid = function () {
 		this.resetStates();
 };
 
+//what happens the first frame when jumping from ground
 Player.prototype.handleJump = function () {
 	//console.log(!this.state['canJump'] + " " + this.state['jumping'] + " " + !this.state['inWater']);
 	if(this.form === 'fairy'){ this.state['canJump'] = true; this.state['flying'] = true;}
@@ -169,17 +174,17 @@ Player.prototype.handleJump = function () {
     }
 	
 };
-
+//fairy specific jump interactions
 Player.prototype.fly = function () {
     this.state['canJump'] = true;
 	this.state['flying'] = true;
 	this.velY -= 0.05*(this.velY + 2.5);
 
 };
-
+//change forms
 Player.prototype.swap = function (bool) {
 			if(this.SwapCD > 0) return;
-			this.SwapCD = 30;
+			this.SwapCD = 45;
 			if(this.form === 'goat'){
 				if(bool) 	this.goDruid();
 				else 		this.goFairy();
@@ -193,14 +198,17 @@ Player.prototype.swap = function (bool) {
 			//smoke cloud
 };
 
+//standard update routine for the player
 Player.prototype.update = function (du) {
 	
 	if(this.cx === undefined) this.cx = 100;
 	if(this.cy === undefined) this.cy = 300;
 	
 	if(this.hp <= 0) this.isAlive = false;
-	if(!this.isAlive) return entityManager.KILL_ME_NOW;
-	
+	if(!this.isAlive){
+		entityManager.enterLevel(1);
+		
+	}
 	spatialManager.unregister(this);
 	
 	
@@ -211,10 +219,9 @@ Player.prototype.update = function (du) {
 	if(keys[this.KEY_JUMP] && !this.state['fairyFire']) this.handleJump();
 	
 	// Update speed/location and handle jumps/collisions
-    if(this.state['fairyFire']) this.updateVelocity(du*0.22); 
+    if(this.state['fairyFire']) this.updateVelocity(du*0.4); 
 	else 						this.updateVelocity(du);
 	if(this.SwapCD > 0)this.SwapCD--;
-	if(this.SwapCD > 0) this.SwapCD--;
 	if (keys[this.KEY_SWAP1]) {
 			this.swap(true);
 	}
@@ -238,24 +245,11 @@ Player.prototype.update = function (du) {
 	//check left/right collisions first and then top/bottom
     if(this.handlePartialCollision(nextX,prevY,"x")) this.velX = 0;
 	bEdge = this.handlePartialCollision(prevX,nextY,"y");
-	
+	if(this.teleportCD > 0) this.teleportCD -= du;
 	
 	this.state['canJump'] = (!this.state['jumping'] && !keys[this.KEY_JUMP]) || this.state['flying'];
 	
-	
-	if(this.form === 'fairy'){
-		
-		this.fairyUpdate(du);
-	
-	} else if(this.form === 'goat'){
-		
-		this.giantUpdate(du);
-	
-	} else if(this.form === 'druid'){
-		
-		this.druidUpdate(du);
-	}
-	if(this.state['fairyFire']){ this.shootZePlasmaBalls(du); this.updateLocation(du*0.18); } 
+	if(this.state['fairyFire'] && this.state['jumping']){ this.shootZePlasmaBalls(du); this.updateLocation(du*0.18); } 
 	else 						this.updateLocation(du);
 	
     this.updateJump(bEdge);
@@ -268,12 +262,12 @@ Player.prototype.update = function (du) {
 	
 };
 
-
+//bassic rendering handled by the animation.js
 Player.prototype.render = function (ctx) {
     this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
 };
 
-
+//LMB functioning while in fairy form
 Player.prototype.shootZePlasmaBalls = function (du) {
     if(this.plasmaTimer <= 0){ 
 		var vMod = 5;
@@ -282,11 +276,26 @@ Player.prototype.shootZePlasmaBalls = function (du) {
 		var vely = vMod*Math.sin(this.rotation + aMod);
 		var temp = 1;
 		if(g_mouseX2 <= g_canvas.width/2) temp *= -1;
-		entityManager.fireBullet(this.cx - this.getSize().sizeX/2, this.cy - this.getSize().sizeY/2, temp*velx, temp*vely, 0, true);
+		entityManager.fireBullet(this.cx + 2*temp*velx, this.cy - 5 + temp*vely, temp*velx, temp*vely, 3, 0, this, 'bomb');
 		this.plasmaTimer = 10;
 	}else this.plasmaTimer -= du;	
 };
 
+//LMB functioning while in druid form
+Player.prototype.shootZeBoomerang = function () {
+		this.configureRotation();
+		var vMod = 40;
+		var aMod = Math.PI/20 - Math.random()*(Math.PI/10) 
+		var velx = vMod*Math.cos(this.rotation + aMod);
+		var vely = vMod*Math.sin(this.rotation + aMod);
+		var temp = 1;
+		if(g_mouseX2 <= g_canvas.width/2) temp *= -1;
+		entityManager.fireBullet(this.cx + 2*temp*velx, this.cy - 5 + temp*vely, temp*velx, temp*vely, 10, 0, this, 'boomerang', 1000);
+		this.rotation = 0;
+};
+
+
+//movement and out of bounds restrictions
 Player.prototype.updateLocation = function(du) {
     var lvlLength = entityManager._world[0].blocks[13].length*(g_canvas.height/14);
 	var halfWidth = this.getSize().sizeX/2;
@@ -296,9 +305,11 @@ Player.prototype.updateLocation = function(du) {
     this.cy += this.velY*du;
 };
 
+//inAir movement
 Player.prototype.updateJump = function(bEdge) {
     // If colliding with bottom edge, stop 'jumping'.	
 	if(bEdge) { 
+		this.state['fairyFire'] = false;
 		this.state['flying'] = false;
         this.state['jumping'] = false;
         this.state['pushing'] = false;
@@ -314,47 +325,40 @@ Player.prototype.updateJump = function(bEdge) {
     }
 };
 
-//===============================================
-// ******************FAIRY***********************
-//===============================================
-
-
-Player.prototype.fairyUpdate = function (du) {
-
-};
-
-//===============================================
-// ******************GIANT***********************
-//===============================================
-
-
-Player.prototype.giantUpdate = function (du) {
-
-};
-
-
-//===============================================
-// ******************Druid***********************
-//===============================================
-
-
-Player.prototype.druidUpdate = function (du) {
-
-};
-
+//on realease of the LMB toggles the shotting state for fairy
 Player.prototype.stopZeShootin = function () {
 	//interupt shootin
 	this.state['fairyFire'] = false;
 	this.plasmaTimer = 1;
 };
 
+//LMB handling for player
 Player.prototype.LMB = function (bool) {
 	//left mouse Button has been pressed
 	if(this.form === 'fairy') this.state['fairyFire'] = true;
+	if(this.form === 'druid') this.shootZeBoomerang();
 };
 
+//RMB handling for the player
 Player.prototype.RMB = function (bool) {
 	//right mouse button
+	if(this.form === 'fairy' && !this.state['spawning'] && this.teleportCD <= 0) this.teleport();
+};
+
+//Special ability in fairy form
+Player.prototype.teleport = function () {
+	var vMod = 50;
+	this.configureRotation();
+	var velx = vMod*Math.cos(this.rotation);
+	var vely = vMod*Math.sin(this.rotation);
+	var temp = 1;
+	if(g_mouseX2 <= g_canvas.width/2) temp *= -1;
+		entityManager.fireBullet(this.cx, this.cy, temp*velx, temp*vely, 10, 0, this, 'detector', 16);
+	this.rotation = 0;
+	this.state['spawning'] = true;
+	this.velY = 0;
+	this.velX = 0;
+	this.teleportCD = 100;
 };
 
 //=============================
@@ -435,6 +439,23 @@ Player.prototype.handleCollision = function(hitEntity, axis) {
     return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};
 }
 
+//for states where you are fireing in a specific directions
+Player.prototype.configureRotation = function() {
+	var dir;
+	if(g_mouseX2 < g_canvas.width/2){ 
+		dir = "Left";
+		this.rotation = Math.atan((g_canvas.height/2 - g_mouseY2)/(g_canvas.width/2 - g_mouseX2)); 
+		//angle of player to mouse
+	}
+	else {
+		dir = "Right";
+		this.rotation = Math.atan((g_canvas.height/2 - g_mouseY2)/(g_canvas.width/2 - g_mouseX2)); 
+		//angle of player to mouse
+	}
+	return dir;
+}
+
+//for picking wich animation to play
 Player.prototype.updateStatus = function() {
 	
 	// figure out our status
@@ -442,16 +463,7 @@ Player.prototype.updateStatus = function() {
 	var dir;
 	
 	if(this.state['fairyFire']){
-		if(g_mouseX2 < g_canvas.width/2){ 
-			dir = "Left";
-			this.rotation = Math.atan((g_canvas.height/2 - g_mouseY2)/(g_canvas.width/2 - g_mouseX2)); 
-			//angle of player to mouse
-		}
-		else {
-			dir = "Right";
-			this.rotation = Math.atan((g_canvas.height/2 - g_mouseY2)/(g_canvas.width/2 - g_mouseX2)); 
-			//angle of player to mouse
-		}
+		dir = this.configureRotation();
 		nextStatus = "shooting"+dir;
 		if(nextStatus!==this.status){
 			this.status = nextStatus;
@@ -484,6 +496,7 @@ Player.prototype.updateStatus = function() {
     }    
 }
 
+// acceleration stuff
 Player.prototype.updateVelocity = function(du) {
     var NOMINAL_FORCE = +0.15;
 
@@ -545,6 +558,7 @@ Player.prototype.updateVelocity = function(du) {
     }
 }
 
+// affects collision box
 Player.prototype.getSize = function(){
 	//alternating hitboxes between forms just the hight for now to 
 	//prevent a lot of collission headache regarding changing form mid-air

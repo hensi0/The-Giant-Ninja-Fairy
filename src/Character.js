@@ -35,7 +35,7 @@ Character.prototype.rememberResets = function () {
 };
 
 // Initial, inheritable, default values
-Character.prototype.hp = 100;
+Character.prototype.hp = 1;
 Character.prototype.cx = 200;
 Character.prototype.cy = 500;
 Character.prototype.velX = 0;
@@ -69,7 +69,7 @@ Character.prototype.updateProxBlocks = function(prevX, prevY, nextX, nextY) {
 
 
 //=================
-// COLLISION STUFFS
+// COLLISION STUFFS 
 //=================
 
 Character.prototype.putToGround = function(groundY) {
@@ -81,8 +81,21 @@ Character.prototype.putToGround = function(groundY) {
 
 }
 
-Character.prototype.takeHit = function() {
-	this.hp--;
+
+Character.prototype.knockBack = function(x,y) {
+    var velX = this.cx - x;
+	var velY = this.cy - y;
+	var angle = 100;
+	if(velX !== 0) angle = Math.atan(velY/velX);
+	if(this.cx < x) angle += Math.PI;
+	var vel = 4;
+	this.velX = vel*Math.cos(angle);
+	this.velY = vel*Math.sin(angle);
+}
+
+Character.prototype.takeHit = function(dmg) {
+	if(!dmg) dmg = 1;
+	this.hp -= dmg;
 	if(this.hp <= 0) this._isDeadNow = true;
 	// skoppa burt frá spikes
 }

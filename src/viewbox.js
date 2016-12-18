@@ -86,7 +86,8 @@ viewBox.prototype.update = function(du){
 		else if(nextViewY > lowerEdge) g_viewPort.y = lowerEdge;
 		else 	g_viewPort.y = nextViewY;
 	*/
-	
+	var oldX = g_viewPort.x;
+	var oldY = g_viewPort.y;
 	
 	var tempX = Player.cx - g_canvas.width/2;
 	var tempY = Player.cy - g_canvas.height/2;
@@ -102,11 +103,16 @@ viewBox.prototype.update = function(du){
 	
 	//console.log(Math.round(limitL) + " " + Math.round(tempX) + " " + 
 	//			Math.round(limitR) + Math.round(0.3*(g_mouseX - g_canvas.width/2)));
+	if(tempX - oldX < -6) tempX = oldX - 6; 
+	if(tempX - oldX > 6) tempX = oldX + 6;
+	if(tempY - oldY < -6) tempY = oldY - 6; 
+	if(tempY - oldY > 6) tempY = oldY + 6;
 	
 	if(tempX > limitL) tempX = limitL;
 	if(tempX < limitR) tempX = limitR;
 	if(tempY < limitU) tempY = limitU;
 	if(tempY > limitD) tempY = limitD;
+	
 	
 	g_viewPort.x = tempX;
 	g_viewPort.y = tempY;

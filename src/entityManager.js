@@ -55,8 +55,8 @@ KILL_ME_NOW : -1,
 // i.e. thing which need `this` to be defined.
 //
 deferredSetup : function () {
-    this._categories = [this._objects, this._character, this._world, this._collisionBlocks,
-						this._bullets, this._particles, this._enemies, this._viewBox];
+    this._categories = [this._objects, this._world, this._collisionBlocks,
+						this._bullets, this._particles, this._character, this._enemies, this._viewBox];
 },
 
 resetAll : function () {
@@ -75,6 +75,7 @@ enterLevel: function(lvl) {
     this._bullets = [];
     this._enemies = [];
     this._objects = [];
+	this._particles = [];
     this._world = [];
 	this._viewBox = [];
     this._collisionBlocks = [];
@@ -94,29 +95,33 @@ enterLevel: function(lvl) {
     this.deferredSetup();
 },
 
-fireBullet: function(cx, cy, velX, velY, rotation, shooter) {
+fireBullet: function(cx, cy, velX, velY, radius, rotation, shooter, type, lifespan) {
     this._bullets.push(new Projectile({
         cx   : cx,
         cy   : cy,
         velX : velX,
         velY : velY,
+		type : type,
+		radius : radius,
         rotation : rotation,
-        shooter : shooter
+        shooter : shooter,
+		lifespan: lifespan
     }));
 },
 
-generateParticle : function(x,y,angle,avgVel,maxAlpha,maxR,fillStyle){
-	var r = Math.random()*maxR;
+generateParticle : function(x,y,radius,angle,avgVel,type, shouldFade){
+	//var r = Math.random()*maxR;
 	var vel = avgVel + (0.5*avgVel - Math.random()*avgVel); // +- 50% velocity from avgVel
-	var alpha = Math.random()*maxAlpha;
+	//var alpha = Math.random()*maxAlpha;
 	var particle = new Particle({
 		cx: x,
 		cy: y,
-		r: r,
+		r: radius,
 		angle: angle,
 		vel: vel,
-		style: fillStyle,
-		alpha: alpha
+		alpha: 1,
+		type: type,
+		fade: shouldFade
 	});
     this._particles.push(particle);
 },

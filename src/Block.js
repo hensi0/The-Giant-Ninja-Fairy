@@ -101,6 +101,7 @@ Block.prototype.activate = function (Char, direction) {
 	}
 	if(this.type === 2){
 		if(Char instanceof Player){
+			Char.knockBack(this.cx, this.cy)
 			Char.takeHit();
 			
 		} 
