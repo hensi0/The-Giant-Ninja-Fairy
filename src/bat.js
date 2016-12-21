@@ -12,27 +12,27 @@
 */
 
 // A generic contructor which accepts an arbitrary descriptor object
-function Dog(descr) {
+function Bat(descr) {
 	this.setup(descr)
     // Default sprite, if not otherwise specified
     this._scale = 1;
-	this.animations = makeDogAnimation(this._scale);
+	this.animations = makeBatAnimation(this._scale);
 	this.animation = this.animations['walkingRight'];
 };
 
-Dog.prototype = new Enemy();
+Bat.prototype = new Enemy();
 
 // Initial, inheritable, default values
-Dog.prototype.cx = 0;
-Dog.prototype.cy = 0;
-Dog.prototype.velX = -1;
-Dog.prototype.velY = 1;
-Dog.prototype.hp = 40;
-Dog.prototype.damagePlayerCD = 60;
-Dog.prototype.initialized = false;
-Dog.prototype.angryCD = 0;
-Dog.prototype._lastDir = "Right";
-Dog.prototype.state = {
+Bat.prototype.cx = 0;
+Bat.prototype.cy = 0;
+Bat.prototype.velX = -1;
+Bat.prototype.velY = 1;
+Bat.prototype.hp = 40;
+Bat.prototype.damagePlayerCD = 60;
+Bat.prototype.initialized = false;
+Bat.prototype.angryCD = 0;
+Bat.prototype._lastDir = "Right";
+Bat.prototype.state = {
 	jumping: false,
 	offGround: false,
 	onGround: true,
@@ -41,7 +41,7 @@ Dog.prototype.state = {
 	inWater: false
 };
 
-Dog.prototype.update = function(du) {
+Bat.prototype.update = function(du) {
 	spatialManager.unregister(this);
 	//check if this is inside the viewport
 	var margin = this.getSize().sizeX; //margin outside of viewport we want to update
@@ -53,7 +53,7 @@ Dog.prototype.update = function(du) {
 	this.updateProxBlocks(this.cx, this.cy, this.cx+this.velX*du, this.cy+this.velY*du);
     if(this._isDeadNow) return entityManager.KILL_ME_NOW;
 
-	//Handles if Dog is in water
+	//Handles if Bat is in water
     if(this.state['inWater']){
         this.maxVelX = 2.3;
         this.maxVelY = 1.1;
@@ -110,64 +110,41 @@ Dog.prototype.update = function(du) {
 	this.animation = this.animations[this.status];
 	
 	this.animation.update(du);
-	
-	if(this.angryCD < 0) this.state['angry'] = false;
-	else this.angryCD--;
 		
-    this.handleSpecificDogAction(du, dir);
+    this.handleSpecificBatAction(du, dir);
 
 	spatialManager.register(this);
 };
 
-Dog.prototype.render = function (ctx) {
+Bat.prototype.render = function (ctx) {
 	this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
 };
 
-Dog.prototype.knockBack = function(x,y) {
+Bat.prototype.knockBack = function(x,y) {
 	this.velY = -2;
 	this.angryCD = 150;
 	this.state['angry'] = true;
 };
 
-Dog.prototype.getSize = function(){
-    var size = {sizeX:35*this._scale,sizeY:20*this._scale};
+Bat.prototype.getSize = function(){
+    var size = {sizeX:20*this._scale,sizeY:20*this._scale};
     return size;
 };
 
-Dog.prototype.handleSpecificDogAction = function(du, dir) {
+Bat.prototype.handleSpecificBatAction = function(du, dir) {
 	// To be implemented in subclasses.
 	var player = entityManager._character[0];
 	if(!player) return;
 	var px = player.cx;
 	var py = player.cy;
-	if(dir === "Left"){
 		if(px < this.cx && (px + 400) > this.cx && Math.abs(py - this.cy) < 220){
 			this.angryCD = 150;
 			this.state['angry'] = true;
 		}
-	} else {
-		if(px > this.cx && (px - 400) < this.cx && Math.abs(py - this.cy) < 220){
-			this.state['angry'] = true;
-			this.angryCD = 150;
-		}
-	}
-	if(this.state['angry']){
-		if(dir === "Left"){
-			if(px < this.cx && (px + 120) > this.cx && Math.abs(py - this.cy) < 100 && !this.state['biting']){
-				this.velY = -5;
-				this.state['biting'] = true;
-			}
-		} else {
-			if(px > this.cx && (px - 120) < this.cx && Math.abs(py - this.cy) < 100 && !this.state['biting']){
-				this.velY = -5;
-				this.state['biting'] = true;
-			}
-		}
-	}	
 };
 
 
-Dog.prototype.handleCollision = function(hitEntity, axis) {
+Bat.prototype.handleCollision = function(hitEntity, axis) {
     var bEdge,lEdge,rEdge,tEdge;
     var standingOnSomething = false;
     var walkingIntoSomething = false;
@@ -191,7 +168,7 @@ Dog.prototype.handleCollision = function(hitEntity, axis) {
         tEdge = charBelow && sameCol;
         bEdge = charAbove && sameCol;
 
-        // Bad fix to make Character decide what happens to it's subclasses (Dog, Zelda, Projectile)
+        // Bad fix to make Character decide what happens to it's subclasses (Bat, Zelda, Projectile)
         if(hitEntity instanceof Block) {
             var dir = 0; //direction of hit
             if(!hitEntity._isPassable) {

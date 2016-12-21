@@ -110,10 +110,10 @@ Character.prototype.handlePartialCollision = function(charX,charY,axis,callback)
             var hitEntity = hitEntities[hit];
             var collisionVars =  this.handleCollision(hitEntity, axis);
             standingOnSomething = standingOnSomething || collisionVars.standingOnSomething;
-            walkingIntoSomething = walkingIntoSomething || collisionVars.walkingIntoSomething;           
-        }
-    }
-    if(axis === "x") return walkingIntoSomething;
+			walkingIntoSomething = walkingIntoSomething || collisionVars.walkingIntoSomething;           
+	    }
+	}
+	if(axis === "x") return walkingIntoSomething;
     if(axis === "y") return standingOnSomething;
 }
 

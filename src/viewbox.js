@@ -103,10 +103,12 @@ viewBox.prototype.update = function(du){
 	
 	//console.log(Math.round(limitL) + " " + Math.round(tempX) + " " + 
 	//			Math.round(limitR) + Math.round(0.3*(g_mouseX - g_canvas.width/2)));
-	if(tempX - oldX < -6) tempX = oldX - 6; 
-	if(tempX - oldX > 6) tempX = oldX + 6;
-	if(tempY - oldY < -6) tempY = oldY - 6; 
-	if(tempY - oldY > 6) tempY = oldY + 6;
+	var viewPanSpeed = 10;
+	
+	if(tempX - oldX < -viewPanSpeed) tempX = oldX - viewPanSpeed; 
+	if(tempX - oldX > viewPanSpeed) tempX = oldX + viewPanSpeed;
+	if(tempY - oldY < -viewPanSpeed) tempY = oldY - viewPanSpeed; 
+	if(tempY - oldY > viewPanSpeed) tempY = oldY + viewPanSpeed;
 	
 	if(tempX > limitL) tempX = limitL;
 	if(tempX < limitR) tempX = limitR;

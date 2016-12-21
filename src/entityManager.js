@@ -82,12 +82,14 @@ enterLevel: function(lvl) {
 
     
 
-    
+    //lvl++;
 
 	if(this._viewBox.length === 0) this.generateViewBox();
 	
     this._level = lvl;
-	this.generateLevel({x: 6, y: 5});
+	var x = Math.floor(2 + 0.5*lvl);
+	var y = Math.floor(2 + 0.3*lvl);
+	this.generateLevel({x: x, y: y});
 	
 	if(this._character.length === 0) this.generateCharacter({cx : 10, cy: 10 });
     this._character[0].reset();
@@ -105,7 +107,7 @@ fireBullet: function(cx, cy, velX, velY, radius, rotation, shooter, type, lifesp
 		radius : radius,
         rotation : rotation,
         shooter : shooter,
-		lifespan: lifespan
+		lifeSpan: lifespan
     }));
 },
 

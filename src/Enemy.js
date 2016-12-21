@@ -12,48 +12,48 @@
 */
 
 // A generic contructor which accepts an arbitrary descriptor object
-function Dog(descr) {
+function Enemy(descr) {
 	this.setup(descr)
     // Default sprite, if not otherwise specified
-    this._scale = 1;
-	this.animations = makeDogAnimation(this._scale);
-	this.animation = this.animations['walkingRight'];
+    this._scale = 2.5;
+	if(typeof makeEnemyAnimation == 'function') {
+		this.animations = makeEnemyAnimation(this._scale);
+		this.animation = this.animations['walkingRight'];
+	}
 };
 
-Dog.prototype = new Enemy();
+// This comes later on when Entity has been implemented: 
+Enemy.prototype = new Character();
 
 // Initial, inheritable, default values
-Dog.prototype.cx = 0;
-Dog.prototype.cy = 0;
-Dog.prototype.velX = -1;
-Dog.prototype.velY = 1;
-Dog.prototype.hp = 40;
-Dog.prototype.damagePlayerCD = 60;
-Dog.prototype.initialized = false;
-Dog.prototype.angryCD = 0;
-Dog.prototype._lastDir = "Right";
-Dog.prototype.state = {
-	jumping: false,
-	offGround: false,
-	onGround: true,
-	angry: false,
-	biting: false,
-	inWater: false
+Enemy.prototype.cx = 500;
+Enemy.prototype.cy = 483;
+Enemy.prototype.velX = -1;
+Enemy.prototype.velY = 1;
+Enemy.prototype.HP = 1;
+Enemy.prototype.initialized = false;
+Enemy.prototype._lastDir = "Right";
+Enemy.prototype.state = {
+jumping: false,
+offGround: false,
+onGround: true,
+inWater: false
 };
 
-Dog.prototype.update = function(du) {
+Enemy.prototype.update = function(du) {
 	spatialManager.unregister(this);
+	
 	//check if this is inside the viewport
 	var margin = this.getSize().sizeX; //margin outside of viewport we want to update
-	if(this.cx+this.getSize().sizeX/2 < g_viewPort.x-margin ||
-	   this.cx-this.getSize().sizeX/2 > g_viewPort.x+g_canvas.width+margin) return;
+	if(this.cx+this.getSize().sizeX/1.5 < g_viewPort.x-margin ||
+	   this.cx-this.getSize().sizeX/1.5 > g_viewPort.x+g_canvas.width+margin) return;
 	   
 	
 
 	this.updateProxBlocks(this.cx, this.cy, this.cx+this.velX*du, this.cy+this.velY*du);
     if(this._isDeadNow) return entityManager.KILL_ME_NOW;
 
-	//Handles if Dog is in water
+	//Handles if enemy is in water
     if(this.state['inWater']){
         this.maxVelX = 2.3;
         this.maxVelY = 1.1;
@@ -61,7 +61,7 @@ Dog.prototype.update = function(du) {
         this.maxVelX = 3.9;
         this.maxVelY = 6.5;
     }
-	if(this.damagePlayerCD > 0) this.damagePlayerCD -= du;
+	
 	var nextX = this.cx+this.velX*du;
     var nextY = this.cy+this.velY*du;
 	var prevX = this.cx;
@@ -76,14 +76,6 @@ Dog.prototype.update = function(du) {
     this.cx += this.velX*du;
     this.cy += this.velY*du;
 	
-	if(this.state['angry']){
-		this.cx += this.velX*du*1.4;
-	}
-	
-	if(this.state['biting']){
-		this.cx += this.velX*du*2;
-	}
-	
 	// Fall down
 	if(!standingOnSomething && this.velY < TERMINAL_VELOCITY && !this.state['inWater']){
 		this.velY += NOMINAL_GRAVITY*du;
@@ -95,6 +87,9 @@ Dog.prototype.update = function(du) {
 		this.velX *= -1;
 	}
 	
+	if(this.cy > g_canvas.height){
+        this._isDeadNow = true;
+    }
 	
 	//update status
 	var dir;
@@ -111,63 +106,25 @@ Dog.prototype.update = function(du) {
 	
 	this.animation.update(du);
 	
-	if(this.angryCD < 0) this.state['angry'] = false;
-	else this.angryCD--;
 		
-    this.handleSpecificDogAction(du, dir);
+    this.handleSpecificEnemyAction(du);
 
 	spatialManager.register(this);
-};
+}
 
-Dog.prototype.render = function (ctx) {
-	this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
-};
 
-Dog.prototype.knockBack = function(x,y) {
-	this.velY = -2;
-	this.angryCD = 150;
-	this.state['angry'] = true;
-};
 
-Dog.prototype.getSize = function(){
-    var size = {sizeX:35*this._scale,sizeY:20*this._scale};
+Enemy.prototype.getSize = function(){
+    var size = {sizeX:10*this._scale,sizeY:15*this._scale};
     return size;
-};
+}
 
-Dog.prototype.handleSpecificDogAction = function(du, dir) {
+Enemy.prototype.handleSpecificEnemyAction = function(du) {
 	// To be implemented in subclasses.
-	var player = entityManager._character[0];
-	if(!player) return;
-	var px = player.cx;
-	var py = player.cy;
-	if(dir === "Left"){
-		if(px < this.cx && (px + 400) > this.cx && Math.abs(py - this.cy) < 220){
-			this.angryCD = 150;
-			this.state['angry'] = true;
-		}
-	} else {
-		if(px > this.cx && (px - 400) < this.cx && Math.abs(py - this.cy) < 220){
-			this.state['angry'] = true;
-			this.angryCD = 150;
-		}
-	}
-	if(this.state['angry']){
-		if(dir === "Left"){
-			if(px < this.cx && (px + 120) > this.cx && Math.abs(py - this.cy) < 100 && !this.state['biting']){
-				this.velY = -5;
-				this.state['biting'] = true;
-			}
-		} else {
-			if(px > this.cx && (px - 120) < this.cx && Math.abs(py - this.cy) < 100 && !this.state['biting']){
-				this.velY = -5;
-				this.state['biting'] = true;
-			}
-		}
-	}	
-};
+}
 
 
-Dog.prototype.handleCollision = function(hitEntity, axis) {
+Enemy.prototype.handleCollision = function(hitEntity, axis) {
     var bEdge,lEdge,rEdge,tEdge;
     var standingOnSomething = false;
     var walkingIntoSomething = false;
@@ -191,7 +148,7 @@ Dog.prototype.handleCollision = function(hitEntity, axis) {
         tEdge = charBelow && sameCol;
         bEdge = charAbove && sameCol;
 
-        // Bad fix to make Character decide what happens to it's subclasses (Dog, Zelda, Projectile)
+        // Bad fix to make Character decide what happens to it's subclasses (Enemy, Zelda, Projectile)
         if(hitEntity instanceof Block) {
             var dir = 0; //direction of hit
             if(!hitEntity._isPassable) {
@@ -206,7 +163,6 @@ Dog.prototype.handleCollision = function(hitEntity, axis) {
                     this.tempMaxJumpHeight = this.cy - this.maxPushHeight; 
                     var groundY = entityManager._world[0].getLocation((hitEntity.i), (hitEntity.j))[1] // block top y coordinate
                     this.putToGround(groundY);
-					this.state['biting'] = false;
                     dir = 4;
                 } 
                 if(tEdge && this.velY < 0  && axis === "y"){// && this.velY < 0) {
@@ -216,14 +172,6 @@ Dog.prototype.handleCollision = function(hitEntity, axis) {
                 }
             }
             hitEntity.activate(this, dir);
-        } else if (hitEntity instanceof Projectile){
-			this.takeHit(hitEntity.radius);
-			this.knockBack(hitEntity.cx, hitEntity.cy)
-			hitEntity.takeHit();
-		} else if (hitEntity instanceof Player && this.state['biting'] && this.damagePlayerCD <= 0){
-			hitEntity.knockBack(this.cx, this.cy)
-			hitEntity.takeHit(15);
-			this.damagePlayerCD = 60;
-		}
+        }
     return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};
-};
+}

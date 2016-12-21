@@ -47,9 +47,8 @@ function Projectile(descr) {
 	this.sprite = sprite || this.sprite;
 	if(this.type !== 'boomerang')this.hp = 1;
 	else this.hp = 50;
-		
-	if(this.lifespan) this.lifeSpan =  this.lifespan;
-	this.startinglifeSpan = this.lifeSpan; 
+	if(!this.lifeSpan) this.lifeSpan = (3500 / NOMINAL_UPDATE_INTERVAL);
+	this.startinglifeSpan = this.lifeSpan;
 }
 
 Projectile.prototype = new Character(); // Lol remember to change name of Character class... turns out it's useful for more things than just a character.
@@ -70,7 +69,7 @@ Projectile.prototype.startinglifeSpan;
 //
 
 // Convert times from milliseconds to "nominal" time units.
-Projectile.prototype.lifeSpan = (3500 / NOMINAL_UPDATE_INTERVAL);
+Projectile.prototype.lifeSpan;
 
 Projectile.prototype.update = function (du) {
 		
@@ -94,7 +93,7 @@ Projectile.prototype.update = function (du) {
 				}
 			}
 		}														//x,	y,		radius,			angle,	  avgVel, type, shouldFade?
-		if(this.type === 'bomb') entityManager.generateParticle(this.cx, this.cy, this.radius, this.rotation, 0 , 'bomb', false);
+		if(this.type === 'bomb') entityManager.generateParticle(this.cx + 0.5*this.velX, this.cy + 0.5*this.velY, this.radius, this.rotation, 0 , 'bomb', false);
 		
 		return entityManager.KILL_ME_NOW;
 	}
@@ -119,7 +118,7 @@ Projectile.prototype.update = function (du) {
 		this.velY *= Math.pow(1.03, du);
 	}
 	if(this.type === 'bomb')this.radius += 0.015*du;
-	if(this.type === 'boomerang' && this.boomerangScaler > -1) this.boomerangScaler -= 0.008*du;
+	if(this.type === 'boomerang' && this.boomerangScaler > -1) this.boomerangScaler -= 0.014*du;
 
 	if(this.type === 'boomerang' && this.boomerangScaler < 0){
 		var rotation = Math.atan((this.cy - this.shooter.cy)/(this.cx - this.shooter.cx));
@@ -186,6 +185,7 @@ Projectile.prototype.handleCollision = function(hitEntity, axis) {
     }
 	//catch the boomerang
 	else if(hitEntity instanceof Player && this.type === 'boomerang') {
+		hitEntity.boomerangs++;
         if(this.lifeSpan < (this.startinglifeSpan - 3)) this.takeHit(100);
     }
 	/*

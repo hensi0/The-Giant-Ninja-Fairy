@@ -67,7 +67,7 @@ function updateSimulation(du) {
     
 	
 	
-	if(entityManager._level != 1) entityManager.enterLevel(1);
+	if(entityManager._level === 0) entityManager.enterLevel(1);
     entityManager.update(du);
 
 }
@@ -80,7 +80,6 @@ var g_viewPort = {x:0, y:0};
 var g_isMuted = false;
 
 var KEY_MUTE   = keyCode('M');
-var KEY_MIXED   = keyCode('M');
 var KEY_SPATIAL = keyCode('X');
 
 var KEY_RESET = keyCode('R');
@@ -89,9 +88,6 @@ var KEY_RESET = keyCode('R');
 // í Diagnostics svosem "spawna óvin"
 
 function processDiagnostics() {
-
-    if (eatKey(KEY_MIXED))
-        g_allowMixedActions = !g_allowMixedActions;
 
     if (eatKey(KEY_SPATIAL)) 
 		g_renderSpatialDebug = !g_renderSpatialDebug;
@@ -171,7 +167,8 @@ function requestPreloads() {
 		druidI:		"res/images/druidStanding.png",
 		goatI:		"res/images/goatStanding.png",
 		pixie:		"res/images/Pixie.png",
-		
+		druid:		"res/images/druid.png",
+
 		//enemie-sprites:
 		dawg: 			"res/images/dawg.png",
 		princeSpriteSheet: "res/images/patss.png"
@@ -193,8 +190,8 @@ function makePlayerAnimationGoat(scale) {
 	Player.inAirLeft  = new Animation(g_images.goatI,0,32,96,1,400, -scale);
 	Player.walkingRight = new Animation(g_images.goatI,0,32,96,1,400, scale);
 	Player.walkingLeft  = new Animation(g_images.goatI,0,32,96,1,400, -scale);
-    Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,130, scale);
-	Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,130, -scale);
+    Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,80, scale);
+	Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,80, -scale);
 	
 	
 	/*    bowser.idleLeft = new Animation(g_images.bowserSpriteSheet,0,200,200,3,400,-scale);
@@ -211,14 +208,14 @@ function makePlayerAnimationDruid(scale) {
     var Player = {};
 	
 	//image, frameY, frameWidth, frameHeight, numFrames, interval, scale
-    Player.idleRight = new Animation(g_images.druidI,0,24,64,1,400, scale);
-	Player.idleLeft  = new Animation(g_images.druidI,0,16,64,1,400, -scale);
-	Player.walkingRight = new Animation(g_images.druidI,0,24,64,1,400, scale);
-	Player.walkingLeft  = new Animation(g_images.druidI,0,16,64,1,400, -scale);
-	Player.inAirRight = new Animation(g_images.druidI,0,24,64,1,400, scale);
-	Player.inAirLeft  = new Animation(g_images.druidI,0,16,64,1,400, -scale);
-	Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,130, scale);
-	Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,130, -scale);
+    Player.idleRight = new Animation(g_images.druid,140,72,140,3,350, scale);
+	Player.idleLeft  = new Animation(g_images.druid,140,72,140,3,250, -scale);
+	Player.walkingRight = new Animation(g_images.druid,418,72,140,8,100, scale);
+	Player.walkingLeft  = new Animation(g_images.druid,418,72,140,8,100, -scale);
+	Player.inAirRight = new Animation(g_images.druid,418,72,140,1,400, scale);
+	Player.inAirLeft  = new Animation(g_images.druid,418,72,140,1,400, -scale);
+	Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,80, scale);
+	Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,80, -scale);
 	
     return Player;
 };
@@ -229,14 +226,14 @@ function makePlayerAnimationFairy(scale) {
 	//image, frameY, frameWidth, frameHeight, numFrames, interval, scale
     Player.idleRight = new Animation(g_images.pixie,0,72,69,1,600, scale);
 	Player.idleLeft  = new Animation(g_images.pixie,0,72,69,1,600, -scale);
-	Player.inAirRight = new Animation(g_images.pixie,140,72,69,6,160, scale);
-	Player.inAirLeft  = new Animation(g_images.pixie,140,72,69,6,160, -scale);
+	Player.inAirRight = new Animation(g_images.pixie,140,72,69,6,100, scale);
+	Player.inAirLeft  = new Animation(g_images.pixie,140,72,69,6,100, -scale);
 	Player.shootingRight = new Animation(g_images.pixie,70,72,69,3,133, scale);
 	Player.shootingLeft  = new Animation(g_images.pixie,70,72,69,3,133, -scale);
-	Player.walkingRight = new Animation(g_images.pixie,0,72,69,6,200, scale);
-	Player.walkingLeft  = new Animation(g_images.pixie,0,72,69,6,200, -scale);
-	Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,130, scale);
-	Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,130, -scale);
+	Player.walkingRight = new Animation(g_images.pixie,0,72,69,6,100, scale);
+	Player.walkingLeft  = new Animation(g_images.pixie,0,72,69,6,100, -scale);
+	Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,80, scale);
+	Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,80, -scale);
 	
     return Player;
 };

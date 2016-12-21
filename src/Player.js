@@ -25,7 +25,7 @@ function Player(descr) {
 	this._isAlive = true;
 	
 	
-	this.animationsD =  makePlayerAnimationDruid(this._scale);
+	this.animationsD =  makePlayerAnimationDruid(this._scale*0.5);
 	this.animationsF =  makePlayerAnimationFairy(this._scale*0.5);
 	this.animationsG =  makePlayerAnimationGoat(this._scale);
 	this.animations = this.animationsD;
@@ -51,7 +51,7 @@ Player.prototype.state = {jumping: true, canJump: false, pushing: false,
 							offGround: true, casting: false, hasJumped: false, 
 							onGround: false, idle: false, flying: false, 
 							facingRight: true, inWater: false, fairyFire: false,
-							spawning: true}
+							spawning: true, holdingWall: false}
 							
 // Sounds (should be preloaded and initialized in constructor):
 // Player.prototype.warpSound = new Audio(
@@ -64,6 +64,8 @@ Player.prototype.maxVelX = 3.9;
 Player.prototype.maxVelY = 6.5;
 Player.prototype.maxPushHeight = 120; 
 Player.prototype.tempMaxJumpHeight = 0;
+Player.prototype.oneXPerMouseStuff = true;
+Player.prototype.jumpStateBuffer = 0;
 Player.prototype.animationsG;
 Player.prototype.animationsD;
 Player.prototype.animationsF;
@@ -85,11 +87,17 @@ Player.prototype.teleportCD = 1;
 
 Player.prototype.hasDoubleJumped = false;
 Player.prototype.hasDruiddUp = false;
+Player.prototype.lastWallGrabX = 0;
+Player.prototype.maxboomerangs = 2;
+Player.prototype.boomerangs = 2;
+
 
 Character.prototype.reset = function () {
 	this.hp = this.maxhp;
 	var pos = entityManager._world[0].returnStartLocation();
     this.setPos(pos.x, pos.y);
+	this._isDeadNow = false;
+	this.isAlive = true;
 };
 
 //to be used when spawning/swithcing forms
@@ -98,7 +106,7 @@ Player.prototype.resetStates = function () {
 							offGround: true, casting: false, hasJumped: false,
 							onGround: false, idle: false, flying: false, 
 							facingRight: true, inWater: false, fairyFire: false,
-							spawning: true }
+							spawning: true, holdingWall: false}
 };
 
 
@@ -109,12 +117,6 @@ Player.prototype.goFairy = function () {
 		this.animations = this.animationsF;
 		this.state['spawning'] = true;
 		this.updateStatus();
-		var temp = 	(Math.random() >  0.5);
-		if(temp) 	this.hoverXvel =  0.4;
-		else  		this.hoverXvel = -0.4;
-		temp = 	(Math.random() >  0.5);
-		if(temp) 	this.hoverYvel =  0.4;
-		else  		this.hoverYvel = -0.4;
 		this.resetStates();
 };
 
@@ -139,6 +141,7 @@ Player.prototype.goDruid = function () {
         this.form = 'druid';
 		this.hoverX = 0;
 		this.hoverY = 0;
+		this.boomerangs = this.maxboomerangs;
 		this.animations = this.animationsD;
 		this.animation = this.animations['idleRight'];
 		this.blinkCharge = 0;
@@ -162,7 +165,7 @@ Player.prototype.handleJump = function () {
         this.state['hasJumped'] = false;
 		if(this.form === 'druid'){
 			this.velY = -6;
-			this.tempMaxJumpHeight = this.cy - this.maxPushHeight; 
+			this.tempMaxJumpHeight = this.cy - this.maxPushHeight;
 		} else if(this.form === 'goat'){
 			this.velY = -4;
 			this.tempMaxJumpHeight = this.cy - 0.6*this.maxPushHeight; 
@@ -207,8 +210,8 @@ Player.prototype.update = function (du) {
 	if(this.hp <= 0) this.isAlive = false;
 	if(!this.isAlive){
 		entityManager.enterLevel(1);
-		
 	}
+	
 	spatialManager.unregister(this);
 	
 	
@@ -243,14 +246,32 @@ Player.prototype.update = function (du) {
 	var bEdge;
 	
 	//check left/right collisions first and then top/bottom
-    if(this.handlePartialCollision(nextX,prevY,"x")) this.velX = 0;
+    if(this.handlePartialCollision(nextX,prevY,"x")){
+		this.velX = 0;
+		var coords; 
+		if(this.state['facingRight']) coords = entityManager._world[0].getBlockCoords(this.cx + 30, this.cy);
+		else coords = entityManager._world[0].getBlockCoords(this.cx - 30, this.cy);
+		
+		var bricktest = entityManager._world[0].blocks[coords[0]][coords[1]]
+		
+		if(bricktest)if(this.form === 'druid' && this.state['jumping'] && this.cx !== this.lastWallGrabX
+												&& (keys[this.KEY_LEFT] || keys[this.KEY_RIGHT]) && bricktest){
+			this.state['holdingWall'] = true;
+			this.velY = 0;
+			if(this.state['facingRight']) this.velX = 0.2;
+			else this.velX = -0.2;
+		}			
+	} else this.state['holdingWall'] = false;
+	
 	bEdge = this.handlePartialCollision(prevX,nextY,"y");
+	
 	if(this.teleportCD > 0) this.teleportCD -= du;
 	
-	this.state['canJump'] = (!this.state['jumping'] && !keys[this.KEY_JUMP]) || this.state['flying'];
+	this.state['canJump'] = (!this.state['jumping'] && !keys[this.KEY_JUMP]) || this.state['flying'] || this.state['holdingWall'];
 	
 	if(this.state['fairyFire'] && this.state['jumping']){ this.shootZePlasmaBalls(du); this.updateLocation(du*0.18); } 
-	else 						this.updateLocation(du);
+	else if(this.state['holdingWall'])	this.updateLocation(0);
+	else 								this.updateLocation(du);
 	
     this.updateJump(bEdge);
 
@@ -314,29 +335,37 @@ Player.prototype.updateJump = function(bEdge) {
         this.state['jumping'] = false;
         this.state['pushing'] = false;
         this.state['offGround'] = false;
-        if(!(keys[this.KEY_LEFT] || keys[this.KEY_RIGHT])) this.velX = 0;
+		this.jumpStateBuffer = 0;
+		if(!(keys[this.KEY_LEFT] || keys[this.KEY_RIGHT])) this.velX = 0;
     }else{
 		this.state['jumping'] = true;
+		this.jumpStateBuffer++;
 	}
 	
     // Set offGround to true so that we can't keep pushing while in air.
     if(this.cy <= this.tempMaxJumpHeight) {
         this.state['offGround'] = true;
+		//keys[this.KEY_JUMP] = false;
     }
 };
 
-//on realease of the LMB toggles the shotting state for fairy
+//on realease of the LMB toggles the shooting state for fairy
 Player.prototype.stopZeShootin = function () {
 	//interupt shootin
 	this.state['fairyFire'] = false;
 	this.plasmaTimer = 1;
+	this.oneXPerMouseStuff = true;
 };
 
 //LMB handling for player
 Player.prototype.LMB = function (bool) {
 	//left mouse Button has been pressed
 	if(this.form === 'fairy') this.state['fairyFire'] = true;
-	if(this.form === 'druid') this.shootZeBoomerang();
+	if(this.form === 'druid' && this.oneXPerMouseStuff && this.boomerangs > 0){
+		this.oneXPerMouseStuff = false;
+		this.shootZeBoomerang();
+		this.boomerangs--;
+	}
 };
 
 //RMB handling for the player
@@ -392,7 +421,6 @@ Player.prototype.handleCollision = function(hitEntity, axis) {
         tEdge = charBelow && sameCol;
         bEdge = charAbove && sameCol;
 		
-		
         if(hitEntity instanceof Block) {
             var dir = 0; //direction of hit
             if(!hitEntity._isPassable) {
@@ -407,6 +435,7 @@ Player.prototype.handleCollision = function(hitEntity, axis) {
                     this.tempMaxJumpHeight = this.cy - this.maxPushHeight; 
                     var groundY = entityManager._world[0].getLocation((hitEntity.i), (hitEntity.j))[1] // block top y coordinate
                     this.putToGround(groundY);
+					this.lastWallGrabX = 0;
                     dir = 4;
                 } 
                 if(tEdge && this.velY < 0  && axis === "y"){// && this.velY < 0) {
@@ -433,8 +462,7 @@ Player.prototype.handleCollision = function(hitEntity, axis) {
             }
         */
 		}
-		
-    
+	
 
     return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};
 }
@@ -484,10 +512,11 @@ Player.prototype.updateStatus = function() {
 	}
     
 	var atMaxVel = (Math.abs(this.velX)>=(this.maxVelX*0.9))
-    if(this.state['jumping'] && !this.state['spawning']) nextStatus = "inAir"+dir;
-    else if(this.velX === 0 && !this.state['jumping'] && !this.state['spawning']) nextStatus = "idle"+(wasMovingLeft?"Left":dir);
-    else if(!this.state['jumping'] && !this.state['spawning']) nextStatus = "walking"+dir;
+    if(this.jumpStateBuffer > 1 && !this.state['spawning']) nextStatus = "inAir"+dir;
+    else if(this.velX === 0 && !(this.jumpStateBuffer > 1) && !this.state['spawning']) nextStatus = "idle"+(wasMovingLeft?"Left":dir);
+    else if(!(this.jumpStateBuffer > 1) && !this.state['spawning']) nextStatus = "walking"+dir;
 	else nextStatus = "spawning"+dir;
+	
 	
     // Update animation
     if(nextStatus!==this.status){
@@ -550,7 +579,7 @@ Player.prototype.updateVelocity = function(du) {
         else this.velY += (NOMINAL_GRAVITY*du)/10;
     }else if(this.state['jumping'] && this.state['pushing']){
 		this.state['hasJumped'] = false;
-		if(this.form === 'druid') this.velY = -6;
+		if(this.form === 'druid') {this.velY = -6; this.lastWallGrabX = this.cx;}
 		else if(this.form === 'goat') this.velY = -4;
 		else if(this.form === 'fairy') this.fly();
 	}else if(!this.state['jumping']){

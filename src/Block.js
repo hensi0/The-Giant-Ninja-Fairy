@@ -17,7 +17,7 @@ function Block(descr) {
 	this.setup(descr);
 	this.sprite = this.Asprite || g_sprites.defaultBlock;
 	this.AnimationSprite = this.AnimationSprite || g_sprites.coin;
-
+	this.sizeMod = 1;
 	switch(this.type) {
 		case 0: 
 		break;
@@ -26,9 +26,11 @@ function Block(descr) {
 		break; 
 		
 		case 2: 	this.sprite = g_sprites.spikes;
+					this._isPassable = true;
+					this.sizeMod = 0.6;
 		break; 
 		
-		case 3:	this.sprite = g_sprites.bricks;
+		case 3:		this.sprite = g_sprites.bricks;
 					this._isPassable = false;
 					this._isBreakable = true;
 		break;
@@ -46,6 +48,7 @@ function Block(descr) {
 
 
 Block.prototype.rotation = 0;
+Block.prototype.sizeMod = 1;
 Block.prototype._isDeadNow = false;
 Block.prototype._isPassable = false;
 Block.prototype._isBreakable = false;
@@ -95,20 +98,32 @@ Block.prototype.render = function (ctx,x,y,w,h) {
 
 Block.prototype.activate = function (Char, direction) {
     //direction 1 = up, 2 = right, 3 = down, 4 = left
-	
+	/*
 	if(direction === 1){
 		this.tryToBreak();
 	}
-	if(this.type === 2){
-		if(Char instanceof Player){
-			Char.knockBack(this.cx, this.cy)
-			Char.takeHit();
-			
-		} 
-
+	*/
+	switch(this.type) {
+		case 0: 
+		break;
+		
+		case 1: 	
+		break; 
+		
+		case 2: 	if(Char instanceof Player) Char.takeHit(0.1);
+		break; 
+		
+		case 'E':	entityManager.enterLevel(entityManager._level +  1)
+		break;
+		
+		default: 
+		break;
 	}
 };
 
+Block.prototype.getSize = function () {
+    return {sizeX : this.sizeMod*this.halfWidth, sizeY : this.sizeMod*this.halfHeight};
+};
 
 Block.prototype.tryToBreak = function(){
     if(this._isBreakable) {
