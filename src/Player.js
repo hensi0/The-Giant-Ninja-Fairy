@@ -66,6 +66,7 @@ Player.prototype.maxPushHeight = 120;
 Player.prototype.tempMaxJumpHeight = 0;
 Player.prototype.oneXPerMouseStuff = true;
 Player.prototype.jumpStateBuffer = 0;
+Player.prototype.holdStateBuffer = 0;
 Player.prototype.animationsG;
 Player.prototype.animationsD;
 Player.prototype.animationsF;
@@ -90,6 +91,7 @@ Player.prototype.hasDruiddUp = false;
 Player.prototype.lastWallGrabX = 0;
 Player.prototype.maxboomerangs = 2;
 Player.prototype.boomerangs = 2;
+Player.prototype.dashCD = 1;
 
 
 Character.prototype.reset = function () {
@@ -182,8 +184,8 @@ Player.prototype.fly = function () {
     this.state['canJump'] = true;
 	this.state['flying'] = true;
 	this.velY -= 0.05*(this.velY + 2.5);
-
 };
+
 //change forms
 Player.prototype.swap = function (bool) {
 			if(this.SwapCD > 0) return;
@@ -248,24 +250,32 @@ Player.prototype.update = function (du) {
 	//check left/right collisions first and then top/bottom
     if(this.handlePartialCollision(nextX,prevY,"x")){
 		this.velX = 0;
-		var coords; 
-		if(this.state['facingRight']) coords = entityManager._world[0].getBlockCoords(this.cx + 30, this.cy);
-		else coords = entityManager._world[0].getBlockCoords(this.cx - 30, this.cy);
-		
-		var bricktest = entityManager._world[0].blocks[coords[0]][coords[1]]
-		
-		if(bricktest)if(this.form === 'druid' && this.state['jumping'] && this.cx !== this.lastWallGrabX
-												&& (keys[this.KEY_LEFT] || keys[this.KEY_RIGHT]) && bricktest){
-			this.state['holdingWall'] = true;
-			this.velY = 0;
-			if(this.state['facingRight']) this.velX = 0.2;
-			else this.velX = -0.2;
-		}			
-	} else this.state['holdingWall'] = false;
+		if(this.form === 'druid'){
+			var coords;
+			var temp = entityManager._world[0].blockDim
+			if(this.state['facingRight']) coords = entityManager._world[0].getBlockCoords(this.cx + temp, this.cy + temp/2.3);
+			else coords = entityManager._world[0].getBlockCoords(this.cx - temp, this.cy + temp/2.3);
+			var bricktest1 = entityManager._world[0].blocks[coords[0]][coords[1]];
+			if(this.state['facingRight']) coords = entityManager._world[0].getBlockCoords(this.cx + temp, this.cy - temp/2.3);
+			else coords = entityManager._world[0].getBlockCoords(this.cx - temp, this.cy - temp/2.3);
+			var bricktest2 = entityManager._world[0].blocks[coords[0]][coords[1]];
+			
+			if(bricktest1 && bricktest2)
+				if(this.state['jumping'] && this.cx !== this.lastWallGrabX
+													&& (keys[this.KEY_LEFT] || keys[this.KEY_RIGHT])){
+					this.state['holdingWall'] = true;
+					this.velY = 0;
+					this.holdStateBuffer++;
+					if(this.state['facingRight']) this.velX = 0.01;
+					else this.velX = -0.5;
+				}
+		}		
+	} else { this.state['holdingWall'] = false; this.holdStateBuffer = 0;}
 	
 	bEdge = this.handlePartialCollision(prevX,nextY,"y");
 	
 	if(this.teleportCD > 0) this.teleportCD -= du;
+	if(this.dashCD > 0) this.dashCD -= du;
 	
 	this.state['canJump'] = (!this.state['jumping'] && !keys[this.KEY_JUMP]) || this.state['flying'] || this.state['holdingWall'];
 	
@@ -274,7 +284,6 @@ Player.prototype.update = function (du) {
 	else 								this.updateLocation(du);
 	
     this.updateJump(bEdge);
-
 
 	this.updateStatus();
 	if(this.animation.update(du) === 1) {this.state['spawning'] = false; this.updateStatus();}
@@ -372,6 +381,8 @@ Player.prototype.LMB = function (bool) {
 Player.prototype.RMB = function (bool) {
 	//right mouse button
 	if(this.form === 'fairy' && !this.state['spawning'] && this.teleportCD <= 0) this.teleport();
+	if(this.form === 'druid' && !this.state['spawning'] && this.dashCD <= 0) this.dash();
+	
 };
 
 //Special ability in fairy form
@@ -389,6 +400,23 @@ Player.prototype.teleport = function () {
 	this.velX = 0;
 	this.teleportCD = 100;
 };
+
+//Special ability in fairy form
+Player.prototype.dash = function () {
+	var vMod = 25;
+	this.configureRotation();
+	var velx = vMod*Math.cos(this.rotation);
+	var vely = vMod*Math.sin(this.rotation);
+	var temp = 1;
+	if(g_mouseX2 <= g_canvas.width/2) temp *= -1;
+		entityManager.fireBullet(this.cx, this.cy, temp*velx, temp*vely, 10*this._scale, 0, this, 'detector', 30);
+	//this.rotation = 0;
+	//this.state['dashing'] = true;
+	this.velY = 0;
+	this.velX = 0;
+	this.dashCD = 100;
+};
+
 
 //=============================
 //===========collsion logic====
@@ -439,7 +467,7 @@ Player.prototype.handleCollision = function(hitEntity, axis) {
                     dir = 4;
                 } 
                 if(tEdge && this.velY < 0  && axis === "y"){// && this.velY < 0) {
-                    this.velY *= -0.8;
+                    this.velY *= -0.01;
 					//this.velY = Math.max(this.velY,5);
                     dir = 1;
                     this.state['offGround'] = true;
@@ -495,6 +523,7 @@ Player.prototype.updateStatus = function() {
 		nextStatus = "shooting"+dir;
 		if(nextStatus!==this.status){
 			this.status = nextStatus;
+			this.animation.reset();
 			this.animation = this.animations[this.status];
 		}  
 		return;
@@ -512,17 +541,26 @@ Player.prototype.updateStatus = function() {
 	}
     
 	var atMaxVel = (Math.abs(this.velX)>=(this.maxVelX*0.9))
-    if(this.jumpStateBuffer > 1 && !this.state['spawning']) nextStatus = "inAir"+dir;
+    if(!this.state['spawning'] && this.state['holdingWall'] && this.holdStateBuffer > 1) 
+		if(this.holdStateBuffer < 20) nextStatus = "holdingWall"+dir;
+		else nextStatus = "holdingWall2"+dir;
+	else if(this.jumpStateBuffer > 1 && !this.state['spawning']) nextStatus = "inAir"+dir;
     else if(this.velX === 0 && !(this.jumpStateBuffer > 1) && !this.state['spawning']) nextStatus = "idle"+(wasMovingLeft?"Left":dir);
     else if(!(this.jumpStateBuffer > 1) && !this.state['spawning']) nextStatus = "walking"+dir;
 	else nextStatus = "spawning"+dir;
 	
+	if(nextStatus === "inAir"+dir && this.form === 'druid'){
+		if(this.velY >= 0) 	nextStatus += "Down";
+		else 			 	nextStatus += "Up";
+	}
 	
     // Update animation
     if(nextStatus!==this.status){
         this.status = nextStatus;
+		this.animation.reset();
         this.animation = this.animations[this.status];
-    }    
+    }
+    
 }
 
 // acceleration stuff
@@ -579,7 +617,7 @@ Player.prototype.updateVelocity = function(du) {
         else this.velY += (NOMINAL_GRAVITY*du)/10;
     }else if(this.state['jumping'] && this.state['pushing']){
 		this.state['hasJumped'] = false;
-		if(this.form === 'druid') {this.velY = -6; this.lastWallGrabX = this.cx;}
+		if(this.form === 'druid'){	this.velY = -6; this.lastWallGrabX = this.cx;}
 		else if(this.form === 'goat') this.velY = -4;
 		else if(this.form === 'fairy') this.fly();
 	}else if(!this.state['jumping']){
@@ -591,8 +629,7 @@ Player.prototype.updateVelocity = function(du) {
 Player.prototype.getSize = function(){
 	//alternating hitboxes between forms just the hight for now to 
 	//prevent a lot of collission headache regarding changing form mid-air
-	var sX = (g_canvas.height / 768); //scale to match height with scaling blocksize
-    var size = 							{sizeX:20*this._scale,sizeY:18*this._scale};
+	var size = 							{sizeX:20*this._scale,sizeY:18*this._scale};
 	if(this.form === 'goat') 	size = 	{sizeX:20*this._scale,sizeY:64*this._scale};
 	if(this.form === 'druid') 	size = 	{sizeX:20*this._scale,sizeY:40*this._scale};
     return size;

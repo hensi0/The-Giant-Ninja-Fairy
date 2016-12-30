@@ -97,6 +97,11 @@ Projectile.prototype.update = function (du) {
 		
 		return entityManager.KILL_ME_NOW;
 	}
+	
+	if(this.type === 'detector' && this.shooter.form === 'druid'){
+		this.shooter.cx = this.cx - 0.5*this.velX;
+		this.shooter.cy = this.cy - 0.5*this.velY;
+	}
 /*
 	this.animation.update(du);
 	

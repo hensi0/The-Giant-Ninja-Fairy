@@ -52,7 +52,7 @@ Block.prototype.sizeMod = 1;
 Block.prototype._isDeadNow = false;
 Block.prototype._isPassable = false;
 Block.prototype._isBreakable = false;
-Block.prototype.dim = g_canvas.height/14;
+Block.prototype.dim = g_canvas.height/28;
 
 Block.prototype = new Entity();
 

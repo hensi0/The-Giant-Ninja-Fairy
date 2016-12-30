@@ -13,6 +13,8 @@ var TOGGLE_BOX = 'B'.charCodeAt(0);
 var TOGGLE_UNDO_BOX = 'U'.charCodeAt(0);
 var TOGGLE_FLIPFLOP = 'F'.charCodeAt(0);
 var TOGGLE_RENDER = 'R'.charCodeAt(0);
+var Zoom_in = 'K'.charCodeAt(0);
+var Zoom_out = 'L'.charCodeAt(0);
 
 function render(ctx) {
     
@@ -24,6 +26,10 @@ function render(ctx) {
     if (eatKey(TOGGLE_FLIPFLOP)) g_doFlipFlop = !g_doFlipFlop;
     if (eatKey(TOGGLE_RENDER)) g_doRender = !g_doRender;
     
+	if (keys[Zoom_in]) g_CameraZoom += 0.005;
+	if (keys[Zoom_out]) g_CameraZoom -= 0.005;
+    
+	
     if (g_doClear) util.clearCanvas(ctx);
     
     // The main purpose of the box is to demonstrate that it is

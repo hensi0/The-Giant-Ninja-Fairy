@@ -92,8 +92,8 @@ viewBox.prototype.update = function(du){
 	var tempX = Player.cx - g_canvas.width/2;
 	var tempY = Player.cy - g_canvas.height/2;
 	
-	tempX += 0.3*(g_mouseX2 - g_canvas.width/2);
-	tempY += 0.5*(g_mouseY2 - g_canvas.height/2);
+	tempX += (1/g_CameraZoom)*0.3*(g_mouseX2 - g_canvas.width/2);
+	tempY += (1/g_CameraZoom)*0.5*(g_mouseY2 - g_canvas.height/2);
 	
 	//barriers to be implemented here so player is never off-screen  (safety measure)
 	var limitL = Player.cx - 0.25*g_canvas.width;

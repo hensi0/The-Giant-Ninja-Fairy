@@ -8,7 +8,8 @@
 
 
 // Construct an animation from a sprite sheet
-function Animation (image, frameY, frameWidth, frameHeight, numFrames, interval, scale) {
+function Animation (image, frameY, frameWidth, frameHeight, numFrames, interval, scale, isThereAX) {
+	if(isThereAX) this.isThereAX = isThereAX;
 	this.image = image;
     this.sprites = this.loadSprites(frameY,frameWidth,frameHeight,numFrames,scale);
     this.numFrames = numFrames;
@@ -19,6 +20,8 @@ function Animation (image, frameY, frameWidth, frameHeight, numFrames, interval,
 
 // A signal to let the character know that now would be a good time to transition into another animation!
 Animation.prototype.TRANSITION_OPPORTUNITY = 1; //nice to have this truthy!
+Animation.prototype.isThereAX = 0;
+
 // The current frame of animation
 Animation.prototype.frameNum = 0;
 Animation.prototype.updateFrameNum = function(du){
@@ -56,7 +59,7 @@ Animation.prototype.loadSprites = function(y,w,h,n,s){
 	var sprites = []
 	for (var i = 0; i < n; i++) {
 		var sprite = new Sprite(this.image);
-		sprite.sx = i*w;
+		sprite.sx = this.isThereAX + i*w;
 		sprite.sy = y;
 		sprite.width = w;
 		sprite.height = h;

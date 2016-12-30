@@ -73,7 +73,7 @@ World.prototype.blocks;
 World.prototype.numRooms = 0; 
 World.prototype.mainWayReady = false; 
 World.prototype.map; 
-World.prototype.blockDim = g_canvas.height/14;
+World.prototype.blockDim = g_canvas.height/24;
 
 
 World.prototype.getBlockCoords = function(x,y) {
@@ -153,6 +153,7 @@ World.prototype.update = function (du) {
 World.prototype.isSafeToTransform = function ( x, y) {
 	//to prevent players clipping into terrain by changing hitbox-sizes
 	if(x < 0 || x > (this.world.length - 1)) return true;
+	if(y < 0 || y > (this.world[0].length - 1)) return true;
 	if (this.blocks[x][y]){ 
 		if(this.blocks[x][y].isPassable) return true;
 		else return false;
@@ -240,7 +241,7 @@ World.prototype.createTheLevel = function( rooms, mX, mY){
 };	
 //Returns the x/y c.o. for the middle of the starting room looked up in the "map"
 World.prototype.returnStartLocation = function(){
-	var BS = g_canvas.height/14; //blockSize
+	var BS = this.blockDim; //blockSize
 	for(var i = 0; i < this.map.length ; i++)
 		for(var j = 0; j < this.map[0].length; j++)
 			if(this.map[i][j] === 'S') return {x: BS*(7+(14*j)), y: BS*(7+14*i)};

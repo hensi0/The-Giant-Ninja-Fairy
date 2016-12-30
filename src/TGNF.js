@@ -119,7 +119,7 @@ function renderSimulation(ctx) {
 	
 	var scale = g_CameraZoom;
     ctx.scale(scale, scale);
-	ctx.translate((1 - g_CameraZoom)*0.5*g_canvas.width, (1 - g_CameraZoom)*0.5*g_canvas.height);
+	ctx.translate(((1 - scale)/scale)*0.5*g_canvas.width, ((1 - scale)/scale)*0.5*g_canvas.height);
 	
      
 	ctx.translate(-dx,-dy);
@@ -210,12 +210,19 @@ function makePlayerAnimationDruid(scale) {
 	//image, frameY, frameWidth, frameHeight, numFrames, interval, scale
     Player.idleRight = new Animation(g_images.druid,140,72,140,3,350, scale);
 	Player.idleLeft  = new Animation(g_images.druid,140,72,140,3,250, -scale);
-	Player.walkingRight = new Animation(g_images.druid,418,72,140,8,100, scale);
-	Player.walkingLeft  = new Animation(g_images.druid,418,72,140,8,100, -scale);
-	Player.inAirRight = new Animation(g_images.druid,418,72,140,1,400, scale);
-	Player.inAirLeft  = new Animation(g_images.druid,418,72,140,1,400, -scale);
+	Player.walkingRight = new Animation(g_images.druid,418,74,140,8,100, scale);
+	Player.walkingLeft  = new Animation(g_images.druid,418,74,140,8,100, -scale);
+	Player.inAirRightDown = new Animation(g_images.druid,558,81,140,3,140, scale);
+	Player.inAirLeftDown  = new Animation(g_images.druid,558,81,140,3,140, -scale);
+	Player.inAirRightUp = new Animation(g_images.druid,838,81,140,2,200, scale);
+	Player.inAirLeftUp  = new Animation(g_images.druid,838,81,140,2,200, -scale);
 	Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,80, scale);
 	Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,80, -scale);
+	Player.holdingWallRight = new Animation(g_images.druid,698,81,130,2,200, -scale);
+	Player.holdingWallLeft  = new Animation(g_images.druid,698,81,130,2,200, scale);
+	Player.holdingWall2Right = new Animation(g_images.druid,698,81,130,2,350, -scale, 162);
+	Player.holdingWall2Left  = new Animation(g_images.druid,698,81,130,2,350, scale,  162);
+	
 	
     return Player;
 };
