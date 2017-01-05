@@ -190,6 +190,7 @@ Player.prototype.fly = function () {
 Player.prototype.swap = function (bool) {
 			if(this.SwapCD > 0) return;
 			this.SwapCD = 45;
+			/*
 			if(this.form === 'goat'){
 				if(bool) 	this.goDruid();
 				else 		this.goFairy();
@@ -199,6 +200,14 @@ Player.prototype.swap = function (bool) {
 			}else {
 				if(bool)	this.goGoat();
 				else		this.goDruid();
+			}
+			*/
+			
+			if(this.form === 'druid'){ 
+				this.goFairy();
+			}else {
+				this.cy -= this.getSize().sizeY/1.5;
+				this.goDruid();
 			}
 			//smoke cloud
 };
@@ -267,7 +276,7 @@ Player.prototype.update = function (du) {
 					this.velY = 0;
 					this.holdStateBuffer++;
 					if(this.state['facingRight']) this.velX = 0.01;
-					else this.velX = -0.5;
+					else this.velX = -0.01;
 				}
 		}		
 	} else { this.state['holdingWall'] = false; this.holdStateBuffer = 0;}
@@ -315,12 +324,12 @@ Player.prototype.shootZePlasmaBalls = function (du) {
 Player.prototype.shootZeBoomerang = function () {
 		this.configureRotation();
 		var vMod = 40;
-		var aMod = Math.PI/20 - Math.random()*(Math.PI/10) 
+		var aMod = 0;//Math.PI/20 - Math.random()*(Math.PI/10) 
 		var velx = vMod*Math.cos(this.rotation + aMod);
 		var vely = vMod*Math.sin(this.rotation + aMod);
 		var temp = 1;
 		if(g_mouseX2 <= g_canvas.width/2) temp *= -1;
-		entityManager.fireBullet(this.cx + 2*temp*velx, this.cy - 5 + temp*vely, temp*velx, temp*vely, 10, 0, this, 'boomerang', 1000);
+		entityManager.fireBullet(this.cx + 2*temp*velx, this.cy - 5 + temp*vely, temp*velx, temp*vely, 10, 0, this, 'boomerang', 400);
 		this.rotation = 0;
 };
 
@@ -542,7 +551,7 @@ Player.prototype.updateStatus = function() {
     
 	var atMaxVel = (Math.abs(this.velX)>=(this.maxVelX*0.9))
     if(!this.state['spawning'] && this.state['holdingWall'] && this.holdStateBuffer > 1) 
-		if(this.holdStateBuffer < 20) nextStatus = "holdingWall"+dir;
+		if(this.holdStateBuffer < 15) nextStatus = "holdingWall"+dir;
 		else nextStatus = "holdingWall2"+dir;
 	else if(this.jumpStateBuffer > 1 && !this.state['spawning']) nextStatus = "inAir"+dir;
     else if(this.velX === 0 && !(this.jumpStateBuffer > 1) && !this.state['spawning']) nextStatus = "idle"+(wasMovingLeft?"Left":dir);

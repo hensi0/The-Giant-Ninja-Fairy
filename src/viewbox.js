@@ -19,7 +19,12 @@ viewBox.prototype.chasingY = true;
     
 viewBox.prototype.update = function(du){
 	if(!entityManager._character[0]) return;
+	
+	
 	var Player = entityManager._character[0];
+	
+	
+	
 	/*
 	if(Player.velX === 0 && Player.velY === 0)
 		this.adjustZoom('in');
@@ -102,20 +107,21 @@ viewBox.prototype.update = function(du){
 	var limitD = Player.cy - 0.25*g_canvas.height;
 	
 	//console.log(Math.round(limitL) + " " + Math.round(tempX) + " " + 
-	//			Math.round(limitR) + Math.round(0.3*(g_mouseX - g_canvas.width/2)));
+	//Math.round(limitR) + Math.round(0.3*(g_mouseX - g_canvas.width/2)));
 	var viewPanSpeed = 10;
 	
 	if(tempX - oldX < -viewPanSpeed) tempX = oldX - viewPanSpeed; 
-	if(tempX - oldX > viewPanSpeed) tempX = oldX + viewPanSpeed;
+	if(tempX - oldX > viewPanSpeed)  tempX = oldX + viewPanSpeed;
 	if(tempY - oldY < -viewPanSpeed) tempY = oldY - viewPanSpeed; 
-	if(tempY - oldY > viewPanSpeed) tempY = oldY + viewPanSpeed;
+	if(tempY - oldY > viewPanSpeed)  tempY = oldY + viewPanSpeed;
 	
 	if(tempX > limitL) tempX = limitL;
 	if(tempX < limitR) tempX = limitR;
 	if(tempY < limitU) tempY = limitU;
 	if(tempY > limitD) tempY = limitD;
 	
-	
+	var zommAdjust = Math.sqrt(Math.pow(Math.abs(tempY - oldY),2) + Math.pow(Math.abs(tempX - oldX),2));
+	this.adjustZoom(zommAdjust);
 	g_viewPort.x = tempX;
 	g_viewPort.y = tempY;
 	
@@ -142,17 +148,14 @@ viewBox.prototype.render = function(ctx){
 	}
 };
 
-viewBox.prototype.adjustZoom = function(outOrIn){
+viewBox.prototype.adjustZoom = function(val){
 	//adjusts the zoom depending if you are moveing or not
-	var vel = 0
-	if(outOrIn === 'out'){
-		vel = 0.015*(g_CameraZoom - 1);
-		if(vel > 0.001) vel = 0.001;
-		g_CameraZoom -= vel; 
-	} else if (outOrIn === 'in'){
-		vel = 0.005*(1.4 - g_CameraZoom);
-		if(vel > 0.0005) vel = 0.0005;
-		g_CameraZoom += vel;
+	if(val > 3){
+		vel = 0.0008*( Math.min(3, (val - 3)));
+		if(g_CameraZoom > 1.5) g_CameraZoom -= vel; 
+	} else {
+		vel = 0.0010*(3-val);
+		if(g_CameraZoom < 2) g_CameraZoom += vel;
 	}
 };
 

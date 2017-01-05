@@ -27,6 +27,7 @@ Dog.prototype.cx = 0;
 Dog.prototype.cy = 0;
 Dog.prototype.velX = -1;
 Dog.prototype.velY = 1;
+Dog.prototype.airCounter = 0;
 Dog.prototype.hp = 40;
 Dog.prototype.damagePlayerCD = 60;
 Dog.prototype.initialized = false;
@@ -103,10 +104,13 @@ Dog.prototype.update = function(du) {
 		dir = (this.velX > 0 ? "Right" : "Left");
 		this._lastDir = dir;
 	}
-	if(this.velY !== 0 && !this.state['inWater']) this.status = "inAir"+dir;
+	if(this.velY !== 0 && !this.state['inWater'] && this.airCounter > 1) this.status = "inAir"+dir;
 	else if(this.state.inWater) this.status = "swimming"+dir;
 	else this.status = "walking"+dir;
 	
+	if(this.velY !== 0) this.airCounter++;
+	else this.airCounter = 0;
+		
 	this.animation = this.animations[this.status];
 	
 	this.animation.update(du);
