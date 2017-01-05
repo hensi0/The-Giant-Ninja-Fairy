@@ -140,6 +140,9 @@ generateDog : function(descr) {
     this._enemies.push(new Dog(descr));
 },
 
+generateRanger : function(descr) {
+    this._enemies.push(new ranger(descr));
+},
 
 generateLevel : function(descr) {
     this._world.push(new World(descr));

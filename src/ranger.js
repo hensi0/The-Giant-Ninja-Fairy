@@ -12,54 +12,58 @@
 */
 
 // A generic contructor which accepts an arbitrary descriptor object
-function Enemy(descr) {
+function ranger(descr) {
 	this.setup(descr)
     // Default sprite, if not otherwise specified
-    this._scale = 2.5;
-	if(typeof makeEnemyAnimation == 'function') {
-		this.animations = makeEnemyAnimation(this._scale);
-		this.animation = this.animations['walkingRight'];
-	}
+    this._scale = 1;
+	this.animations = makeDogAnimation(this._scale);
+	this.animation = this.animations['walkingRight'];
 };
 
-// This comes later on when Entity has been implemented: 
-Enemy.prototype = new Character();
-	
+ranger.prototype = new Enemy();
+
 // Initial, inheritable, default values
-Enemy.prototype.cx = 500;
-Enemy.prototype.cy = 483;
-Enemy.prototype.velX = -1;
-Enemy.prototype.velY = 1;
-Enemy.prototype.HP = 1;
-Enemy.prototype.initialized = false;
-Enemy.prototype._lastDir = "Right";
-Enemy.prototype.state = {
-jumping: false,
-offGround: false,
-onGround: true,
-inWater: false
+ranger.prototype.cx = 0;
+ranger.prototype.cy = 0;
+ranger.prototype.velX = -1;
+ranger.prototype.velY = 1;
+ranger.prototype.HP = 40;
+ranger.prototype.maxhp = 40;
+ranger.prototype.damagePlayerCD = 60;
+ranger.prototype.initialized = false;
+ranger.prototype.airDuration = 0;
+ranger.prototype.angryCD = 0;
+ranger.prototype.arrowCD = 0;
+ranger.prototype._lastDir = "Right";
+ranger.prototype.state = {
+	jumping: false,
+	offGround: false,
+	onGround: true,
+	angry: false,
+	biting: false,
+	inWater: false
 };
 
-Enemy.prototype.update = function(du) {
+ranger.prototype.update = function(du) {
 	spatialManager.unregister(this);
-	
 	//check if this is inside the viewport
 	var margin = this.getSize().sizeX; //margin outside of viewport we want to update
-	if(this.cx+this.getSize().sizeX/1.5 < g_viewPort.x-margin ||
-	   this.cx-this.getSize().sizeX/1.5 > g_viewPort.x+g_canvas.width+margin) return;
-	   
-	
+	if(this.cx+this.getSize().sizeX/2 < g_viewPort.x-margin ||
+	   this.cx-this.getSize().sizeX/2 > g_viewPort.x+g_canvas.width+margin) return;
+	var margin = this.getSize().sizeY; //margin outside of viewport we want to update
+	if(this.cy+this.getSize().sizeY/2 < g_viewPort.y-margin ||
+	   this.cy-this.getSize().sizeY/2 > g_viewPort.y+g_canvas.height+margin) return;
 
 	this.updateProxBlocks(this.cx, this.cy, this.cx+this.velX*du, this.cy+this.velY*du);
     if(this._isDeadNow) return entityManager.KILL_ME_NOW;
 
-	//Handles if enemy is in water
+	//Handles if ranger is in water
     if(this.state['inWater']){
         this.maxVelX = 2.3;
         this.maxVelY = 1.1;
     }else {
-        this.maxVelX = 3.9;
-        this.maxVelY = 6.5;
+        this.maxVelX = 1.9;
+        this.maxVelY = 4.5;
     }
 	
 	var nextX = this.cx+this.velX*du;
@@ -73,9 +77,11 @@ Enemy.prototype.update = function(du) {
     var walkingIntoSomething = this.handlePartialCollision(nextX,prevY,"x");
 	var standingOnSomething = this.handlePartialCollision(prevX,nextY,"y");
 	// update location
-    this.cx += this.velX*du;
+    if(!this.state['angry'])this.cx += this.velX*du;
     this.cy += this.velY*du;
 	
+	if(this.velY !== 0) this.airDuration++;
+	else this.airDuration = 0;
 	// Fall down
 	if(!standingOnSomething && this.velY < TERMINAL_VELOCITY && !this.state['inWater']){
 		this.velY += NOMINAL_GRAVITY*du;
@@ -83,48 +89,123 @@ Enemy.prototype.update = function(du) {
 	
 	if(this.state['inWater'] && standingOnSomething) this.velY = -1;
 	// Turn around
+	
 	if(walkingIntoSomething){
 		this.velX *= -1;
 	}
 	
-	if(this.cy > g_canvas.height){
-        this._isDeadNow = true;
-    }
-	
-	//update status
 	var dir;
 	if(this.velX === 0) dir = this._lastDir || "Right";
 	else{
 		dir = (this.velX > 0 ? "Right" : "Left");
 		this._lastDir = dir;
 	}
-	if(this.velY !== 0 && !this.state['inWater']) this.status = "inAir"+dir;
+	
+	this.handleAnimation(dir);
+	//update status
+	
+	this.animation.update(du);
+		
+    this.handleSpecificRangerAction(du, dir);
+
+	spatialManager.register(this);
+};
+
+
+ranger.prototype.handleAnimation = function (dir) {
+	var lastStatus = this.status;
+	if(this.velY !== 0 && !this.state['inWater'] && this.airDuration > 1) this.status = "inAir"+dir;
 	else if(this.state.inWater) this.status = "swimming"+dir;
 	else this.status = "walking"+dir;
 	
-	this.animation = this.animations[this.status];
-	
-	this.animation.update(du);
-	
-		
-    this.handleSpecificEnemyAction(du);
+	if(lastStatus !== this.status){
+		this.animation.reset();
+		this.animation = this.animations[this.status];
+	}
 
-	spatialManager.register(this);
+	
+};
+
+ranger.prototype.shootZeArrow = function () {
+	var dir = this.configureRotation();
+	var vMod = 14;
+	var aMod = Math.PI/30 - Math.random()*(Math.PI/15) 
+	if(dir === "Left") {
+		var velx = -vMod*Math.cos(this.rotation + aMod);
+		var vely = -vMod*Math.sin(this.rotation + aMod);
+	} else {
+		var velx = vMod*Math.cos(this.rotation + aMod);
+		var vely = vMod*Math.sin(this.rotation + aMod);
+	}
+	
+	entityManager.fireBullet(this.cx + 2*velx, this.cy - 3 + vely, velx, vely -4, 3, 0, this, 'arrow');
+};
+
+//for states where you are fireing in a specific directions
+ranger.prototype.configureRotation = function() {
+	var player = entityManager._character[0];
+	var dir;
+	if(player.cx < this.cx){ 
+		dir = "Left";
+		this.rotation = Math.atan((this.cy - player.cy)/(this.cx - player.cx)); 
+		//angle of player to mouse
+	}
+	else {
+		dir = "Right";
+		this.rotation = Math.atan((this.cy - player.cy)/(this.cx - player.cx)); 
+		//angle of player to mouse
+	}
+	return dir;
 }
 
+ranger.prototype.render = function (ctx) {
+	this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
+	this.drawHealthBar(ctx);
+};
 
+ranger.prototype.knockBack = function(x,y) {
+	this.velY = -2;
+	this.angryCD = 150;
+	this.state['angry'] = true;
+};
 
-Enemy.prototype.getSize = function(){
-    var size = {sizeX:10*this._scale,sizeY:15*this._scale};
+ranger.prototype.getSize = function(){
+    var size = {sizeX:35*this._scale,sizeY:20*this._scale};
     return size;
-}
+};
 
-Enemy.prototype.handleSpecificEnemyAction = function(du) {
+ranger.prototype.handleSpecificRangerAction = function(du, dir) {
 	// To be implemented in subclasses.
-}
+	var player = entityManager._character[0];
+	if(!player) return;
+	var px = player.cx;
+	var py = player.cy;
+	
+	if(dir === "Left"){
+		if(px < this.cx && (px + 400) > this.cx && Math.abs(py - this.cy) < 220){
+			this.angryCD = 70;
+			this.state['angry'] = true;
+		}
+	} else {
+		if(px > this.cx && (px - 400) < this.cx && Math.abs(py - this.cy) < 220){
+			this.state['angry'] = true;
+			this.angryCD = 70;
+		}
+	}
+	
+	this.angryCD--;
+	if(this.angryCD < 0) this.state['angry'] = false;
+	
+	if(this.state['angry']){
+		if(this.arrowCD < 0){
+			this.shootZeArrow();
+			this.arrowCD = 80;
+		} else this.arrowCD--;
+	}	
+};
 
 
-Enemy.prototype.handleCollision = function(hitEntity, axis) {
+ranger.prototype.handleCollision = function(hitEntity, axis) {
     var bEdge,lEdge,rEdge,tEdge;
     var standingOnSomething = false;
     var walkingIntoSomething = false;
@@ -148,7 +229,7 @@ Enemy.prototype.handleCollision = function(hitEntity, axis) {
         tEdge = charBelow && sameCol;
         bEdge = charAbove && sameCol;
 
-        // Bad fix to make Character decide what happens to it's subclasses (Enemy, Zelda, Projectile)
+        // Bad fix to make Character decide what happens to it's subclasses (ranger, Zelda, Projectile)
         if(hitEntity instanceof Block) {
             var dir = 0; //direction of hit
             if(!hitEntity._isPassable) {
@@ -163,6 +244,7 @@ Enemy.prototype.handleCollision = function(hitEntity, axis) {
                     this.tempMaxJumpHeight = this.cy - this.maxPushHeight; 
                     var groundY = entityManager._world[0].getLocation((hitEntity.i), (hitEntity.j))[1] // block top y coordinate
                     this.putToGround(groundY);
+					this.state['biting'] = false;
                     dir = 4;
                 } 
                 if(tEdge && this.velY < 0  && axis === "y"){// && this.velY < 0) {
@@ -172,6 +254,18 @@ Enemy.prototype.handleCollision = function(hitEntity, axis) {
                 }
             }
             hitEntity.activate(this, dir);
-        }
+        } else if (hitEntity instanceof Projectile){
+				if(hitEntity.firstHit(this)){
+					hitEntity.hits.push(this);
+					this.takeHit(15);
+					this.knockBack(hitEntity.cx, hitEntity.cy)
+					hitEntity.takeHit();
+				}
+				
+		} else if (hitEntity instanceof Player && this.state['biting'] && this.damagePlayerCD <= 0){
+			hitEntity.knockBack(this.cx, this.cy)
+			hitEntity.takeHit(15);
+			this.damagePlayerCD = 60;
+		}
     return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};
-}
+};

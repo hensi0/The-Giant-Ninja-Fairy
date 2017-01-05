@@ -30,9 +30,10 @@ function World(descr) {
 			var location = this.getLocation(i,j);
 			
 			if(s === 'D'){
-				entityManager.generateDog({cx: location[0], cy: location[1]});
+				//entityManager.generateDog({cx: location[0], cy: location[1]});
+				entityManager.generateRanger({cx: location[0], cy: location[1]});
 				s = 0;
-			} 
+			}
 			//above, left, right and below
 			var a = false;
 			var l = false;
@@ -623,7 +624,7 @@ World.prototype.Worlds =  {
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[0,0,6,0,0,0,0,0,0,0,0,6,0,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,'D',0],
+	[0,0,0,0,0,0,0,0,0,'D','D','D','D',0],
 	[0,0,0,0,0,0,0,0,0,2,2,0,0,7],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,7],
 	[7,0,7,0,0,0,0,0,0,0,0,0,0,7],

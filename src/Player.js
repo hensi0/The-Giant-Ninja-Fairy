@@ -58,7 +58,7 @@ Player.prototype.state = {jumping: true, canJump: false, pushing: false,
 //    "sounds/PlayerWarp.ogg");
 
 //generic variables
-Player.prototype.hp = 100;
+Player.prototype.HP = 100;
 Player.prototype.maxhp = 100;
 Player.prototype.maxVelX = 3.9;
 Player.prototype.maxVelY = 6.5;
@@ -89,13 +89,13 @@ Player.prototype.teleportCD = 1;
 Player.prototype.hasDoubleJumped = false;
 Player.prototype.hasDruiddUp = false;
 Player.prototype.lastWallGrabX = 0;
-Player.prototype.maxboomerangs = 2;
-Player.prototype.boomerangs = 2;
+Player.prototype.maxboomerangs = 1;
+Player.prototype.boomerangs = 1;
 Player.prototype.dashCD = 1;
 
 
 Character.prototype.reset = function () {
-	this.hp = this.maxhp;
+	this.HP = this.maxhp;
 	var pos = entityManager._world[0].returnStartLocation();
     this.setPos(pos.x, pos.y);
 	this._isDeadNow = false;
@@ -166,7 +166,7 @@ Player.prototype.handleJump = function () {
     	this.state['jumping'] = true;
         this.state['hasJumped'] = false;
 		if(this.form === 'druid'){
-			this.velY = -6;
+			this.velY = -5;
 			this.tempMaxJumpHeight = this.cy - this.maxPushHeight;
 		} else if(this.form === 'goat'){
 			this.velY = -4;
@@ -218,7 +218,7 @@ Player.prototype.update = function (du) {
 	if(this.cx === undefined) this.cx = 100;
 	if(this.cy === undefined) this.cy = 300;
 	
-	if(this.hp <= 0) this.isAlive = false;
+	if(this.HP <= 0) this.isAlive = false;
 	if(!this.isAlive){
 		entityManager.enterLevel(1);
 	}
@@ -277,6 +277,8 @@ Player.prototype.update = function (du) {
 					this.holdStateBuffer++;
 					if(this.state['facingRight']) this.velX = 0.01;
 					else this.velX = -0.01;
+					this.tempMaxJumpHeight = this.cy - 0.3*this.maxPushHeight;
+					this.state['offGround'] = false;
 				}
 		}		
 	} else { this.state['holdingWall'] = false; this.holdStateBuffer = 0;}
@@ -304,6 +306,7 @@ Player.prototype.update = function (du) {
 //bassic rendering handled by the animation.js
 Player.prototype.render = function (ctx) {
     this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
+	this.drawHealthBar(ctx);
 };
 
 //LMB functioning while in fairy form
@@ -418,7 +421,7 @@ Player.prototype.dash = function () {
 	var vely = vMod*Math.sin(this.rotation);
 	var temp = 1;
 	if(g_mouseX2 <= g_canvas.width/2) temp *= -1;
-		entityManager.fireBullet(this.cx, this.cy, temp*velx, temp*vely, 10*this._scale, 0, this, 'detector', 30);
+		entityManager.fireBullet(this.cx, this.cy, temp*velx, temp*vely, 15*this._scale, 0, this, 'detector', 30);
 	//this.rotation = 0;
 	//this.state['dashing'] = true;
 	this.velY = 0;

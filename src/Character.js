@@ -36,6 +36,7 @@ Character.prototype.rememberResets = function () {
 
 // Initial, inheritable, default values
 Character.prototype.hp = 1;
+Character.prototype.maxhp = 1;
 Character.prototype.cx = 200;
 Character.prototype.cy = 500;
 Character.prototype.velX = 0;
@@ -95,8 +96,8 @@ Character.prototype.knockBack = function(x,y) {
 
 Character.prototype.takeHit = function(dmg) {
 	if(!dmg) dmg = 1;
-	this.hp -= dmg;
-	if(this.hp <= 0) this._isDeadNow = true;
+	this.HP -= dmg;
+	if(this.HP <= 0) this._isDeadNow = true;
 	// skoppa burt frá spikes
 }
 
@@ -148,6 +149,24 @@ Character.prototype.update = function (du) {
 	console.log("std unit update");
 	
 };
+
+Character.prototype.drawHealthBar = function (ctx) {
+    ctx.beginPath();
+    ctx.moveTo(this.cx - this.getSize().sizeX/2, this.cy - this.getSize().sizeY/2 - 8);
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = "5";
+    ctx.lineTo(this.cx + this.getSize().sizeX/2, this.cy - this.getSize().sizeY/2 - 8);
+    ctx.stroke();
+    ctx.beginPath();
+    var n = this.HP/this.maxhp;
+    ctx.moveTo(this.cx - this.getSize().sizeX/2, this.cy - this.getSize().sizeY/2 - 8);
+    ctx.strokeStyle = "green";
+    ctx.lineWidth = "5";
+    ctx.lineTo(this.cx - this.getSize().sizeX/2 + n*this.getSize().sizeX, 
+									this.cy - this.getSize().sizeY/2 - 8);
+    ctx.stroke();
+	ctx.lineWidth = "1";
+}
 
 Character.prototype.render = function (ctx) {
         var origScale = this.sprite.scale;

@@ -253,8 +253,8 @@ function makeDogAnimation(scale) {
 	//image, frameX, frameY, frameWidth, frameHeight, numFrames, interval, scale
     Dog.walkingRight = new Animation(g_images.dawg,0,45,48,4,400, scale);
 	Dog.walkingLeft  = new Animation(g_images.dawg,0,45,48,4,400, -scale);
-	Dog.inAirRight = new Animation(g_images.bricks,0,32,32,1,400, scale);
-	Dog.inAirLeft  = new Animation(g_images.bricks,0,32,32,1,400, -scale);
+	Dog.inAirRight = new Animation(g_images.dawg,0,45,48,4,100, scale, 245);
+	Dog.inAirLeft  = new Animation(g_images.dawg,0,45,48,4,100, -scale, 245);
 	Dog.swimmingRight = new Animation(g_images.bricks,0,32,32,1,400, scale);
 	Dog.swimmingLeft  = new Animation(g_images.bricks,0,32,32,1,400, -scale);
 
@@ -270,6 +270,15 @@ function makeBombAnimation(scale) {
 	bomb.flash = new Animation(g_images.pixie,474,40,40,10,80, scale);
 
     return bomb;
+};
+
+
+function makeBoomerangAnimation(scale) {
+    var boomerang = {};	
+	//image, frameX, frameY, frameWidth, frameHeight, numFrames, interval, scale
+    boomerang.boomerang = new Animation(g_images.druid,993,32,32,29,50, scale);	
+
+    return boomerang;
 };
 
 function preloadDone() {

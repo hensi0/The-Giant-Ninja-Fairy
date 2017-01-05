@@ -27,9 +27,14 @@ Dog.prototype.cx = 0;
 Dog.prototype.cy = 0;
 Dog.prototype.velX = -1;
 Dog.prototype.velY = 1;
+<<<<<<< HEAD
 Dog.prototype.airCounter = 0;
 Dog.prototype.hp = 40;
+=======
+Dog.prototype.HP = 40;
+>>>>>>> origin/master
 Dog.prototype.damagePlayerCD = 60;
+Dog.prototype.airDuration = 0;
 Dog.prototype.initialized = false;
 Dog.prototype.angryCD = 0;
 Dog.prototype._lastDir = "Right";
@@ -96,22 +101,18 @@ Dog.prototype.update = function(du) {
 		this.velX *= -1;
 	}
 	
-	
-	//update status
 	var dir;
 	if(this.velX === 0) dir = this._lastDir || "Right";
 	else{
 		dir = (this.velX > 0 ? "Right" : "Left");
 		this._lastDir = dir;
 	}
-	if(this.velY !== 0 && !this.state['inWater'] && this.airCounter > 1) this.status = "inAir"+dir;
-	else if(this.state.inWater) this.status = "swimming"+dir;
-	else this.status = "walking"+dir;
 	
-	if(this.velY !== 0) this.airCounter++;
-	else this.airCounter = 0;
-		
-	this.animation = this.animations[this.status];
+	if(this.velY !== 0) this.airDuration++;
+	else 				this.airDuration = 0;
+	this.handleAnimation(dir);
+	//update status
+
 	
 	this.animation.update(du);
 	
@@ -123,8 +124,24 @@ Dog.prototype.update = function(du) {
 	spatialManager.register(this);
 };
 
+
+Dog.prototype.handleAnimation = function (dir) {
+	var lastStatus = this.status;
+	if(this.velY !== 0 && !this.state['inWater'] && this.airDuration > 1) this.status = "inAir"+dir;
+	else if(this.state.inWater) this.status = "swimming"+dir;
+	else this.status = "walking"+dir;
+	
+	if(lastStatus !== this.status){
+		this.animation.reset();
+		this.animation = this.animations[this.status];
+	}
+
+	
+};
+
 Dog.prototype.render = function (ctx) {
 	this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
+	this.drawHealthBar(ctx);
 };
 
 Dog.prototype.knockBack = function(x,y) {
@@ -220,10 +237,10 @@ Dog.prototype.handleCollision = function(hitEntity, axis) {
                 }
             }
             hitEntity.activate(this, dir);
-        } else if (hitEntity instanceof Projectile){
-			this.takeHit(hitEntity.radius);
-			this.knockBack(hitEntity.cx, hitEntity.cy)
-			hitEntity.takeHit();
+        //} else if (hitEntity instanceof Projectile){
+			//this.takeHit(hitEntity.radius);
+			//this.knockBack(hitEntity.cx, hitEntity.cy)
+			//hitEntity.takeHit();
 		} else if (hitEntity instanceof Player && this.state['biting'] && this.damagePlayerCD <= 0){
 			hitEntity.knockBack(this.cx, this.cy)
 			hitEntity.takeHit(15);
