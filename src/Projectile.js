@@ -28,25 +28,31 @@ function Projectile(descr) {
    
 	if(this.type === 'detector'){
 		var sprite = 'blank';
+		this.renderStyle = 'sprite';
 	}
    
-	if(this.type === 'bomb' || this.type === 'boomerang'){
-    var sprite = new Sprite(g_images.pixie);
-		sprite.sx = 0 + Math.floor(Math.random()*8)*20;
-		sprite.sy = 414;
-		sprite.width = 20;
-		sprite.height = 20;
-		sprite.scale = 1;
-		sprite.drawAt = function(ctx,x,y){
-			ctx.drawImage(this.image, this.sx, this.sy, this.width, this.height, x, y, this.width*this.scale, this.height*this.scale);
-		};
-	
-	this.rotation = Math.random()*3.14;
-   }
+	if(this.type === 'bomb' || this.type === 'arrow'){
+		var sprite = new Sprite(g_images.pixie);
+			sprite.sx = 0 + Math.floor(Math.random()*8)*20;
+			sprite.sy = 414;
+			sprite.width = 20;
+			sprite.height = 20;
+			sprite.scale = 1;
+			sprite.drawAt = function(ctx,x,y){
+				ctx.drawImage(this.image, this.sx, this.sy, this.width, this.height, x, y, this.width*this.scale, this.height*this.scale);
+			};
+		this.renderStyle = 'sprite';
+		this.rotation = Math.random()*3.14;
+	}
+	if(this.type === 'boomerang'){
+		this.animations = makeBoomerangAnimation(1);
+		this.animation = this.animations['boomerang'];
+		this.rendertype = 'animation';
+	}
    
 	this.sprite = sprite || this.sprite;
-	if(this.type !== 'boomerang')this.hp = 1;
-	else this.hp = 50;
+	if(this.type !== 'boomerang')this.HP = 1;
+	else this.HP = 100;
 	if(!this.lifeSpan) this.lifeSpan = (3500 / NOMINAL_UPDATE_INTERVAL);
 	this.startinglifeSpan = this.lifeSpan;
 }
@@ -64,8 +70,9 @@ Projectile.prototype.velY = 1;
 Projectile.prototype.color;
 Projectile.prototype.alpha = 0.7;
 Projectile.prototype.boomerangScaler = 1;
+Projectile.prototype.renderStyle;
 Projectile.prototype.startinglifeSpan;
-
+Projectile.prototype.hits = [];
 //
 
 // Convert times from milliseconds to "nominal" time units.
@@ -80,9 +87,10 @@ Projectile.prototype.update = function (du) {
     if(this.lifeSpan < 0) this._isDeadNow = true;
 	this.lifeSpan -= du;
 	
-	this.rotation += 0.08;
+	if(this.type !== 'boomerang' && this.type !== 'arrow') this.rotation += 0.08;
 	
 	if(this._isDeadNow){
+		this.hits = [];	
 		if(this.type === 'detector'){
 			if(this.shooter instanceof Player){
 				if(this.shooter.form === 'fairy' && (this.lifeSpan < (this.startinglifeSpan - 3))){ 
@@ -98,10 +106,17 @@ Projectile.prototype.update = function (du) {
 		return entityManager.KILL_ME_NOW;
 	}
 	
+	if(this.animation) this.animation.update(du);
+	
 	if(this.type === 'detector' && this.shooter.form === 'druid'){
-		this.shooter.cx = this.cx - 0.5*this.velX;
-		this.shooter.cy = this.cy - 0.5*this.velY;
+		//this.shooter.cx = this.cx - 0.5*this.velX;
+		//this.shooter.cy = this.cy - 0.5*this.velY;
+		this.shooter.velX = this.velX*0.2*du;
+		this.shooter.velY = this.velY*0.2*du;
+		
 	}
+	
+	if(this.type === 'arrow') this.velY += 0.1;
 /*
 	this.animation.update(du);
 	
@@ -117,12 +132,12 @@ Projectile.prototype.update = function (du) {
 */
 	if(this.alpha < (1-(du/50)))
 		this.alpha += du/50;
-	if(Math.abs(this.velX) < 20 && Math.abs(this.velY) < 20 && this.type !== 'boomerang')
+	if(Math.abs(this.velX) < 20 && Math.abs(this.velY) < 20 && this.type === 'bomb')
 	{ 
 		this.velX *= Math.pow(1.03, du);
 		this.velY *= Math.pow(1.03, du);
+		this.radius += 0.015*du;
 	}
-	if(this.type === 'bomb')this.radius += 0.015*du;
 	if(this.type === 'boomerang' && this.boomerangScaler > -1) this.boomerangScaler -= 0.014*du;
 
 	if(this.type === 'boomerang' && this.boomerangScaler < 0){
@@ -156,21 +171,30 @@ Projectile.prototype.getSize = function () {
     return {sizeX: 2*this.radius, sizeY: 2*this.radius};
 };
 
+Projectile.prototype.firstHit = function (enem) {
+    for(var i = 0; i < this.hits.length; i++){
+		if(enem === this.hits[i]) return false;
+	} return true;
+};
+
 Projectile.prototype.render = function (ctx) {
-	if(this.sprite === 'blank') return;
-    var oldAlpha = ctx.globalAlpha;
-	ctx.save();
-	// Use particle specific values
-	ctx.globalAlpha = this.alpha;
-	// Draw the thing
-	this.sprite.scale = 0.15*this.radius;
-	this.sprite.drawCentredAt(ctx, this.cx, this.cy, this.rotation);
-    //util.fillCircle(ctx,this.cx, this.cy, this.radius);
-	// give the context back as we found it
-	ctx.globalAlpha = oldAlpha;
-	ctx.beginPath();
-	ctx.restore();
-	
+	if(this.renderStyle === 'sprite'){
+		if(this.sprite === 'blank') return;
+		var oldAlpha = ctx.globalAlpha;
+		ctx.save();
+		// Use particle specific values
+		ctx.globalAlpha = this.alpha;
+		// Draw the thing
+		this.sprite.scale = 0.15*this.radius;
+		this.sprite.drawCentredAt(ctx, this.cx, this.cy, this.rotation);
+		//util.fillCircle(ctx,this.cx, this.cy, this.radius);
+		// give the context back as we found it
+		ctx.globalAlpha = oldAlpha;
+		ctx.beginPath();
+		ctx.restore();
+	} else {
+		this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
+	}
 };
 
 
@@ -181,17 +205,26 @@ Projectile.prototype.handleCollision = function(hitEntity, axis) {
 	
 	if(hitEntity instanceof Block && !hitEntity._isPassable) {
         this.takeHit(1);
-		this.boomerangScaler = -1;
+		//makes boomerang turn around upon hitting a brick
+		if(this.boomerangScaler > -0.5) this.boomerangScaler = -0.5;
     }
 	
-	else if(hitEntity instanceof Dog && this.shooter instanceof Player) {
-        this.takeHit(1);
-		hitEntity.takeHit(this.radius);
+	else if(hitEntity instanceof Enemy && this.shooter instanceof Player) {
+        
+		if(this.firstHit(hitEntity)){
+			this.hits.push(hitEntity);
+			hitEntity.takeHit(15);
+		}
     }
 	//catch the boomerang
 	else if(hitEntity instanceof Player && this.type === 'boomerang') {
-		hitEntity.boomerangs++;
+		if(hitEntity.boomerangs < hitEntity.maxboomerangs) hitEntity.boomerangs++;
         if(this.lifeSpan < (this.startinglifeSpan - 3)) this.takeHit(100);
+    } 
+	
+	else if(hitEntity instanceof Player && this.shooter instanceof Enemy) {
+		hitEntity.takeHit(15);
+        this.takeHit(1);
     }
 	/*
 	else if(hitEntity instanceof Zelda && this.shooter instanceof Shooter) {

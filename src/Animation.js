@@ -55,6 +55,27 @@ Animation.prototype.renderAt = function(ctx,cx,cy,rot){
 	frame.drawCentredAt(ctx,cx,cy,rot);
 };
 
+
+Animation.prototype.renderGrayAt = function(ctx,cx,cy,rot){
+	if (rot === undefined) rot = 0;
+	var frame = this.sprites[this.frameNum];
+	console.log(frame);
+	var imgPixels = frame.image.getImageData(0, 0, frame.width, frame.height);
+     
+    for(var y = 0; y < imgPixels.height; y++){
+        for(var x = 0; x < imgPixels.width; x++){
+            var i = (y * 4) * imgPixels.width + x * 4;
+            var avg = (imgPixels.data[i] + imgPixels.data[i + 1] + imgPixels.data[i + 2]) / 3;
+            imgPixels.data[i] = avg; 
+            imgPixels.data[i + 1] = avg; 
+            imgPixels.data[i + 2] = avg;
+        }
+    }
+	
+	imgPixels.drawCentredAt(ctx,cx,cy,rot);
+};
+
+
 Animation.prototype.loadSprites = function(y,w,h,n,s){
 	var sprites = []
 	for (var i = 0; i < n; i++) {
