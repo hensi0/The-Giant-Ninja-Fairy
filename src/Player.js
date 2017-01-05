@@ -51,7 +51,7 @@ Player.prototype.state = {jumping: true, canJump: false, pushing: false,
 							offGround: true, casting: false, hasJumped: false, 
 							onGround: false, idle: false, flying: false, 
 							facingRight: true, inWater: false, fairyFire: false,
-							spawning: true, holdingWall: false}
+							spawning: true, holdingWall: false, dashing: false}
 							
 // Sounds (should be preloaded and initialized in constructor):
 // Player.prototype.warpSound = new Audio(
@@ -108,7 +108,7 @@ Player.prototype.resetStates = function () {
 							offGround: true, casting: false, hasJumped: false,
 							onGround: false, idle: false, flying: false, 
 							facingRight: true, inWater: false, fairyFire: false,
-							spawning: true, holdingWall: false}
+							spawning: true, holdingWall: false, dashing: false}
 };
 
 
@@ -297,7 +297,7 @@ Player.prototype.update = function (du) {
     this.updateJump(bEdge);
 
 	this.updateStatus();
-	if(this.animation.update(du) === 1) {this.state['spawning'] = false; this.updateStatus();}
+	if(this.animation.update(du) === 1) {this.state['spawning'] = false; this.state['dashing'] = false; this.updateStatus();}
 
 	spatialManager.register(this);
 	
@@ -399,13 +399,13 @@ Player.prototype.RMB = function (bool) {
 
 //Special ability in fairy form
 Player.prototype.teleport = function () {
-	var vMod = 50;
+	var vMod = 1;
 	this.configureRotation();
 	var velx = vMod*Math.cos(this.rotation);
 	var vely = vMod*Math.sin(this.rotation);
 	var temp = 1;
 	if(g_mouseX2 <= g_canvas.width/2) temp *= -1;
-		entityManager.fireBullet(this.cx, this.cy, temp*velx, temp*vely, 10, 0, this, 'detector', 16);
+		entityManager.fireBullet(this.cx, this.cy, temp*velx, temp*vely, 10, 0, this, 'detector', 600);
 	this.rotation = 0;
 	this.state['spawning'] = true;
 	this.velY = 0;
@@ -427,6 +427,7 @@ Player.prototype.dash = function () {
 	this.velY = 0;
 	this.velX = 0;
 	this.dashCD = 100;
+	this.state['dashing'] = true;
 };
 
 
@@ -476,6 +477,7 @@ Player.prototype.handleCollision = function(hitEntity, axis) {
                     var groundY = entityManager._world[0].getLocation((hitEntity.i), (hitEntity.j))[1] // block top y coordinate
                     this.putToGround(groundY);
 					this.lastWallGrabX = 0;
+					this.state['dashing'] = false;
                     dir = 4;
                 } 
                 if(tEdge && this.velY < 0  && axis === "y"){// && this.velY < 0) {
@@ -556,7 +558,7 @@ Player.prototype.updateStatus = function() {
     if(!this.state['spawning'] && this.state['holdingWall'] && this.holdStateBuffer > 1) 
 		if(this.holdStateBuffer < 15) nextStatus = "holdingWall"+dir;
 		else nextStatus = "holdingWall2"+dir;
-	else if(this.jumpStateBuffer > 1 && !this.state['spawning']) nextStatus = "inAir"+dir;
+	else if(this.jumpStateBuffer > 1 && !this.state['spawning']){if(this.state['dashing']) nextStatus = "dashing"+dir; else nextStatus = "inAir"+dir;}
     else if(this.velX === 0 && !(this.jumpStateBuffer > 1) && !this.state['spawning']) nextStatus = "idle"+(wasMovingLeft?"Left":dir);
     else if(!(this.jumpStateBuffer > 1) && !this.state['spawning']) nextStatus = "walking"+dir;
 	else nextStatus = "spawning"+dir;

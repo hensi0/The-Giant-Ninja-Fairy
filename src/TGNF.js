@@ -212,8 +212,8 @@ function makePlayerAnimationDruid(scale) {
 	Player.idleLeft  = new Animation(g_images.druid,140,72,140,3,250, -scale);
 	Player.walkingRight = new Animation(g_images.druid,418,74,140,8,100, scale);
 	Player.walkingLeft  = new Animation(g_images.druid,418,74,140,8,100, -scale);
-	//Player.walkingRight = new Animation(g_images.druid,280,81,140,5,130, scale);
-	//Player.walkingLeft  = new Animation(g_images.druid,280,81,140,5,130, -scale);
+	Player.dashingRight = new Animation(g_images.druid,300,90,90,11,70, scale);
+	Player.dashingLeft  = new Animation(g_images.druid,300,90,90,11,70, -scale);
 	Player.inAirRightDown = new Animation(g_images.druid,558,81,140,3,140, scale);
 	Player.inAirLeftDown  = new Animation(g_images.druid,558,81,140,3,140, -scale);
 	Player.inAirRightUp = new Animation(g_images.druid,838,81,140,2,200, scale);

@@ -255,12 +255,10 @@ ranger.prototype.handleCollision = function(hitEntity, axis) {
             }
             hitEntity.activate(this, dir);
         } else if (hitEntity instanceof Projectile){
-				if(hitEntity.firstHit(this)){
-					hitEntity.hits.push(this);
-					this.takeHit(15);
-					this.knockBack(hitEntity.cx, hitEntity.cy)
-					hitEntity.takeHit();
-				}
+			hitEntity.hits.push(this);
+			//this.takeHit(1);
+			this.knockBack(hitEntity.cx, hitEntity.cy)
+			hitEntity.takeHit();
 				
 		} else if (hitEntity instanceof Player && this.state['biting'] && this.damagePlayerCD <= 0){
 			hitEntity.knockBack(this.cx, this.cy)

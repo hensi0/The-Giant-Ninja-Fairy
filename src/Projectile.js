@@ -52,7 +52,7 @@ function Projectile(descr) {
    
 	this.sprite = sprite || this.sprite;
 	if(this.type !== 'boomerang')this.HP = 1;
-	else this.HP = 100;
+	else this.HP = 1000;
 	if(!this.lifeSpan) this.lifeSpan = (3500 / NOMINAL_UPDATE_INTERVAL);
 	this.startinglifeSpan = this.lifeSpan;
 }
@@ -113,7 +113,6 @@ Projectile.prototype.update = function (du) {
 		//this.shooter.cy = this.cy - 0.5*this.velY;
 		this.shooter.velX = this.velX*0.2*du;
 		this.shooter.velY = this.velY*0.2*du;
-		
 	}
 	
 	if(this.type === 'arrow') this.velY += 0.1;
@@ -160,7 +159,7 @@ Projectile.prototype.update = function (du) {
 
     // (Re-)Register
     spatialManager.register(this);
-
+	if(this.type === 'detector' && this.shooter.form === 'fairy') this.update(du);
 };
 
 Projectile.prototype.getPos = function () {
@@ -211,15 +210,13 @@ Projectile.prototype.handleCollision = function(hitEntity, axis) {
 	
 	else if(hitEntity instanceof Enemy && this.shooter instanceof Player) {
         
-		if(this.firstHit(hitEntity)){
-			this.hits.push(hitEntity);
-			hitEntity.takeHit(15);
-		}
+		hitEntity.takeHit(1);
+		
     }
 	//catch the boomerang
 	else if(hitEntity instanceof Player && this.type === 'boomerang') {
 		if(hitEntity.boomerangs < hitEntity.maxboomerangs) hitEntity.boomerangs++;
-        if(this.lifeSpan < (this.startinglifeSpan - 3)) this.takeHit(100);
+        if(this.lifeSpan < (this.startinglifeSpan - 3)) this.takeHit(1000);
     } 
 	
 	else if(hitEntity instanceof Player && this.shooter instanceof Enemy) {
