@@ -218,8 +218,8 @@ function makePlayerAnimationDruid(scale) {
 	Player.inAirLeftDown  = new Animation(g_images.druid,558,81,140,3,140, -scale);
 	Player.inAirRightUp = new Animation(g_images.druid,838,81,140,2,200, scale);
 	Player.inAirLeftUp  = new Animation(g_images.druid,838,81,140,2,200, -scale);
-	Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,80, scale);
-	Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,80, -scale);
+	Player.spawningRight = new Animation(g_images.druid,140,72,140,3,100, scale, 216);
+	Player.spawningLeft  = new Animation(g_images.druid,140,72,140,3,100, -scale, 216);
 	Player.holdingWallRight = new Animation(g_images.druid,698,81,130,2,150, -scale);
 	Player.holdingWallLeft  = new Animation(g_images.druid,698,81,130,2,150, scale);
 	Player.holdingWall2Right = new Animation(g_images.druid,698,81,130,2,350, -scale, 162);
@@ -241,8 +241,10 @@ function makePlayerAnimationFairy(scale) {
 	Player.shootingLeft  = new Animation(g_images.pixie,70,72,69,3,133, -scale);
 	Player.walkingRight = new Animation(g_images.pixie,0,72,69,6,100, scale);
 	Player.walkingLeft  = new Animation(g_images.pixie,0,72,69,6,100, -scale);
-	Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,80, scale);
-	Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,80, -scale);
+	//Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,80, scale);
+	//Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,80, -scale);
+	Player.spawningRight = new Animation(g_images.pixie,450,72,140,4,70, scale);
+	Player.spawningLeft  = new Animation(g_images.pixie,450,72,140,4,70, -scale);
 	
     return Player;
 };

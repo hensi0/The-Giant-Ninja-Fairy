@@ -166,10 +166,10 @@ Player.prototype.handleJump = function () {
     	this.state['jumping'] = true;
         this.state['hasJumped'] = false;
 		if(this.form === 'druid'){
-			this.velY = -5;
+			this.velY = -2;
 			this.tempMaxJumpHeight = this.cy - this.maxPushHeight;
 		} else if(this.form === 'goat'){
-			this.velY = -4;
+			this.velY = -2;
 			this.tempMaxJumpHeight = this.cy - 0.6*this.maxPushHeight; 
 		} else if(this.form === 'fairy'){
 			this.velY = -3;
@@ -570,6 +570,7 @@ Player.prototype.updateStatus = function() {
 	
     // Update animation
     if(nextStatus!==this.status){
+		
         this.status = nextStatus;
 		this.animation.reset();
         this.animation = this.animations[this.status];
@@ -631,7 +632,7 @@ Player.prototype.updateVelocity = function(du) {
         else this.velY += (NOMINAL_GRAVITY*du)/10;
     }else if(this.state['jumping'] && this.state['pushing']){
 		this.state['hasJumped'] = false;
-		if(this.form === 'druid'){	this.velY = -6; this.lastWallGrabX = this.cx;}
+		if(this.form === 'druid'){	this.velY = -3.4 ; this.lastWallGrabX = this.cx;}
 		else if(this.form === 'goat') this.velY = -4;
 		else if(this.form === 'fairy') this.fly();
 	}else if(!this.state['jumping']){
