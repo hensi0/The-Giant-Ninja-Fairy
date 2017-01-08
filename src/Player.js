@@ -235,6 +235,7 @@ Player.prototype.update = function (du) {
 	// Update speed/location and handle jumps/collisions
     if(this.state['fairyFire']) this.updateVelocity(du*0.4); 
 	else 						this.updateVelocity(du);
+	
 	if(this.SwapCD > 0)this.SwapCD--;
 	if (keys[this.KEY_SWAP1]) {
 			this.swap(true);
@@ -277,7 +278,7 @@ Player.prototype.update = function (du) {
 					this.holdStateBuffer++;
 					if(this.state['facingRight']) this.velX = 0.01;
 					else this.velX = -0.01;
-					this.tempMaxJumpHeight = this.cy - 0.3*this.maxPushHeight;
+					this.tempMaxJumpHeight = this.cy - 0.6*this.maxPushHeight;
 					this.state['offGround'] = false;
 				}
 		}		
@@ -332,7 +333,7 @@ Player.prototype.shootZeBoomerang = function () {
 		var vely = vMod*Math.sin(this.rotation + aMod);
 		var temp = 1;
 		if(g_mouseX2 <= g_canvas.width/2) temp *= -1;
-		entityManager.fireBullet(this.cx + 2*temp*velx, this.cy - 5 + temp*vely, temp*velx, temp*vely, 10, 0, this, 'boomerang', 400);
+		entityManager.fireBullet(this.cx , this.cy - 5 + temp*vely, temp*velx, temp*vely, 10, 0, this, 'boomerang', 400);
 		this.rotation = 0;
 };
 
@@ -421,13 +422,14 @@ Player.prototype.dash = function () {
 	var vely = vMod*Math.sin(this.rotation);
 	var temp = 1;
 	if(g_mouseX2 <= g_canvas.width/2) temp *= -1;
-		entityManager.fireBullet(this.cx, this.cy, temp*velx, temp*vely, 15*this._scale, 0, this, 'detector', 30);
+		entityManager.fireBullet(this.cx, this.cy, temp*velx, temp*vely, this._scale, 0, this, 'detector', 30);
 	//this.rotation = 0;
 	//this.state['dashing'] = true;
 	this.velY = 0;
 	this.velX = 0;
 	this.dashCD = 100;
 	this.state['dashing'] = true;
+	this.state['jumping'] = true;
 };
 
 
@@ -547,6 +549,7 @@ Player.prototype.updateStatus = function() {
     var wasMovingLeft = (this.velX < 0);
 	
     
+    
 	if(this.velX === 0) dir = (this.state['facingRight'] ? "Right" : "Left");
 	
 	else{
@@ -562,17 +565,17 @@ Player.prototype.updateStatus = function() {
     else if(this.velX === 0 && !(this.jumpStateBuffer > 1) && !this.state['spawning']) nextStatus = "idle"+(wasMovingLeft?"Left":dir);
     else if(!(this.jumpStateBuffer > 1) && !this.state['spawning']) nextStatus = "walking"+dir;
 	else nextStatus = "spawning"+dir;
-	
-	if(nextStatus === "inAir"+dir && this.form === 'druid'){
+	if(nextStatus === "inAir"+dir && this.form === 'druid'){	
 		if(this.velY >= 0) 	nextStatus += "Down";
 		else 			 	nextStatus += "Up";
 	}
 	
     // Update animation
     if(nextStatus!==this.status){
-		
+		if(this.status)
+			if(nextStatus.substring(0,3) !== this.status.substring(0,3))
+				this.animation.reset();
         this.status = nextStatus;
-		this.animation.reset();
         this.animation = this.animations[this.status];
     }
     

@@ -60,7 +60,7 @@ function lockChangeAlert() {
     document.addEventListener("mousemove", updatePosition, false);
   } else {
 	g_isUpdatePaused = true;
-	g_canvas.style.display = "none";
+	//g_canvas.style.display = "none";
     g_mouseLocked = true;
     document.removeEventListener("mousemove", updatePosition, false);
   }

@@ -28,6 +28,7 @@ function Block(descr) {
 		case 2: 	this.sprite = g_sprites.spikes;
 					this._isPassable = true;
 					this.sizeMod = 0.6;
+					this.damageCD = 0;
 		break; 
 		
 		case 3:		this.sprite = g_sprites.bricks;
@@ -36,6 +37,10 @@ function Block(descr) {
 		break;
 		
 		case 'E':	this.sprite = g_sprites.door;
+					this._isPassable = true;
+		break;
+		
+		case 'T':	this.sprite = g_sprites.loot;
 					this._isPassable = true;
 		break;
 		
@@ -49,6 +54,7 @@ function Block(descr) {
 
 Block.prototype.rotation = 0;
 Block.prototype.sizeMod = 1;
+Block.prototype.damageCD = 0;
 Block.prototype._isDeadNow = false;
 Block.prototype._isPassable = false;
 Block.prototype._isBreakable = false;
@@ -88,7 +94,8 @@ Block.prototype.rndRotation = function () {
 };
 
 Block.prototype.render = function (ctx,x,y,w,h) {
-	
+	if(this._isDeadNow) return entityManager.KILL_ME_NOW;
+	if(this.damageCD > 0) this.damageCD--;
 	var img_h = this.sprite.height;
 	var scale = h/img_h;
 	this.sprite.scale = scale;
@@ -110,10 +117,17 @@ Block.prototype.activate = function (Char, direction) {
 		case 1: 	
 		break; 
 		
-		case 2: 	if(Char instanceof Player) Char.takeHit(0.1);
+		case 2: 	if(Char instanceof Player && this.damageCD === 0){ 
+						Char.takeHit(10);
+						this.damageCD = 50;
+					}
 		break; 
 		
 		case 'E':	entityManager.enterLevel(entityManager._level +  1)
+		break;
+		
+		case 'T':	this._isDeadNow = true;
+					//get treasure
 		break;
 		
 		default: 

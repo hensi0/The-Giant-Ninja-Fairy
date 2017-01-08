@@ -29,9 +29,25 @@ function Projectile(descr) {
 	if(this.type === 'detector'){
 		var sprite = 'blank';
 		this.renderStyle = 'sprite';
+		if(this.shooter.form === 'druid') this.etherial = true;
 	}
-   
-	if(this.type === 'bomb' || this.type === 'arrow'){
+	if(this.type === 'arrow') { 
+		var sprite = new Sprite(g_images.dawg);
+		this.renderStyle = 'sprite';
+		this.dmg = 15;
+		sprite.sx = 0 
+		sprite.sy = 254;
+		sprite.width = 100;
+		sprite.height = 70;
+		sprite.scale = 1;
+		sprite.drawAt = function(ctx,x,y){
+			ctx.drawImage(this.image, this.sx, this.sy, this.width, this.height, x, y, this.width*this.scale, this.height*this.scale);
+		};
+		this.rotation = Math.random()*3.14;
+		this.radius = 5;
+	}
+	
+	if(this.type === 'bomb'){
 		var sprite = new Sprite(g_images.pixie);
 			sprite.sx = 0 + Math.floor(Math.random()*8)*20;
 			sprite.sy = 414;
@@ -43,6 +59,7 @@ function Projectile(descr) {
 			};
 		this.renderStyle = 'sprite';
 		this.rotation = Math.random()*3.14;
+		this.dmg = 5;
 	}
 	if(this.type === 'boomerang'){
 		this.animations = makeBoomerangAnimation(1);
@@ -63,6 +80,7 @@ Projectile.prototype = new Character(); // Lol remember to change name of Charac
 Projectile.prototype.friendly = false;  //override if Mario made it 
 Projectile.prototype.radius = 3;        //override in constructor for specific r
 Projectile.prototype.rotation = 0;
+Projectile.prototype.etherial = false;
 Projectile.prototype.cx = 200;
 Projectile.prototype.cy = 200;
 Projectile.prototype.velX = 1;
@@ -111,11 +129,11 @@ Projectile.prototype.update = function (du) {
 	if(this.type === 'detector' && this.shooter.form === 'druid'){
 		//this.shooter.cx = this.cx - 0.5*this.velX;
 		//this.shooter.cy = this.cy - 0.5*this.velY;
-		this.shooter.velX = this.velX*0.2*du;
-		this.shooter.velY = this.velY*0.2*du;
+		this.shooter.velX = Math.min(3,this.velX*0.15*du);
+		this.shooter.velY = Math.min(3,this.velY*0.15*du);
 	}
 	
-	if(this.type === 'arrow') this.velY += 0.1;
+	if(this.type === 'arrow') {this.velY += 0.1; this.configureRotation();}
 /*
 	this.animation.update(du);
 	
@@ -137,7 +155,7 @@ Projectile.prototype.update = function (du) {
 		this.velY *= Math.pow(1.03, du);
 		this.radius += 0.015*du;
 	}
-	if(this.type === 'boomerang' && this.boomerangScaler > -1) this.boomerangScaler -= 0.014*du;
+	if(this.type === 'boomerang' && this.boomerangScaler > -1) this.boomerangScaler -= 0.02*du;
 
 	if(this.type === 'boomerang' && this.boomerangScaler < 0){
 		var rotation = Math.atan((this.cy - this.shooter.cy)/(this.cx - this.shooter.cx));
@@ -203,25 +221,30 @@ Projectile.prototype.handleCollision = function(hitEntity, axis) {
     var walkingIntoSomething
 	
 	if(hitEntity instanceof Block && !hitEntity._isPassable) {
-        this.takeHit(1);
+		if(!this.etherial)this.takeHit(1);
 		//makes boomerang turn around upon hitting a brick
 		if(this.boomerangScaler > -0.5) this.boomerangScaler = -0.5;
+		if(this.type === 'arrow') entityManager.generateParticle(this.cx + 0.5*this.velX, this.cy + 0.5*this.velY, this.radius, this.rotation, 0 , 'arrow1', false);
+		
     }
 	
 	else if(hitEntity instanceof Enemy && this.shooter instanceof Player) {
         
-		hitEntity.takeHit(1);
-		
+		hitEntity.takeHit(this.dmg);
+		if(!this.etherial)this.takeHit(1);
     }
 	//catch the boomerang
 	else if(hitEntity instanceof Player && this.type === 'boomerang') {
-		if(hitEntity.boomerangs < hitEntity.maxboomerangs) hitEntity.boomerangs++;
-        if(this.lifeSpan < (this.startinglifeSpan - 3)) this.takeHit(1000);
+		if(this.lifeSpan < (this.startinglifeSpan - 3)){ this.takeHit(1000);
+			if(hitEntity.boomerangs < hitEntity.maxboomerangs) hitEntity.boomerangs++;
+		}
     } 
 	
 	else if(hitEntity instanceof Player && this.shooter instanceof Enemy) {
-		hitEntity.takeHit(15);
+		if(!hitEntity.state['dashing']) hitEntity.takeHit(15);
         this.takeHit(1);
+		if(this.type === 'arrow') entityManager.generateParticle(this.cx + 0.5*this.velX, this.cy + 0.5*this.velY, this.radius, this.rotation + Math.PI, 2 , 'arrow2', true);
+		
     }
 	/*
 	else if(hitEntity instanceof Zelda && this.shooter instanceof Shooter) {
@@ -231,4 +254,15 @@ Projectile.prototype.handleCollision = function(hitEntity, axis) {
 	*/
     return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};
 	
-}
+};
+
+Projectile.prototype.configureRotation = function() {
+	if(this.velX < 0){ 
+		this.rotation = Math.PI + Math.atan(this.velY/this.velX); 
+		//angle of player to mouse
+	}
+	else {
+		this.rotation = Math.atan(this.velY/this.velX); 
+		//angle of player to mouse
+	}
+};

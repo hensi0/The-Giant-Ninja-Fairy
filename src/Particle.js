@@ -13,7 +13,16 @@ function Particle(descriptor){
 		this.animations = makeBombAnimation(1);
 		this.animation = this.animations['flash'];
 		this.rendertype = 'animation';
+	}  else if(this.type === 'arrow1'){
+		this.animations = makeBombAnimation(0.5);
+		this.animation = this.animations['arrow1'];
+		this.rendertype = 'animation';
+	}  else if(this.type === 'arrow2'){
+		this.animations = makeBombAnimation(0.5);
+		this.animation = this.animations['arrow2'];
+		this.rendertype = 'animation';
 	}
+	
 	if(this.fade === false) this.alpha = 1;
 }
 
@@ -30,8 +39,9 @@ Particle.prototype.update = function(dt){
 		this.dead = true;
 		return;
 	}
+	if(this.type === 'arrow2') this.angle -= 0.1*Math.cos(this.angle);
 	this.cx += Math.cos(this.angle)*this.vel*dt;
-	this.cy += Math.sin(this.angle)*this.vel*dt;
+	this.cy -= Math.sin(this.angle)*this.vel*dt;
 	if(this.rendertype === 'animation')if(this.animation.update(dt) === 1) this.dead = true;
 	
 }

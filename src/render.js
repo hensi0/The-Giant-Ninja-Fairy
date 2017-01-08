@@ -85,5 +85,5 @@ function goFullScreen(){
         g_canvas.webkitRequestFullScreen();
     else if(canvas.mozRequestFullScreen)
         g_canvas.mozRequestFullScreen();
-	g_canvas.style.display = g_oldCanvasStyle;
+	//g_canvas.style.display = g_oldCanvasStyle;
 }

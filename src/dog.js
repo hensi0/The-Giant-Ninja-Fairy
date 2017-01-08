@@ -16,7 +16,7 @@ function Dog(descr) {
 	this.setup(descr)
     // Default sprite, if not otherwise specified
     this._scale = 1;
-	this.animations = makeDogAnimation(this._scale);
+	this.animations = makeDogAnimation(0.6*this._scale);
 	this.animation = this.animations['walkingRight'];
 };
 
@@ -27,12 +27,8 @@ Dog.prototype.cx = 0;
 Dog.prototype.cy = 0;
 Dog.prototype.velX = -1;
 Dog.prototype.velY = 1;
-<<<<<<< HEAD
-Dog.prototype.airCounter = 0;
-Dog.prototype.hp = 40;
-=======
 Dog.prototype.HP = 40;
->>>>>>> origin/master
+Dog.prototype.maxhp = 40;
 Dog.prototype.damagePlayerCD = 60;
 Dog.prototype.airDuration = 0;
 Dog.prototype.initialized = false;
@@ -162,17 +158,17 @@ Dog.prototype.handleSpecificDogAction = function(du, dir) {
 	var px = player.cx;
 	var py = player.cy;
 	if(dir === "Left"){
-		if(px < this.cx && (px + 400) > this.cx && Math.abs(py - this.cy) < 220){
+		if(px < this.cx && (px + 400) > this.cx && Math.abs(py - this.cy) < 110){
 			this.angryCD = 150;
 			this.state['angry'] = true;
 		}
 	} else {
-		if(px > this.cx && (px - 400) < this.cx && Math.abs(py - this.cy) < 220){
+		if(px > this.cx && (px - 400) < this.cx && Math.abs(py - this.cy) < 110){
 			this.state['angry'] = true;
 			this.angryCD = 150;
 		}
 	}
-	if(this.state['angry']){
+	if(this.state['angry'] && !this.state['biting']){
 		if(dir === "Left"){
 			if(px < this.cx && (px + 120) > this.cx && Math.abs(py - this.cy) < 100 && !this.state['biting']){
 				this.velY = -5;
@@ -243,7 +239,8 @@ Dog.prototype.handleCollision = function(hitEntity, axis) {
 			//hitEntity.takeHit();
 		} else if (hitEntity instanceof Player && this.state['biting'] && this.damagePlayerCD <= 0){
 			hitEntity.knockBack(this.cx, this.cy)
-			hitEntity.takeHit(15);
+			if(!hitEntity.state['dashing']) hitEntity.takeHit(15);
+			else this.takeHit(25);
 			this.damagePlayerCD = 60;
 		}
     return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};

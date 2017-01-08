@@ -156,6 +156,7 @@ function requestPreloads() {
 		//tilesets
 		spikes:		"res/images/blocks/spikes.png",
 		door:		"res/images/blocks/door.png",
+		loot:		"res/images/blocks/chest.png",
 		
 		//mud-tileset
 		dirtM1:		"res/images/blocks/Dirtblock.png",
@@ -169,8 +170,8 @@ function requestPreloads() {
 		pixie:		"res/images/Pixie.png",
 		druid:		"res/images/druid.png",
 
-		//enemie-sprites:
-		dawg: 			"res/images/dawg.png",
+		//enemy-sprites:
+		dawg: 			   "res/images/dawg.png",
 		princeSpriteSheet: "res/images/patss.png"
 		
     };
@@ -243,8 +244,8 @@ function makePlayerAnimationFairy(scale) {
 	Player.walkingLeft  = new Animation(g_images.pixie,0,72,69,6,100, -scale);
 	//Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,80, scale);
 	//Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,80, -scale);
-	Player.spawningRight = new Animation(g_images.pixie,450,72,140,4,70, scale);
-	Player.spawningLeft  = new Animation(g_images.pixie,450,72,140,4,70, -scale);
+	Player.spawningRight = new Animation(g_images.pixie,474,72,82,4,70, scale);
+	Player.spawningLeft  = new Animation(g_images.pixie,474,72,82,4,70, -scale);
 	
     return Player;
 };
@@ -253,10 +254,10 @@ function makeDogAnimation(scale) {
     var Dog = {};
 	
 	//image, frameX, frameY, frameWidth, frameHeight, numFrames, interval, scale
-    Dog.walkingRight = new Animation(g_images.dawg,0,45,48,4,400, scale);
-	Dog.walkingLeft  = new Animation(g_images.dawg,0,45,48,4,400, -scale);
-	Dog.inAirRight = new Animation(g_images.dawg,0,45,48,4,100, scale, 245);
-	Dog.inAirLeft  = new Animation(g_images.dawg,0,45,48,4,100, -scale, 245);
+    Dog.walkingRight = new Animation(g_images.dawg,0,88,55,12,200, scale);
+	Dog.walkingLeft  = new Animation(g_images.dawg,0,88,55,12,200, -scale);
+	Dog.inAirRight = new Animation(g_images.dawg,0,88,55,1,100, scale, 176);
+	Dog.inAirLeft  = new Animation(g_images.dawg,0,88,55,1,100, -scale, 176);
 	Dog.swimmingRight = new Animation(g_images.bricks,0,32,32,1,400, scale);
 	Dog.swimmingLeft  = new Animation(g_images.bricks,0,32,32,1,400, -scale);
 
@@ -265,11 +266,35 @@ function makeDogAnimation(scale) {
     return Dog;
 };
 
+function makeRangerAnimation(scale) {
+    var Ranger = {};
+	
+	//image, frameX, frameY, frameWidth, frameHeight, numFrames, interval, scale
+    Ranger.walkingRight = new Animation(g_images.dawg,54,100,100,6,200, scale, 500);
+	Ranger.walkingLeft  = new Animation(g_images.dawg,54,100,100,6,200, -scale, 500);
+	
+	Ranger.feetRight = new Animation(g_images.dawg,154,100,100,5,200, scale);
+	Ranger.feetLeft  = new Animation(g_images.dawg,154,100,100,5,200, -scale);
+	Ranger.aimingRight = new Animation(g_images.dawg,54,100,100,5,290, scale);
+	Ranger.aimingLeft  = new Animation(g_images.dawg,54,100,100,5,290, -scale);
+	
+	Ranger.inAirRight   = new Animation(g_images.dawg,154,100,100,1,100, scale, 500);
+	Ranger.inAirLeft    = new Animation(g_images.dawg,154,100,100,1,100, -scale, 500);
+	Ranger.swimmingRight = new Animation(g_images.bricks,0,32,32,1,400, scale);
+	Ranger.swimmingLeft  = new Animation(g_images.bricks,0,32,32,1,400, -scale);
+
+    
+
+    return Ranger;
+};
+
 function makeBombAnimation(scale) {
     var bomb = {};	
 	//image, frameX, frameY, frameWidth, frameHeight, numFrames, interval, scale
     bomb.boom = new Animation(g_images.pixie,434,40,40,8,50, scale);
-	bomb.flash = new Animation(g_images.pixie,474,40,40,10,80, scale);
+	bomb.flash = new Animation(g_images.pixie,564,40,40,10,80, scale);
+	bomb.arrow1 = new Animation(g_images.dawg,260,100,80,1,2000, scale, 17);
+	bomb.arrow2 = new Animation(g_images.dawg,254,100,100,1,500, scale, 100);
 
     return bomb;
 };
@@ -289,6 +314,7 @@ function preloadDone() {
 	g_sprites.bricks  = new Sprite(g_images.bricks),
 	g_sprites.spikes  = new Sprite(g_images.spikes),
 	g_sprites.door    = new Sprite(g_images.door),
+	g_sprites.loot    = new Sprite(g_images.loot),
 	g_sprites.skybox  = new Sprite(g_images.skyBox),
 	
 	//tileset-mud
@@ -296,7 +322,10 @@ function preloadDone() {
 	g_sprites.dirtMT  = new Sprite(g_images.dirtMT),
 	g_sprites.dirtMTL  = new Sprite(g_images.dirtMTL),
 	g_sprites.dirtMTR  = new Sprite(g_images.dirtMTR);
-
+	
+	g_sprites.skybox  = new Sprite(g_images.skyBox),
+	
+	
     entityManager.init();
 
     main.init();

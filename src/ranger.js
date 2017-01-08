@@ -16,7 +16,7 @@ function ranger(descr) {
 	this.setup(descr)
     // Default sprite, if not otherwise specified
     this._scale = 1;
-	this.animations = makeDogAnimation(this._scale);
+	this.animations = makeRangerAnimation(0.44*this._scale);
 	this.animation = this.animations['walkingRight'];
 };
 
@@ -33,7 +33,7 @@ ranger.prototype.damagePlayerCD = 60;
 ranger.prototype.initialized = false;
 ranger.prototype.airDuration = 0;
 ranger.prototype.angryCD = 0;
-ranger.prototype.arrowCD = 0;
+ranger.prototype.arrowCD = 80;
 ranger.prototype._lastDir = "Right";
 ranger.prototype.state = {
 	jumping: false,
@@ -73,11 +73,13 @@ ranger.prototype.update = function(du) {
 	
     this.state['inWater'] = false;
 	
+	if(this.damagePlayerCD > 0) this.damagePlayerCD -= du;
+	
 	//check left/right collisions first and then top/bottomx
     var walkingIntoSomething = this.handlePartialCollision(nextX,prevY,"x");
 	var standingOnSomething = this.handlePartialCollision(prevX,nextY,"y");
 	// update location
-    if(!this.state['angry'])this.cx += this.velX*du;
+    if(!this.state['angry']) this.cx += this.velX*du;
     this.cy += this.velY*du;
 	
 	if(this.velY !== 0) this.airDuration++;
@@ -95,7 +97,7 @@ ranger.prototype.update = function(du) {
 	}
 	
 	var dir;
-	if(this.velX === 0) dir = this._lastDir || "Right";
+	if(this.velX === 0 || this.state['angry']) dir = this._lastDir || "Right";
 	else{
 		dir = (this.velX > 0 ? "Right" : "Left");
 		this._lastDir = dir;
@@ -104,7 +106,7 @@ ranger.prototype.update = function(du) {
 	this.handleAnimation(dir);
 	//update status
 	
-	this.animation.update(du);
+	if(this.animation.update(du) === 1 && this.state['angry'] && this.airDuration === 0) this.shootZeArrow();;
 		
     this.handleSpecificRangerAction(du, dir);
 
@@ -115,11 +117,10 @@ ranger.prototype.update = function(du) {
 ranger.prototype.handleAnimation = function (dir) {
 	var lastStatus = this.status;
 	if(this.velY !== 0 && !this.state['inWater'] && this.airDuration > 1) this.status = "inAir"+dir;
-	else if(this.state.inWater) this.status = "swimming"+dir;
+	else if(this.state['angry']) this.status = "aiming"+ dir;
 	else this.status = "walking"+dir;
 	
 	if(lastStatus !== this.status){
-		this.animation.reset();
 		this.animation = this.animations[this.status];
 	}
 
@@ -128,17 +129,19 @@ ranger.prototype.handleAnimation = function (dir) {
 
 ranger.prototype.shootZeArrow = function () {
 	var dir = this.configureRotation();
-	var vMod = 14;
+	var vMod = 18;
 	var aMod = Math.PI/30 - Math.random()*(Math.PI/15) 
 	if(dir === "Left") {
+		this._lastDir = "Left";
 		var velx = -vMod*Math.cos(this.rotation + aMod);
 		var vely = -vMod*Math.sin(this.rotation + aMod);
 	} else {
+		this._lastDir = "Right";
 		var velx = vMod*Math.cos(this.rotation + aMod);
 		var vely = vMod*Math.sin(this.rotation + aMod);
 	}
 	
-	entityManager.fireBullet(this.cx + 2*velx, this.cy - 3 + vely, velx, vely -4, 3, 0, this, 'arrow');
+	entityManager.fireBullet(this.cx + 2*velx, this.cy - 10 + vely, velx, vely -2, 3, 0, this, 'arrow');
 };
 
 //for states where you are fireing in a specific directions
@@ -155,11 +158,20 @@ ranger.prototype.configureRotation = function() {
 		this.rotation = Math.atan((this.cy - player.cy)/(this.cx - player.cx)); 
 		//angle of player to mouse
 	}
+	this._lastDir = dir;
 	return dir;
 }
 
+
 ranger.prototype.render = function (ctx) {
-	this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
+	if(!this.state['angry'] || this.airDuration > 1) this.animation.renderAt(ctx, this.cx, this.cy, 0);
+	else{
+		var dir = this._lastDir;
+		this.animations["feet"+dir].renderAt(ctx, this.cx, this.cy, 0);
+		this.configureRotation();
+		this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
+	}
+		
 	this.drawHealthBar(ctx);
 };
 
@@ -170,7 +182,7 @@ ranger.prototype.knockBack = function(x,y) {
 };
 
 ranger.prototype.getSize = function(){
-    var size = {sizeX:35*this._scale,sizeY:20*this._scale};
+    var size = {sizeX:20*this._scale,sizeY:40*this._scale};
     return size;
 };
 
@@ -183,24 +195,22 @@ ranger.prototype.handleSpecificRangerAction = function(du, dir) {
 	
 	if(dir === "Left"){
 		if(px < this.cx && (px + 400) > this.cx && Math.abs(py - this.cy) < 220){
-			this.angryCD = 70;
+			this.angryCD = 150;
 			this.state['angry'] = true;
 		}
 	} else {
 		if(px > this.cx && (px - 400) < this.cx && Math.abs(py - this.cy) < 220){
 			this.state['angry'] = true;
-			this.angryCD = 70;
+			this.angryCD = 150;
 		}
 	}
 	
-	this.angryCD--;
+	if(Math.abs(px - this.cx) > 400 || Math.abs(py - this.cy) > 220 )this.angryCD--;
 	if(this.angryCD < 0) this.state['angry'] = false;
 	
 	if(this.state['angry']){
-		if(this.arrowCD < 0){
-			this.shootZeArrow();
-			this.arrowCD = 80;
-		} else this.arrowCD--;
+		this.configureRotation();
+
 	}	
 };
 
@@ -254,15 +264,15 @@ ranger.prototype.handleCollision = function(hitEntity, axis) {
                 }
             }
             hitEntity.activate(this, dir);
-        } else if (hitEntity instanceof Projectile){
+        } else if (hitEntity instanceof Projectile && hitEntity.shooter instanceof Player){
 			hitEntity.hits.push(this);
 			//this.takeHit(1);
 			this.knockBack(hitEntity.cx, hitEntity.cy)
 			hitEntity.takeHit();
 				
-		} else if (hitEntity instanceof Player && this.state['biting'] && this.damagePlayerCD <= 0){
-			hitEntity.knockBack(this.cx, this.cy)
-			hitEntity.takeHit(15);
+		} else if (hitEntity instanceof Player && this.damagePlayerCD <= 0 && hitEntity.state['dashing']){
+			this.knockBack(this.cx, this.cy)
+			this.takeHit(100);
 			this.damagePlayerCD = 60;
 		}
     return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};
