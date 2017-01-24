@@ -1,0 +1,15 @@
+baseline:
+ klukkuspil+fiðla
+
+form1: dr
+ +flauta2
+form2: fa
+ +flauta
+form3: sh 
+ +bongo
+combat:  scala volume eftir g_cameraZoom
+ +trommur
+boss:		entityManager.
+ +action
+Dead:  		entityManager._characters[0]._isDeadNow
+ klukkuspil solo
