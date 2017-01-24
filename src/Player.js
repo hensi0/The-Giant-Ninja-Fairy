@@ -275,9 +275,16 @@ Player.prototype.update = function (du) {
 													&& (keys[this.KEY_LEFT] || keys[this.KEY_RIGHT])){
 					this.state['holdingWall'] = true;
 					this.velY = 0;
+					this.state['dashing'] = false;
 					this.holdStateBuffer++;
-					if(this.state['facingRight']) this.velX = 0.01;
-					else this.velX = -0.01;
+					if(this.state['facingRight']){ 
+						this.velX = 1;
+						this.cx = bricktest2.cx - temp/2 - this.getSize().sizeX/2 - 1;
+					} else {
+						this.velX = -1;
+						this.cx = bricktest2.cx + temp/2 + this.getSize().sizeX/2 + 1;
+					}
+					
 					this.tempMaxJumpHeight = this.cy - 0.6*this.maxPushHeight;
 					this.state['offGround'] = false;
 				}
@@ -298,7 +305,15 @@ Player.prototype.update = function (du) {
     this.updateJump(bEdge);
 
 	this.updateStatus();
-	if(this.animation.update(du) === 1) {this.state['spawning'] = false; this.state['dashing'] = false; this.updateStatus();}
+	
+	
+	var flySpeedScaler = 1;
+	if(this.form === 'fairy' && this.status.substring(0,5) === "inAir") 
+		flySpeedScaler = 1 - Math.max( -1 , this.velY/7);
+	
+	
+	if(this.animation.update(du*flySpeedScaler) === 1) 
+		{this.state['spawning'] = false; this.state['dashing'] = false; this.updateStatus();}
 
 	spatialManager.register(this);
 	
@@ -393,6 +408,7 @@ Player.prototype.LMB = function (bool) {
 //RMB handling for the player
 Player.prototype.RMB = function (bool) {
 	//right mouse button
+	if(!g_mouseLocked) return;
 	if(this.form === 'fairy' && !this.state['spawning'] && this.teleportCD <= 0) this.teleport();
 	if(this.form === 'druid' && !this.state['spawning'] && this.dashCD <= 0) this.dash();
 	
@@ -406,7 +422,7 @@ Player.prototype.teleport = function () {
 	var vely = vMod*Math.sin(this.rotation);
 	var temp = 1;
 	if(g_mouseX2 <= g_canvas.width/2) temp *= -1;
-		entityManager.fireBullet(this.cx, this.cy, temp*velx, temp*vely, 10, 0, this, 'detector', 600);
+		entityManager.fireBullet(this.cx, this.cy -1, temp*velx, temp*vely, 10, 0, this, 'detector', 600);
 	this.rotation = 0;
 	this.state['spawning'] = true;
 	this.velY = 0;

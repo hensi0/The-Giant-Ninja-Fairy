@@ -157,6 +157,7 @@ function requestPreloads() {
 		spikes:		"res/images/blocks/spikes.png",
 		door:		"res/images/blocks/door.png",
 		loot:		"res/images/blocks/chest.png",
+		blocks:		"res/images/blocks/blocks.png",
 		
 		//mud-tileset
 		dirtM1:		"res/images/blocks/Dirtblock.png",
@@ -264,6 +265,23 @@ function makeDogAnimation(scale) {
     
 
     return Dog;
+};
+
+
+function makeBatAnimation(scale) {
+    var Bat = {};
+	
+	//image, frameX, frameY, frameWidth, frameHeight, numFrames, interval, scale
+    Bat.walkingRight = new Animation(g_images.dawg,454,100,100,8,100, -scale);
+	Bat.walkingLeft  = new Animation(g_images.dawg,454,100,100,8,100, scale);
+	Bat.inAirRight = new Animation(g_images.dawg,0,88,55,1,100, scale, 176);
+	Bat.inAirLeft  = new Animation(g_images.dawg,0,88,55,1,100, -scale, 176);
+	Bat.swimmingRight = new Animation(g_images.bricks,0,32,32,1,400, scale);
+	Bat.swimmingLeft  = new Animation(g_images.bricks,0,32,32,1,400, -scale);
+
+    
+
+    return Bat;
 };
 
 function makeRangerAnimation(scale) {

@@ -31,7 +31,8 @@ function World(descr) {
 			
 			if(s === 'D'){
 				//entityManager.generateDog({cx: location[0], cy: location[1]});
-				entityManager.generateRanger({cx: location[0], cy: location[1]});
+				//entityManager.generateRanger({cx: location[0], cy: location[1]});
+				entityManager.generateBat({cx: location[0], cy: location[1]});
 				s = 0;
 			}
 			//above, left, right and below
@@ -41,13 +42,13 @@ function World(descr) {
 			var b = false;
 			
 			if(j > 0) 
-					l = (this.world[i][j-1] === 0);
+					l = (this.world[i][j-1]);
 			if(i > 0) 
-					a = (this.world[i-1][j] === 0);
+					a = (this.world[i-1][j]);
 			if(i < (this.world.length -1)) 
-					b = (this.world[i+1][j] === 0);
+					b = (this.world[i+1][j]);
 			if(j < (this.world[0].length -1))
-					r = (this.world[i][j+1] === 0);
+					r = (this.world[i][j+1]);
 		
 			var adjBlocks = {
 				above : a,
@@ -97,7 +98,10 @@ World.prototype.handleMultiBlocks = function(s) {
 	} else if 	(s === 2){
 		if(Math.random() > 0.6) return 2;
 		else 					return 0;
-	} else 						return s;
+	} else if 	(s === 5){
+		if(Math.random() > 0.5) return 4;
+		else 					return 0;
+	} return s;
 }
 
 World.prototype.collidesWith = function (player, prevX, prevY, nextX, nextY) {
@@ -369,23 +373,23 @@ World.prototype.shapeAndGo = function(Rooms,x,y,p, roomsX, roomsY) {
 //on this room. This is used on bonus and Ending rooms and therefor always has only one exit
 //currently this then simply returns the corresponding room
 World.prototype.WhereIsTheExit = function(type, y, x, mY, mX){
-	var dir = 'closed';
+	var dir = '';
 	
 	if(y > 0){
 		var t = this.map[y-1][x];
-		if(t==='I' || t==='R' || t==='K' || t==='q' || t==='T' || t==='p') 		dir = 'up';
+		if(t==='I' || t==='R' || t==='K' || t==='q' || t==='T' || t==='p') 		dir += 'up';
 	}
 	if(y < (mY -1)){
 		var t = this.map[y+1][x];
-		if(t==='I' || t==='R' || t==='K' || t==='J' || t==='W' || t==='L') 		dir = 'down';
+		if(t==='I' || t==='R' || t==='K' || t==='J' || t==='W' || t==='L') 		dir += 'down';
 	}
 	if(x > 0){ 		
 		var t = this.map[y][x-1];
-		if(t==='p' || t==='K' || t==='L' || t==='-' || t==='T' || t==='W')		dir = 'left';
+		if(t==='p' || t==='K' || t==='L' || t==='-' || t==='T' || t==='W')		dir += 'left';
 	}
 	if(x < (mX - 1)){
 		var t = this.map[y][x+1];
-		if(t==='q' || t==='R' || t==='J' || t==='-' || t==='T' || t==='W')		dir = 'right';
+		if(t==='q' || t==='R' || t==='J' || t==='-' || t==='T' || t==='W')		dir += 'right';
 	}
 	//console.log("(x,y): (" + x + "," + y + ") dir: " + dir);
 	
@@ -403,6 +407,7 @@ World.prototype.WhereIsTheExit = function(type, y, x, mY, mX){
 		if(dir === 'right')	return this.Worlds.Br;
 
 	} else if(type === 'S'){
+		if(dir === 'leftright')	return this.Worlds.Sw;
 		if(dir === 'left')	return this.Worlds.Sl;
 		if(dir === 'right')	return this.Worlds.Sr;
 
@@ -637,16 +642,35 @@ World.prototype.Worlds =  {
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[6,0,0,0,0,0,0,0,0,0,0,'T',0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,0,0,0,6,0,0,0,0,6,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,0,6,0,0,0,0,0,0,0,0,6,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[6,7,0,0,0,0,0,0,0,2,2,0,0,0],
-	[6,7,0,0,0,0,0,0,0,0,0,0,'D',0],
-	[6,7,7,0,0,0,0,0,0,0,0,0,0,7],
+	[6,5,0,0,0,0,0,0,0,2,2,0,0,0],
+	[6,4,0,0,0,0,0,0,0,0,0,0,'D',0],
+	[6,4,7,0,0,0,0,0,0,0,0,0,0,7],
+	[6,6,6,6,6,6,6,6,6,6,6,6,6,6]
+	]
+	],
+	
+	'Sw' : [
+	[
+	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,6,0,0,0,0,6,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[0,0,6,0,0,0,0,0,0,0,0,6,0,0],
+	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0,2,2,0,0,0],
+	[0,0,0,0,0,0,0,0,0,0,0,0,'D',0],
+	[0,7,7,0,0,0,0,0,0,0,0,0,0,7],
 	[6,6,6,6,6,6,6,6,6,6,6,6,6,6]
 	]
 	],
@@ -877,7 +901,7 @@ World.prototype.Worlds =  {
 	[6,0,0,0,7,0,7,0,0,0,0,0,0,0],
 	[6,7,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,6,7,0,0,0,0,0,0,0,0,0,0,0],
-	[0,7,7,0,0,0,0,0,0,0,7,7,0,0]
+	[6,7,7,0,0,0,0,0,0,0,7,7,0,0]
 	]
 	
 	],

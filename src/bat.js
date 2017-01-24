@@ -16,7 +16,7 @@ function Bat(descr) {
 	this.setup(descr)
     // Default sprite, if not otherwise specified
     this._scale = 1;
-	this.animations = makeBatAnimation(this._scale);
+	this.animations = makeBatAnimation(this._scale*0.8);
 	this.animation = this.animations['walkingRight'];
 };
 
@@ -27,9 +27,11 @@ Bat.prototype.cx = 0;
 Bat.prototype.cy = 0;
 Bat.prototype.velX = -1;
 Bat.prototype.velY = 1;
-Bat.prototype.hp = 40;
+Bat.prototype.HP = 40;
+Bat.prototype.maxhp = 40;
 Bat.prototype.damagePlayerCD = 60;
 Bat.prototype.initialized = false;
+Bat.prototype.dirbuffer = 0;
 Bat.prototype.angryCD = 0;
 Bat.prototype._lastDir = "Right";
 Bat.prototype.state = {
@@ -43,6 +45,12 @@ Bat.prototype.state = {
 
 Bat.prototype.update = function(du) {
 	spatialManager.unregister(this);
+	
+	var Player = entityManager._character[0];
+	
+	if(this.angryCD > 0) {this.angryCD -= du; this.configureRotation()}
+	else this.state['angry'] = false;
+	
 	//check if this is inside the viewport
 	var margin = this.getSize().sizeX; //margin outside of viewport we want to update
 	if(this.cx+this.getSize().sizeX/2 < g_viewPort.x-margin ||
@@ -54,14 +62,15 @@ Bat.prototype.update = function(du) {
     if(this._isDeadNow) return entityManager.KILL_ME_NOW;
 
 	//Handles if Bat is in water
-    if(this.state['inWater']){
-        this.maxVelX = 2.3;
-        this.maxVelY = 1.1;
+    if(this.state['angry']){
+        this.maxVel = 2;
     }else {
-        this.maxVelX = 3.9;
-        this.maxVelY = 6.5;
+        this.maxVel = 1;
     }
+	
+	
 	if(this.damagePlayerCD > 0) this.damagePlayerCD -= du;
+	
 	var nextX = this.cx+this.velX*du;
     var nextY = this.cy+this.velY*du;
 	var prevX = this.cx;
@@ -76,24 +85,26 @@ Bat.prototype.update = function(du) {
     this.cx += this.velX*du;
     this.cy += this.velY*du;
 	
-	if(this.state['angry']){
-		this.cx += this.velX*du*1.4;
+	var vel = Math.sqrt((this.velX*this.velX) + (this.velY*this.velY));
+	if(vel < this.maxVel){
+		this.velX /= 0.96;
+		this.velY /= 0.96;
 	}
+	if(vel > this.maxVel){
+		this.velX *= 0.98;
+		this.velY *= 0.98;
+	}	
 	
-	if(this.state['biting']){
-		this.cx += this.velX*du*2;
-	}
+	/*
+	var rotation = Math.atan((this.cy - this.shooter.cy)/(this.cx - this.shooter.cx));
+		var temp = 1;
+		if(this.cx <= this.shooter.cx) temp *= -1;
+		this.velX = (3*this.velX + Math.abs(this.boomerangScaler)*40*temp*Math.cos(rotation))/4;
+		this.velY = (3*this.velY + Math.abs(this.boomerangScaler)*40*temp*Math.sin(rotation))/4;
+	*/
+
 	
-	// Fall down
-	if(!standingOnSomething && this.velY < TERMINAL_VELOCITY && !this.state['inWater']){
-		this.velY += NOMINAL_GRAVITY*du;
-	}
 	
-	if(this.state['inWater'] && standingOnSomething) this.velY = -1;
-	// Turn around
-	if(walkingIntoSomething){
-		this.velX *= -1;
-	}
 	
 	
 	//update status
@@ -101,14 +112,18 @@ Bat.prototype.update = function(du) {
 	if(this.velX === 0) dir = this._lastDir || "Right";
 	else{
 		dir = (this.velX > 0 ? "Right" : "Left");
-		this._lastDir = dir;
+		if(this._lastDir !== dir){
+			if(this.dirbuffer > 3){
+				this._lastDir = dir;
+				this.dirbuffer = 0;
+			} else {
+				this.dirbuffer++;
+			}
+		} else this.dirbuffer = 0;
 	}
-	if(this.velY !== 0 && !this.state['inWater']) this.status = "inAir"+dir;
-	else if(this.state.inWater) this.status = "swimming"+dir;
-	else this.status = "walking"+dir;
 	
-	this.animation = this.animations[this.status];
-	
+	this.handleAnimation(this._lastDir);
+
 	this.animation.update(du);
 		
     this.handleSpecificBatAction(du, dir);
@@ -116,13 +131,54 @@ Bat.prototype.update = function(du) {
 	spatialManager.register(this);
 };
 
+Bat.prototype.handleAnimation = function (dir) {
+	var lastStatus = this.status;
+	if(this.velY !== 0 && !this.state['inWater'] && this.airDuration > 1) this.status = "inAir"+dir;
+	//else if(this.state['angry']) this.status = "aiming"+ dir;
+	else this.status = "walking"+dir;
+	
+	if(lastStatus !== this.status){
+		this.animation = this.animations[this.status];
+	}
+
+	
+};
+
+Bat.prototype.configureRotation = function() {
+	var vel = Math.sqrt((this.velX*this.velX) + (this.velY*this.velY));
+	var player = entityManager._character[0];
+	var dir;
+	if(player.cx <= this.cx){ 
+		dir = "Left";
+		this.rotation = Math.atan((this.cy - player.cy)/(this.cx - player.cx)); 
+		//angle of player to mouse
+		this.velX = -vel*Math.cos(this.rotation);
+		this.velY = -vel*Math.sin(this.rotation);
+	}
+	else {
+		dir = "Right";
+		this.rotation = Math.atan((this.cy - player.cy)/(this.cx - player.cx)); 
+		//angle of player to mouse
+		this.velX = vel*Math.cos(this.rotation);
+		this.velY = vel*Math.sin(this.rotation);
+	}
+	this.rotation = 0;
+	
+	//this._lastDir = dir;
+	return dir;
+}
+
 Bat.prototype.render = function (ctx) {
 	this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
+	this.drawHealthBar(ctx);
 };
 
 Bat.prototype.knockBack = function(x,y) {
-	this.velY = -2;
-	this.angryCD = 150;
+	if(Math.abs(this.velX) > 0.4)
+		this.velX *= 0.8;
+	if(Math.abs(this.velY) > 0.4)
+		this.velY *= 0.8;
+	this.angryCD = 200;
 	this.state['angry'] = true;
 };
 
@@ -137,8 +193,8 @@ Bat.prototype.handleSpecificBatAction = function(du, dir) {
 	if(!player) return;
 	var px = player.cx;
 	var py = player.cy;
-		if(px < this.cx && (px + 400) > this.cx && Math.abs(py - this.cy) < 220){
-			this.angryCD = 150;
+		if(Math.abs(px - this.cx) < 100  && Math.abs(py - this.cy) < 100){
+			this.angryCD = 100;
 			this.state['angry'] = true;
 		}
 };
@@ -175,15 +231,14 @@ Bat.prototype.handleCollision = function(hitEntity, axis) {
                 standingOnSomething = standingOnSomething || bEdge;
                 if(lEdge && this.velX < 0 && axis === "x") {
                     walkingIntoSomething = walkingIntoSomething || true;
+					this.velX *= -1;
                 }
                 if(rEdge && this.velX > 0 && axis === "x") {
                     walkingIntoSomething = walkingIntoSomething || true;
-                }
+					this.velX *= -1;
+				}
                 if(bEdge && this.velY > 0 && axis === "y") {
-                    this.tempMaxJumpHeight = this.cy - this.maxPushHeight; 
-                    var groundY = entityManager._world[0].getLocation((hitEntity.i), (hitEntity.j))[1] // block top y coordinate
-                    this.putToGround(groundY);
-					this.state['biting'] = false;
+                    this.velY *= -1;
                     dir = 4;
                 } 
                 if(tEdge && this.velY < 0  && axis === "y"){// && this.velY < 0) {
@@ -193,13 +248,15 @@ Bat.prototype.handleCollision = function(hitEntity, axis) {
                 }
             }
             hitEntity.activate(this, dir);
-        } else if (hitEntity instanceof Projectile){
-			this.takeHit(hitEntity.radius);
+         } else if (hitEntity instanceof Projectile && hitEntity.shooter instanceof Player){
+			//hitEntity.hits.push(this);
+			//this.takeHit(1);
 			this.knockBack(hitEntity.cx, hitEntity.cy)
-			hitEntity.takeHit();
-		} else if (hitEntity instanceof Player && this.state['biting'] && this.damagePlayerCD <= 0){
-			hitEntity.knockBack(this.cx, this.cy)
-			hitEntity.takeHit(15);
+			//hitEntity.takeHit();
+				
+		} else if (hitEntity instanceof Player && this.damagePlayerCD <= 0 && hitEntity.state['dashing']){
+			this.knockBack(this.cx, this.cy)
+			this.takeHit(100);
 			this.damagePlayerCD = 60;
 		}
     return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};

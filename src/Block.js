@@ -18,17 +18,21 @@ function Block(descr) {
 	this.sprite = this.Asprite || g_sprites.defaultBlock;
 	this.AnimationSprite = this.AnimationSprite || g_sprites.coin;
 	this.sizeMod = 1;
+	this.isCracked = true;
 	switch(this.type) {
 		case 0: 
 		break;
 		
-		case 6: 	this.sprite = this.mudBlockLogic(this.status);
+		case 6: 	this.sprite = this.mudBlockLogic(this.status); //normal block
 		break; 
 		
-		case 2: 	this.sprite = g_sprites.spikes;
-					this._isPassable = true;
-					this.sizeMod = 0.6;
-					this.damageCD = 0;
+		case 2: 	this.sprite 		= this.spritify(64,128,64,64);
+					this._isPassable 	= true;
+					this.sizeMod 		= 0.6;
+					this.damageCD 		= 0;
+					this.rotation 		= Math.PI*Math.random();
+					this.rotation2 		= Math.PI*Math.random();
+					this.sprite2 		= this.spritify(256,128,64,64);
 		break; 
 		
 		case 3:		this.sprite = g_sprites.bricks;
@@ -36,11 +40,26 @@ function Block(descr) {
 					this._isBreakable = true;
 		break;
 		
+		case 4:		this.sprite = this.pillarBlockLogic(this.status);
+					this._isBreakable = true;
+		break;
+		
 		case 'E':	this.sprite = g_sprites.door;
 					this._isPassable = true;
 		break;
 		
-		case 'T':	this.sprite = g_sprites.loot;
+		case 'T':	
+					var sprite = new Sprite(g_images.dawg);
+					
+					sprite.sx = 100 
+					sprite.sy = 554;
+					sprite.width = 100;
+					sprite.height = 100;
+					sprite.scale = 1;
+					sprite.drawAt = function(ctx,x,y){
+						ctx.drawImage(this.image, this.sx, this.sy, 100, 100, x-97, y-85, 300, 300);
+					};
+					this.sprite = sprite;
 					this._isPassable = true;
 		break;
 		
@@ -54,6 +73,7 @@ function Block(descr) {
 
 Block.prototype.rotation = 0;
 Block.prototype.sizeMod = 1;
+Block.prototype.isCracked = true;
 Block.prototype.damageCD = 0;
 Block.prototype._isDeadNow = false;
 Block.prototype._isPassable = false;
@@ -69,38 +89,92 @@ Block.prototype.update = function (du) {
 
 Block.prototype.mudBlockLogic = function (status) {
 	//simple logic that might be implemented and improved uppon with diffrent tile-sets 
-	if(status.above){
-		if(status.left)
+	if(status.above === 0){
+		if(status.left === 0)
 			return g_sprites.dirtMTL;
-		else if(status.right)
+		else if(status.right === 0)
 			return g_sprites.dirtMTR;
 		else
 			return g_sprites.dirtMT;
 	}
-	this.rndRotation();
-	return g_sprites.dirtM1;
+	//this.rndRotation();
+	
+	var sprite = this.spritify(0,0,64,64);
+	this.isCracked = false;
+	return sprite;
+	
+};
+
+Block.prototype.pillarBlockLogic = function (status) {
+	//simple logic that might be implemented and improved uppon with diffrent tile-sets 
+	
+	//this.rndRotation();
+	
+	var sprite = new Sprite(g_images.blocks);
+					
+					sprite.sx = 0 
+					sprite.sy = 128;
+					sprite.width = 64;
+					sprite.height = 64;
+					sprite.scale = 1;
+					sprite.drawAt = function(ctx,x,y){
+						ctx.drawImage(this.image, this.sx, this.sy, this.width, this.height, x, y, this.scale*2.02*this.width, this.scale*2.02*this.height);
+					};
+	if(status.above === 0)
+		sprite.sy = 128;
+	else if ((status.above === 4 || status.above === 5) && (status.below === 4 || status.below === 5))
+		sprite.sy = 192;
+	else {
+		sprite.sy = 256;
+	}
+	return sprite;
 	
 };
 
 Block.prototype.rndRotation = function () {
 	if(Math.random() < 0.25)
-		this.rotation = 0;
+		return 0;
 	else if(Math.random() < 0.33)
-		this.rotation = 0.5*Math.PI;
+		return  0.5*Math.PI;
 	else if(Math.random() < 0.5)
-		this.rotation = Math.PI;
-	else this.rotation = Math.PI*1.5;
-	
+		return  Math.PI;
+	else return  Math.PI*1.5;
+};
+
+Block.prototype.spritify = function (sx, sy, w, h) {
+	var sprite = new Sprite(g_images.blocks);
+					
+					sprite.sx = sx;
+					sprite.sy = sy;
+					sprite.width = w;
+					sprite.height = h;
+					sprite.scale = 1;
+					sprite.drawAt = function(ctx,x,y){
+						ctx.drawImage(this.image, this.sx, this.sy, this.width, this.height, x, y, this.scale*2.02*this.width, this.scale*2.02*this.height);
+					};
+	return sprite;
 };
 
 Block.prototype.render = function (ctx,x,y,w,h) {
 	if(this._isDeadNow) return entityManager.KILL_ME_NOW;
+	if(this.type === 2) {this.rotation += 0.01; this.rotation2 -= 0.005;}
 	if(this.damageCD > 0) this.damageCD--;
 	var img_h = this.sprite.height;
 	var scale = h/img_h;
 	this.sprite.scale = scale;
-	this.sprite.drawCentredAt(ctx,x+w/2,y+h/2, this.rotation);
-	
+	this.sprite.drawCentredAt(ctx, x+w/2, y+h/2, this.rotation);
+	if(this.sprite2){
+		this.sprite2.scale = scale;
+		var oldAlpha = ctx.globalAlpha;
+		ctx.globalAlpha = Math.max(0.15, (Math.abs(Math.cos(this.rotation))*Math.abs(Math.sin(this.rotation))));
+		
+		this.sprite2.drawCentredAt(ctx,x+w/2,y+h/2, this.rotation2);
+		ctx.globalAlpha = oldAlpha;
+	}
+	if(this.sprite3){
+		this.sprite3.scale = scale;
+		this.sprite3.drawCentredAt(ctx,x+w/2,y+h/2, this.rotation3);
+	}
 };
 
 Block.prototype.activate = function (Char, direction) {
@@ -123,10 +197,12 @@ Block.prototype.activate = function (Char, direction) {
 					}
 		break; 
 		
-		case 'E':	entityManager.enterLevel(entityManager._level +  1)
+		case 'E':	if(Char instanceof Player)
+					entityManager.enterLevel(entityManager._level +  1)
 		break;
 		
-		case 'T':	this._isDeadNow = true;
+		case 'T':	//this._isDeadNow = true;
+					this.sprite.sx = 200;
 					//get treasure
 		break;
 		
@@ -142,5 +218,12 @@ Block.prototype.getSize = function () {
 Block.prototype.tryToBreak = function(){
     if(this._isBreakable) {
 		this._isDeadNow = true;
+		this._isPassable = true;
+	} else if(!this.isCracked){
+		this.sprite3 = this.spritify(0,64,64,64);
+		this.rotation3 = 0;
+		this.rotation3 = this.rndRotation();
+		this.isCracked = true;
 	}
+	
 }

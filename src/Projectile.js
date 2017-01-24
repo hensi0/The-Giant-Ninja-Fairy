@@ -65,6 +65,7 @@ function Projectile(descr) {
 		this.animations = makeBoomerangAnimation(1);
 		this.animation = this.animations['boomerang'];
 		this.rendertype = 'animation';
+		this.dmg = 0.1;
 	}
    
 	this.sprite = sprite || this.sprite;
@@ -222,6 +223,7 @@ Projectile.prototype.handleCollision = function(hitEntity, axis) {
 	
 	if(hitEntity instanceof Block && !hitEntity._isPassable) {
 		if(!this.etherial)this.takeHit(1);
+		hitEntity.tryToBreak();
 		//makes boomerang turn around upon hitting a brick
 		if(this.boomerangScaler > -0.5) this.boomerangScaler = -0.5;
 		if(this.type === 'arrow') entityManager.generateParticle(this.cx + 0.5*this.velX, this.cy + 0.5*this.velY, this.radius, this.rotation, 0 , 'arrow1', false);

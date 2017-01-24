@@ -140,6 +140,10 @@ generateDog : function(descr) {
     this._enemies.push(new Dog(descr));
 },
 
+generateBat : function(descr) {
+    this._enemies.push(new Bat(descr));
+},
+
 generateRanger : function(descr) {
     this._enemies.push(new ranger(descr));
 },
