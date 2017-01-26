@@ -19,6 +19,56 @@ function Block(descr) {
 	this.AnimationSprite = this.AnimationSprite || g_sprites.coin;
 	this.sizeMod = 1;
 	this.isCracked = true;
+	this._isInitialized = false;
+};
+
+
+Block.prototype.rotation = 0;
+Block.prototype.sizeMod = 1;
+Block.prototype.isCracked = true;
+Block.prototype.damageCD = 0;
+Block.prototype._isDeadNow = false;
+Block.prototype._isPassable = false;
+Block.prototype._isBreakable = false;
+Block.prototype.dim = g_canvas.height/28;
+
+Block.prototype = new Entity();
+
+Block.prototype.update = function (du) {
+	if(this._isDeadNow) return entityManager.KILL_ME_NOW;
+	if(!this._isInitialized) this.initialize();
+};
+
+Block.prototype.initialize = function () {
+	this._isInitialized = true;
+	
+	//above, left, right and below
+			var a = 0;
+			var l = 0;
+			var r = 0;
+			var b = 0;
+			var world = entityManager._world[0].blocks;
+			
+			if(this.j > 0) 
+					if(world[this.i][this.j-1]) l = (world[this.i][this.j-1].type);
+			if(this.i > 0) 
+					if(world[this.i-1][this.j]) a = (world[this.i-1][this.j].type);
+			if(this.i < (world.length -1)) 
+					if(world[this.i+1][this.j]) b = (world[this.i+1][this.j].type);
+			if(this.j < (world[0].length -1))
+					if(world[this.i][this.j+1]) r = (world[this.i][this.j+1].type);
+		
+			this.adjBlocks = {
+				above : a,
+				left: 	l,
+				right: 	r,
+				below:	b
+			}
+			
+			this.renderPicker();
+};
+
+Block.prototype.renderPicker = function () {
 	switch(this.type) {
 		case 0: 
 		break;
@@ -67,35 +117,17 @@ function Block(descr) {
 					this.sprite = g_sprites.blank;
 		break;
 	}
-	
 };
 
-
-Block.prototype.rotation = 0;
-Block.prototype.sizeMod = 1;
-Block.prototype.isCracked = true;
-Block.prototype.damageCD = 0;
-Block.prototype._isDeadNow = false;
-Block.prototype._isPassable = false;
-Block.prototype._isBreakable = false;
-Block.prototype.dim = g_canvas.height/28;
-
-Block.prototype = new Entity();
-
-Block.prototype.update = function (du) {
-	if(this._isDeadNow) return true;
-	else return false;
-};
-
-Block.prototype.mudBlockLogic = function (status) {
+Block.prototype.mudBlockLogic = function () {
 	//simple logic that might be implemented and improved uppon with diffrent tile-sets 
-	if(status.above === 0){
-		if(status.left === 0)
-			return g_sprites.dirtMTL;
-		else if(status.right === 0)
-			return g_sprites.dirtMTR;
+	if(this.isPassableTest(this.adjBlocks.above)){
+		if(this.adjBlocks.left === 0)
+			return this.spritify(64,0,64,64);
+		else if(this.adjBlocks.right === 0)
+			return this.spritify(128,0,64,64);
 		else
-			return g_sprites.dirtMT;
+			return this.spritify(192,0,64,64);
 	}
 	//this.rndRotation();
 	
@@ -105,7 +137,20 @@ Block.prototype.mudBlockLogic = function (status) {
 	
 };
 
-Block.prototype.pillarBlockLogic = function (status) {
+
+Block.prototype.isPassableTest = function (type) {
+	var temp = false;
+	if (type === 0) temp = true;
+	if (type === 'E') temp = true;
+	if (type === 'T') temp = true;
+	if (type === 2) temp = true;
+	if (type === 4) temp = true;
+	
+	return temp;
+	
+};
+
+Block.prototype.pillarBlockLogic = function () {
 	//simple logic that might be implemented and improved uppon with diffrent tile-sets 
 	
 	//this.rndRotation();
@@ -120,12 +165,12 @@ Block.prototype.pillarBlockLogic = function (status) {
 					sprite.drawAt = function(ctx,x,y){
 						ctx.drawImage(this.image, this.sx, this.sy, this.width, this.height, x, y, this.scale*2.02*this.width, this.scale*2.02*this.height);
 					};
-	if(status.above === 0)
+	if(this.adjBlocks.above === 0)
 		sprite.sy = 128;
-	else if ((status.above === 4 || status.above === 5) && (status.below === 4 || status.below === 5))
+	else if (this.adjBlocks.above === 4 && this.adjBlocks.below === 4 )
 		sprite.sy = 192;
 	else {
-		sprite.sy = 256;
+		sprite.sy = 320;
 	}
 	return sprite;
 	

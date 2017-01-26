@@ -150,6 +150,7 @@ generateRanger : function(descr) {
 
 generateLevel : function(descr) {
     this._world.push(new World(descr));
+	this._world[0].update();
 },
 
 generateObject : function(descr) {

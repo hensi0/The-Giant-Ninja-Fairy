@@ -35,30 +35,10 @@ function World(descr) {
 				entityManager.generateBat({cx: location[0], cy: location[1]});
 				s = 0;
 			}
-			//above, left, right and below
-			var a = false;
-			var l = false;
-			var r = false;
-			var b = false;
 			
-			if(j > 0) 
-					l = (this.world[i][j-1]);
-			if(i > 0) 
-					a = (this.world[i-1][j]);
-			if(i < (this.world.length -1)) 
-					b = (this.world[i+1][j]);
-			if(j < (this.world[0].length -1))
-					r = (this.world[i][j+1]);
-		
-			var adjBlocks = {
-				above : a,
-				left: 	l,
-				right: 	r,
-				below:	b
-			}
 			s = this.handleMultiBlocks(s);
 				
-			this.blocks[i][j] = (s === 0 ? null : new Block({i: i, j: j, type: s, status: adjBlocks}));
+			this.blocks[i][j] = (s === 0 ? null : new Block({i: i, j: j, type: s}));
 		}
 	}
 }
@@ -146,12 +126,13 @@ World.prototype.collidesWith = function (player, prevX, prevY, nextX, nextY) {
 
 
 World.prototype.update = function (du) {
-	/*
-	for(var i = 0; i < this.world.length; i++) {
-		for(var j = 0; j < this.world[i].length; j++) {
+	
+	for(var i = 0; i < this.blocks.length; i++) {
+		for(var j = 0; j < this.blocks[i].length; j++) {
+			if(this.blocks[i][j])this.blocks[i][j].update(du);
 		}
 	}
-	*/
+	
 };
 
 //function to check if there are blocks above the character making him unable to grow bigger
