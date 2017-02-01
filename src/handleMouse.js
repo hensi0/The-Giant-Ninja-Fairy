@@ -28,7 +28,9 @@ function handleMouse(evt) {
 }
 
 function stopZeShootin() {
-	entityManager._character[0].stopZeShootin();
+	if(!g_MenuScreenOn)entityManager._character[0].stopZeShootin();
+	else g_menu.mouseAction();
+	
   //entityManager._gun[entityManager._selectedGun].stopShooting();
 };
 

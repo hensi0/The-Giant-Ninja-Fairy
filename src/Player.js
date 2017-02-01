@@ -67,6 +67,7 @@ Player.prototype.tempMaxJumpHeight = 0;
 Player.prototype.oneXPerMouseStuff = true;
 Player.prototype.jumpStateBuffer = 0;
 Player.prototype.holdStateBuffer = 0;
+Player.prototype.FoWrot = 0;
 Player.prototype.animationsG;
 Player.prototype.animationsD;
 Player.prototype.animationsF;
@@ -321,8 +322,17 @@ Player.prototype.update = function (du) {
 
 //bassic rendering handled by the animation.js
 Player.prototype.render = function (ctx) {
-    this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
+    g_sprites.FoW.scale = 8 + 4; //add camera zoom
+	this.FoWrot += 0.04;
+	var mouseX = this.cx + 0.5*(g_mouseX2 - g_canvas.width/2);
+	var mouseY = this.cy + 0.5*(g_mouseY2 - g_canvas.height/2)
+	util.fillCircle(ctx, mouseX, mouseY, 1);
+	
+	g_sprites.FoW.drawCentredAt(ctx, this.cx, this.cy, this.FoWrot);
+	g_sprites.FoW.drawCentredAt(ctx, mouseX, mouseY, -this.FoWrot);
+	this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
 	this.drawHealthBar(ctx);
+	
 };
 
 //LMB functioning while in fairy form

@@ -130,8 +130,9 @@ Projectile.prototype.update = function (du) {
 	if(this.type === 'detector' && this.shooter.form === 'druid'){
 		//this.shooter.cx = this.cx - 0.5*this.velX;
 		//this.shooter.cy = this.cy - 0.5*this.velY;
-		this.shooter.velX = Math.min(3,this.velX*0.15*du);
-		this.shooter.velY = Math.min(3,this.velY*0.15*du);
+		this.shooter.velX =  Math.max(-3,Math.min(3,this.velX*0.15*du));
+		
+		this.shooter.velY = Math.max(-3,Math.min(3,this.velY*0.15*du));
 	}
 	
 	if(this.type === 'arrow') {this.velY += 0.1; this.configureRotation();}

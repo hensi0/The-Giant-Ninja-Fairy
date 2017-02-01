@@ -147,19 +147,19 @@ ranger.prototype.shootZeArrow = function () {
 
 //for states where you are fireing in a specific directions
 ranger.prototype.configureRotation = function() {
+	var vel = Math.sqrt((this.velX*this.velX) + (this.velY*this.velY));
 	var player = entityManager._character[0];
 	var dir;
-	if(player.cx < this.cx){ 
+	if(player.cx <= this.cx){ 
 		dir = "Left";
-		this.rotation = Math.atan((this.cy - player.cy)/(this.cx - player.cx)); 
-		//angle of player to mouse
-	}
+		this.rotation = Math.atan((this.cy - player.cy)/(this.cx - player.cx)); 	}
 	else {
 		dir = "Right";
 		this.rotation = Math.atan((this.cy - player.cy)/(this.cx - player.cx)); 
-		//angle of player to mouse
-	}
-	this._lastDir = dir;
+}
+	this.rotation = 0;
+	
+	//this._lastDir = dir;
 	return dir;
 }
 
@@ -183,36 +183,8 @@ ranger.prototype.knockBack = function(x,y) {
 };
 
 ranger.prototype.getSize = function(){
-    var size = {sizeX:20*this._scale,sizeY:40*this._scale};
+    var size = {sizeX:20*this._scale,sizeY:20*this._scale};
     return size;
-};
-
-ranger.prototype.handleSpecificRangerAction = function(du, dir) {
-	// To be implemented in subclasses.
-	var player = entityManager._character[0];
-	if(!player) return;
-	var px = player.cx;
-	var py = player.cy;
-	
-	if(dir === "Left"){
-		if(px < this.cx && (px + 400) > this.cx && Math.abs(py - this.cy) < 220){
-			this.angryCD = 150;
-			this.state['angry'] = true;
-		}
-	} else {
-		if(px > this.cx && (px - 400) < this.cx && Math.abs(py - this.cy) < 220){
-			this.state['angry'] = true;
-			this.angryCD = 150;
-		}
-	}
-	
-	if(Math.abs(px - this.cx) > 400 || Math.abs(py - this.cy) > 220 )this.angryCD--;
-	if(this.angryCD < 0) this.state['angry'] = false;
-	
-	if(this.state['angry']){
-		this.configureRotation();
-
-	}	
 };
 
 

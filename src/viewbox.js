@@ -129,6 +129,7 @@ viewBox.prototype.update = function(du){
 
 viewBox.prototype.render = function(ctx){
 	//renders inner and outer box if you press X, even though outer box might be hard to see 
+	
 	if (g_renderSpatialDebug){
 	
 		ctx.save();

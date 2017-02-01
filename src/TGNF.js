@@ -61,6 +61,8 @@ function gatherInputs() {
 
 // GAME-SPECIFIC UPDATE LOGIC
 
+var g_menu = new Menu();
+
 function updateSimulation(du) {
     
     processDiagnostics();
@@ -68,7 +70,8 @@ function updateSimulation(du) {
 	
 	
 	if(entityManager._level === 0) entityManager.enterLevel(1);
-    entityManager.update(du);
+    if(g_MenuScreenOn) g_menu.update(du);
+	else entityManager.update(du);
 
 }
 
@@ -78,6 +81,7 @@ var g_allowMixedActions = true;
 var g_renderSpatialDebug = false;
 var g_viewPort = {x:0, y:0};
 var g_isMuted = false;
+var g_MenuScreenOn = true;
 
 var KEY_MUTE   = keyCode('M');
 var KEY_SPATIAL = keyCode('X');
@@ -105,36 +109,40 @@ function processDiagnostics() {
 function renderSimulation(ctx) {
 	ctx.save();
 	
-        var dx = g_viewPort.x;
-        var dy = g_viewPort.y;
-    
-    var lvlLength;        
-	lvlLength = entityManager._world[0].blocks[0].length*(g_canvas.height/14) - g_canvas.width;
-	
-	//current background for the game. To be replaced with multi-layered background later
-	ctx.fillStyle = "cyan";	
-	ctx.fillRect(0,0,g_canvas.width,g_canvas.height);
-	ctx.fillStyle = "red";	
-	util.fillCircle(ctx,g_mouseX2,g_mouseY2,8);
-	
-	var scale = g_CameraZoom;
-    ctx.scale(scale, scale);
-	ctx.translate(((1 - scale)/scale)*0.5*g_canvas.width, ((1 - scale)/scale)*0.5*g_canvas.height);
-	
-     
-	ctx.translate(-dx,-dy);
-    
-	//here we handle the zoom
-	
-    
-	
-	entityManager.render(ctx);
-    
-	
-	if (g_renderSpatialDebug) spatialManager.render(ctx);
-    
+	if(!g_MenuScreenOn){
+			var dx = g_viewPort.x;
+			var dy = g_viewPort.y;
+		
+		var lvlLength;        
+		lvlLength = entityManager._world[0].blocks[0].length*(g_canvas.height/14) - g_canvas.width;
+		
+		//current background for the game. To be replaced with multi-layered background later
+		ctx.fillStyle = "black";	
+		ctx.fillRect(0,0,g_canvas.width,g_canvas.height);
+		ctx.fillStyle = "red";	
+		
+		
+		
+		var scale = g_CameraZoom;
+		ctx.scale(scale, scale);
+		ctx.translate(((1 - scale)/scale)*0.5*g_canvas.width, ((1 - scale)/scale)*0.5*g_canvas.height);
+		
+		 
+		ctx.translate(-dx,-dy);
+		
+		//here we handle the zoom
+		
+		
+		
+		entityManager.render(ctx);
+		
+		
+		if (g_renderSpatialDebug) spatialManager.render(ctx);
+		
+	} else g_menu.render(ctx);
+		
 	ctx.restore();
-	
+		
 	
 	
 }
@@ -156,6 +164,7 @@ function requestPreloads() {
 		//tilesets
 		spikes:		"res/images/blocks/spikes.png",
 		door:		"res/images/blocks/door.png",
+		wall:		"res/images/blocks/wall.png",
 		loot:		"res/images/blocks/chest.png",
 		blocks:		"res/images/blocks/blocks.png",
 		
@@ -170,7 +179,16 @@ function requestPreloads() {
 		goatI:		"res/images/goatStanding.png",
 		pixie:		"res/images/Pixie.png",
 		druid:		"res/images/druid.png",
+		
+		FoW: 		"res/images/FoW.png",
+		
+		//Menu images
+		menu1:			"res/images/menu/title.png",
+		menuMain:		"res/images/menu/main.png",
+		menuTree:		"res/images/menu/titleTree.png",
 
+		
+		
 		//enemy-sprites:
 		dawg: 			   "res/images/dawg.png",
 		princeSpriteSheet: "res/images/patss.png"
@@ -332,15 +350,26 @@ function preloadDone() {
 	g_sprites.bricks  = new Sprite(g_images.bricks),
 	g_sprites.spikes  = new Sprite(g_images.spikes),
 	g_sprites.door    = new Sprite(g_images.door),
+	g_sprites.wall    = new Sprite(g_images.door),
 	g_sprites.loot    = new Sprite(g_images.loot),
 	g_sprites.skybox  = new Sprite(g_images.skyBox),
+	
 	
 	//tileset-mud
 	g_sprites.dirtM1  = new Sprite(g_images.dirtM1),
 	g_sprites.dirtMT  = new Sprite(g_images.dirtMT),
 	g_sprites.dirtMTL  = new Sprite(g_images.dirtMTL),
-	g_sprites.dirtMTR  = new Sprite(g_images.dirtMTR);
+	g_sprites.dirtMTR  = new Sprite(g_images.dirtMTR),
 	
+	
+	//tileset-mud
+	g_sprites.menu1  		= new Sprite(g_images.menu1),
+	g_sprites.menuMain  	= new Sprite(g_images.menuMain),
+	g_sprites.menuTree  	= new Sprite(g_images.menuTree),
+
+	
+	
+	g_sprites.FoW  = new Sprite(g_images.FoW),
 	g_sprites.skybox  = new Sprite(g_images.skyBox),
 	
 	

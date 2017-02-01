@@ -25,6 +25,9 @@ var NOMINAL_UPDATE_INTERVAL = 16.666;
 var NOMINAL_GRAVITY = 0.42;
 var TERMINAL_VELOCITY = 10.5;
 
+//gold
+var g_gold = 0;
+
 //zoom in on screen to control camera movement
 var g_CameraZoom = 1.4;
 

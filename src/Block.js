@@ -20,10 +20,12 @@ function Block(descr) {
 	this.sizeMod = 1;
 	this.isCracked = true;
 	this._isInitialized = false;
+	this.enemySpawnTimer = 500 + Math.random()*1000;
 };
 
 
 Block.prototype.rotation = 0;
+Block.prototype.enemySpawnTimer = 0;
 Block.prototype.sizeMod = 1;
 Block.prototype.isCracked = true;
 Block.prototype.damageCD = 0;
@@ -37,6 +39,26 @@ Block.prototype = new Entity();
 Block.prototype.update = function (du) {
 	if(this._isDeadNow) return entityManager.KILL_ME_NOW;
 	if(!this._isInitialized) this.initialize();
+	if(this.type === 'D'){	
+		if(this.enemySpawnTimer < 0)	{this.spwnRandomEnemy(); this.enemySpawnTimer = 2000 + 4000*Math.random()}
+		else if(this.enemySpawnTimer < 150)	this.sprite.sx = 192;
+		else this.sprite.sx = 128;
+		
+		if(du)this.enemySpawnTimer -= du;
+	}
+};
+
+Block.prototype.spwnRandomEnemy = function () {
+	if(entityManager._enemies.length > 3*(entityManager._world[0].numRooms)) return;
+	
+	var location = entityManager._world[0].getLocation(this.i,this.j);
+	if(Math.random() > 0.66)
+		entityManager.generateDog({cx: location[0], cy: location[1]});
+	else if(Math.random() > 0.5)
+		entityManager.generateRanger({cx: location[0], cy: location[1]});
+	else
+		entityManager.generateBat({cx: location[0], cy: location[1]});
+	
 };
 
 Block.prototype.initialize = function () {
@@ -76,7 +98,7 @@ Block.prototype.renderPicker = function () {
 		case 6: 	this.sprite = this.mudBlockLogic(this.status); //normal block
 		break; 
 		
-		case 2: 	this.sprite 		= this.spritify(64,128,64,64);
+		case 2: 	this.sprite 		= this.spritify(64,128,64,63);
 					this._isPassable 	= true;
 					this.sizeMod 		= 0.6;
 					this.damageCD 		= 0;
@@ -94,7 +116,7 @@ Block.prototype.renderPicker = function () {
 					this._isBreakable = true;
 		break;
 		
-		case 'E':	this.sprite = g_sprites.door;
+		case 'E':	this.sprite = this.spritify(64,257,64,62);
 					this._isPassable = true;
 		break;
 		
@@ -113,6 +135,11 @@ Block.prototype.renderPicker = function () {
 					this._isPassable = true;
 		break;
 		
+		case 'D':	this.sprite = this.spritify(64,192,64,64);
+					
+					this._isPassable = true;
+		break;
+		
 		default: 	this._isPassable = true;
 					this.sprite = g_sprites.blank;
 		break;
@@ -123,9 +150,9 @@ Block.prototype.mudBlockLogic = function () {
 	//simple logic that might be implemented and improved uppon with diffrent tile-sets 
 	if(this.isPassableTest(this.adjBlocks.above)){
 		if(this.adjBlocks.left === 0)
-			return this.spritify(64,0,64,64);
+			return this.spritify(65,0,64,64);
 		else if(this.adjBlocks.right === 0)
-			return this.spritify(128,0,64,64);
+			return this.spritify(127,0,64,64);
 		else
 			return this.spritify(192,0,64,64);
 	}
@@ -199,6 +226,7 @@ Block.prototype.spritify = function (sx, sy, w, h) {
 					};
 	return sprite;
 };
+
 
 Block.prototype.render = function (ctx,x,y,w,h) {
 	if(this._isDeadNow) return entityManager.KILL_ME_NOW;

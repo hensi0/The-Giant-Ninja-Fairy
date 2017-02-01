@@ -254,10 +254,14 @@ Bat.prototype.handleCollision = function(hitEntity, axis) {
 			this.knockBack(hitEntity.cx, hitEntity.cy)
 			//hitEntity.takeHit();
 				
-		} else if (hitEntity instanceof Player && this.damagePlayerCD <= 0 && hitEntity.state['dashing']){
+		} else if (hitEntity instanceof Player && hitEntity.state['dashing']){
 			this.knockBack(this.cx, this.cy)
 			this.takeHit(100);
-			this.damagePlayerCD = 60;
+			
+		} else if (hitEntity instanceof Player && this.damagePlayerCD <= 0 && !hitEntity.state['dashing']){
+			this.knockBack(this.cx, this.cy)
+			hitEntity.takeHit(3);
+			this.damagePlayerCD = 20;
 		}
     return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};
 };

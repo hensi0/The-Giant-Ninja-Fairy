@@ -19,7 +19,7 @@ function World(descr) {
     // Define current level:
 	this.Worlds[1] = this.generateLevel(descr.x, descr.y);
     this.world = this.Worlds[1];
-
+	
     this.blocks = [];
 	var s = 0;	
 	//will be changed when I combine rooms randomly
@@ -29,16 +29,37 @@ function World(descr) {
 			s = this.world[i][j];
 			var location = this.getLocation(i,j);
 			
-			if(s === 'D'){
+			//if(s === 'D'){
 				//entityManager.generateDog({cx: location[0], cy: location[1]});
 				//entityManager.generateRanger({cx: location[0], cy: location[1]});
-				entityManager.generateBat({cx: location[0], cy: location[1]});
-				s = 0;
-			}
+				//entityManager.generateBat({cx: location[0], cy: location[1]});
+				//s = 0;
+			//}
 			
 			s = this.handleMultiBlocks(s);
 				
-			this.blocks[i][j] = (s === 0 ? null : new Block({i: i, j: j, type: s}));
+			if(s !== 0) this.blocks[i][j] = new Block({i: i, j: j, type: s});
+			else if(Math.random() < 0.006){
+				var a = false;
+				var l = false;
+				var r = false;
+				var b = false;
+				
+			
+				if(j > 0) 
+					if(this.world[i][j-1] === 0) l = true;
+				if(i > 0) 
+					if(this.world[i-1][j] === 0) a = true;
+				if(i < (this.world.length -1)) 
+					if(this.world[i+1][j] === 0) b = true;
+				if(j < (this.world[0].length -1))
+					if(this.world[i][j+1] === 0) r = true;
+				if(l && a && b && r && ((j+1)%14 !== 0) && ((i+1)%14 !== 0))
+					this.spawnARandomBGObject(location[0], location[1]); 
+				
+				this.world[i][j] = null;
+				this.blocks[i][j] = null;
+			} else this.blocks[i][j] = null;
 		}
 	}
 }
@@ -55,6 +76,7 @@ World.prototype.blocks;
 World.prototype.numRooms = 0; 
 World.prototype.mainWayReady = false; 
 World.prototype.map; 
+World.prototype.BGObjects = []; 
 World.prototype.blockDim = g_canvas.height/24;
 
 
@@ -63,6 +85,14 @@ World.prototype.getBlockCoords = function(x,y) {
 	var row = Math.floor(y/(this.blockDim));
 	return [row, col];
 }
+
+World.prototype.spawnARandomBGObject = function(x,y) {
+	var x2 = 128 + Math.floor(Math.random()*4)*64;
+	var sprite = this.spritify(x2,64,64,64,false);
+	sprite.scale = 1; 
+	this.BGObjects.push({x: x, y: y, sprite: sprite});
+}
+
 
 World.prototype.getLocation = function(i,j) {
 	//var block = this.blocks[i][j];
@@ -81,7 +111,10 @@ World.prototype.handleMultiBlocks = function(s) {
 	} else if 	(s === 5){
 		if(Math.random() > 0.5) return 4;
 		else 					return 0;
-	} return s;
+	} else if 	(s === 'D'){
+		if(Math.random() < 0.15*entityManager._level) return 'D';
+		else 					return 0;
+	}return s;
 }
 
 World.prototype.collidesWith = function (player, prevX, prevY, nextX, nextY) {
@@ -148,6 +181,13 @@ World.prototype.isSafeToTransform = function ( x, y) {
 
 World.prototype.render = function(ctx) {
 	ctx.save();
+	
+	for(var i = 0; i < this.map.length; i++) {
+		for(var j = 0; j < this.map[i].length; j++) {
+			this.drawBGAt(ctx, (7+(j*14))*this.blockDim, (7+(i*14))*this.blockDim);
+		}
+	}
+	
 	for(var i = 0; i < this.world.length; i++) {
 		for(var j = 0; j < this.world[i].length; j++) {
 			var block = this.blocks[i][j];
@@ -157,9 +197,43 @@ World.prototype.render = function(ctx) {
 			}
 		}
 	}
-
+	
 	ctx.restore();
 }
+
+World.prototype.drawBGAt = function (ctx, x,y) {
+	var player = entityManager._character[0];
+	var angle = 0;
+	var dist = Math.max(-14*this.blockDim , Math.min(14*this.blockDim, x - player.cx));
+	var offsetX = (dist / (14*this.blockDim))* this.blockDim
+	var BG = this.spritify( this.blockDim + offsetX , 0, 448,448, true);
+	var scale = this.blockDim*14 /448;
+	BG.scale = scale;
+	BG.drawAt(ctx , x -7*this.blockDim, y - 7*this.blockDim, 0);
+	for(var i = 0; i < this.BGObjects.length; i++){
+		var x2 = this.BGObjects[i].x;
+		var y2 = this.BGObjects[i].y;
+		if(Math.abs(x - x2) < 7*this.blockDim && Math.abs(y - y2) < 7*this.blockDim)
+			this.BGObjects[i].sprite.drawAt(ctx , -offsetX + x2 - 0.5*this.blockDim, y2 - 0.5*this.blockDim, 0)
+
+	}
+	
+};
+
+World.prototype.spritify = function (sx, sy, w, h , toggle) {
+	if(toggle)var sprite = new Sprite(g_images.wall);
+	else      var sprite = new Sprite(g_images.blocks);
+					
+					sprite.sx = sx;
+					sprite.sy = sy;
+					sprite.width = w;
+					sprite.height = h;
+					sprite.scale = 1;
+					sprite.drawAt = function(ctx,x,y){
+						ctx.drawImage(this.image, this.sx, this.sy, this.width, this.height, x, y, this.scale*this.width, this.scale*this.height);
+					};
+	return sprite;
+};
 
 // ======================
 // VARIOUS WORLD PARTS DEFINED
@@ -377,8 +451,8 @@ World.prototype.WhereIsTheExit = function(type, y, x, mY, mX){
 	
 	
 	if(type === 'E'){
-		if(dir === 'up') 	return this.Worlds.Eu;
 		if(dir === 'down') 	return this.Worlds.Ed;
+		if(dir === 'up') 	return this.Worlds.Eu;
 		if(dir === 'left')	return this.Worlds.El;
 		if(dir === 'right')	return this.Worlds.Er;
 	} else if(type === 'B'){
@@ -610,10 +684,10 @@ World.prototype.Worlds =  {
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[0,0,6,0,0,0,0,0,0,0,0,6,0,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,'D','D','D','D',0],
-	[0,0,0,0,0,0,0,0,0,2,2,0,0,7],
+	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[0,0,0,0,0,0,0,0,0,0,2,0,0,7],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,7],
-	[7,0,7,0,0,0,0,0,0,0,0,0,0,7],
+	[7,0,7,0,0,0,0,0,0,0,0,'D',0,7],
 	[6,6,6,6,6,6,6,6,6,6,6,6,6,6]
 	]
 	],
@@ -623,7 +697,7 @@ World.prototype.Worlds =  {
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[6,0,0,0,0,0,0,0,0,0,0,'T',0,0],
+	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,0,0,0,6,0,0,0,0,6,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -631,8 +705,8 @@ World.prototype.Worlds =  {
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,5,0,0,0,0,0,0,0,2,2,0,0,0],
-	[6,4,0,0,0,0,0,0,0,0,0,0,'D',0],
-	[6,4,7,0,0,0,0,0,0,0,0,0,0,7],
+	[6,4,0,0,0,0,0,0,0,0,0,0,0,0],
+	[6,4,7,0,0,0,0,0,0,0,0,'D',0,7],
 	[6,6,6,6,6,6,6,6,6,6,6,6,6,6]
 	]
 	],
@@ -650,8 +724,8 @@ World.prototype.Worlds =  {
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[0,0,0,0,0,0,0,0,0,2,2,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,'D',0],
-	[0,7,7,0,0,0,0,0,0,0,0,0,0,7],
+	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[0,7,7,'D',0,0,0,0,0,0,0,0,0,7],
 	[6,6,6,6,6,6,6,6,6,6,6,6,6,6]
 	]
 	],
@@ -858,7 +932,7 @@ World.prototype.Worlds =  {
 	[0,6,6,0,0,0,0,0,0,0,0,0,7,6],
 	[6,7,0,0,0,0,0,0,0,6,7,7,6,6],
 	[6,0,0,0,0,0,0,6,6,6,6,6,6,6],
-	[6,0,0,0,0,0,0,0,0,0,7,6,7,7],
+	[6,0,0,'D',0,0,0,0,0,0,7,6,7,7],
 	[6,0,0,6,6,0,0,0,0,0,0,0,0,7],
 	[7,6,0,0,0,0,0,0,0,0,0,0,0,0],
 	[7,6,0,0,0,0,7,6,6,6,0,0,0,0],
@@ -872,14 +946,14 @@ World.prototype.Worlds =  {
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,7,0,0,0,0,0,0,0,0,0,0,0,0],
-	[6,7,7,0,0,0,0,0,0,0,7,7,0,0],
+	[6,7,7,'D',0,0,0,0,0,0,7,7,0,0],
 	[6,0,7,6,7,0,0,0,7,6,6,0,0,0],
 	[7,6,7,7,0,0,0,0,0,0,0,0,0,7],
-	[7,6,7,0,0,0,0,0,0,0,0,0,7,7],
+	[7,6,7,0,0,0,0,0,0,'D',0,0,7,7],
 	[6,7,0,0,0,0,0,0,6,6,6,6,6,6],
 	[6,0,0,0,0,0,0,0,0,7,7,7,6,6],
 	[6,0,0,0,7,6,0,0,0,0,0,0,0,7],
-	[6,0,0,0,7,0,7,0,0,0,0,0,0,0],
+	[6,'D',0,0,7,0,7,0,0,0,0,0,0,0],
 	[6,7,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,6,7,0,0,0,0,0,0,0,0,0,0,0],
 	[6,7,7,0,0,0,0,0,0,0,7,7,0,0]
@@ -900,9 +974,9 @@ World.prototype.Worlds =  {
 	[0,7,6,0,2,0,0,0,0,0,7,7,7,0],
 	[0,7,0,0,0,0,0,0,0,7,7,7,6,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[0,0,0,'D',0,0,0,0,0,0,0,0,0,0],
 	[0,0,7,6,0,0,0,0,7,0,0,0,0,0],
-	[0,7,6,6,2,2,2,2,0,6,6,0,0,0],
+	[0,7,6,6,2,2,2,2,0,6,6,0,'D',0],
 	[6,6,7,7,6,6,6,6,6,7,6,6,6,6]
 	],
 	
@@ -910,16 +984,16 @@ World.prototype.Worlds =  {
 	[0,2,0,0,0,0,0,0,0,0,2,0,0,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[0,0,0,'D',0,0,0,0,0,0,0,0,0,0],
 	[0,7,6,6,6,7,0,0,0,0,0,0,0,0],
 	[0,7,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+	[0,0,'D',0,0,0,0,0,0,0,0,0,0,0],
 	[0,0,6,7,0,0,2,0,0,6,6,6,6,6],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[0,0,0,0,6,0,0,0,0,0,0,0,0,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,7,2,0,0,6,6,2,0,2,7,0,0],
+	[0,0,7,2,0,0,6,6,2,0,2,7,'D',0],
 	[6,6,6,6,6,6,6,6,6,6,6,6,6,6]
 	]
 	],
@@ -939,7 +1013,7 @@ World.prototype.Worlds =  {
 	[0,0,6,7,0,6,6,0,0,0,0,0,0,0],
 	[0,0,0,0,0,7,0,0,0,0,0,0,7,0],
 	[0,0,0,0,0,7,0,0,0,0,7,7,6,0],
-	[0,2,0,0,0,7,0,0,0,7,7,6,6,0],
+	[0,2,0,0,0,7,0,'D',0,7,7,6,6,0],
 	[6,6,6,6,6,6,6,6,6,6,6,6,6,6]
 	]
 	],
@@ -954,11 +1028,11 @@ World.prototype.Worlds =  {
 	[6,0,0,6,0,0,0,0,6,6,0,0,0,0],
 	[6,0,0,6,7,0,0,0,0,0,0,0,0,2],
 	[6,0,7,0,0,0,0,0,0,0,0,0,0,0],
-	[6,0,0,0,2,0,0,0,0,0,0,0,0,0],
+	[6,0,0,0,2,'D',0,0,0,0,0,0,0,0],
 	[6,7,0,0,6,6,6,7,7,0,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[6,0,0,0,0,0,0,2,0,0,0,0,0,7],
+	[6,0,'D',0,0,0,0,2,0,0,0,0,0,7],
 	[6,6,6,6,6,6,6,6,6,6,6,6,6,6]
 	]
 	],
@@ -992,10 +1066,10 @@ World.prototype.Worlds =  {
 	[0,0,0,0,0,6,0,0,0,0,0,0,0,0],
 	[0,0,0,0,7,6,0,0,0,0,0,0,0,6],
 	[0,0,0,0,7,0,0,0,0,0,7,6,6,6],
-	[0,0,0,7,6,0,0,0,0,7,6,0,0,0],
+	[0,0,0,7,6,'D',0,0,0,7,6,0,0,0],
 	[0,0,6,7,6,6,6,0,0,0,0,0,7,0],
 	[0,0,6,6,0,0,0,0,0,0,0,0,0,0],
-	[0,0,6,0,0,0,0,0,0,0,0,7,0,0],
+	[0,0,6,0,0,0,0,0,0,0,0,5,0,'D'],
 	[0,6,6,0,2,0,0,0,0,7,7,6,6,6],
 	[6,6,0,0,0,0,0,0,0,6,0,0,0,6]
 	]
@@ -1013,7 +1087,7 @@ World.prototype.Worlds =  {
 	[0,0,0,0,0,0,0,0,0,7,7,7,0,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,7,0,0,0,0,0,0],
+	[0,0,0,0,0,0,'D',7,0,0,0,0,0,0],
 	[0,0,0,0,0,0,6,0,0,0,0,0,0,0],
 	[0,0,0,7,7,6,0,6,6,0,0,0,0,0],
 	[0,0,0,0,7,0,0,0,0,0,0,0,0,0],
@@ -1026,14 +1100,14 @@ World.prototype.Worlds =  {
 	[
 	[6,6,7,0,0,0,0,0,0,0,0,6,6,6],
 	[6,6,6,7,0,0,0,0,0,0,0,0,0,7],
-	[6,6,6,7,0,0,0,0,0,7,7,0,0,7],
+	[6,6,6,7,0,0,0,0,'D',7,7,0,0,7],
 	[7,6,7,0,0,0,0,7,6,6,6,6,0,0],
 	[7,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[0,0,0,7,6,6,0,0,0,0,0,0,0,7],
 	[0,0,0,0,0,0,0,0,0,0,6,6,6,7],
 	[0,7,0,0,0,0,0,0,0,0,7,7,7,6],
-	[0,0,0,0,0,0,7,0,0,0,0,7,7,0],
+	[0,0,0,0,0,'D',7,0,0,0,0,7,7,0],
 	[0,0,0,7,6,6,6,6,6,0,0,0,7,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,7,0],
 	[0,7,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -1049,10 +1123,10 @@ World.prototype.Worlds =  {
 	[0,7,7,0,0,0,0,0,7,7,7,7,0,6],
 	[0,0,0,0,0,0,0,6,6,6,6,6,0,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-	[0,0,0,7,7,7,0,0,0,0,0,0,0,7],
+	[0,0,0,7,7,7,'D',0,0,0,0,0,0,7],
 	[0,0,0,0,6,6,6,0,0,0,0,0,0,0],
-	[0,0,0,0,0,0,0,0,7,7,0,0,0,0],
-	[0,0,7,0,0,0,0,7,6,6,6,0,0,0],
+	[0,0,0,0,0,0,0,0,7,7,'D',0,0,0],
+	[0,0,7,'D',0,0,0,7,6,6,6,0,0,0],
 	[0,7,6,6,6,6,0,0,0,0,0,0,0,0],
 	[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[7,0,0,0,0,0,7,0,0,7,7,0,0,0],
@@ -1064,14 +1138,14 @@ World.prototype.Worlds =  {
 	[
 	[6,7,0,0,0,0,7,0,0,0,0,0,0,6],
 	[6,7,7,0,0,0,0,0,0,0,0,0,6,6],
-	[6,6,7,0,0,0,0,0,0,0,7,6,6,6],
+	[6,6,7,'D',0,0,0,0,0,0,7,6,6,6],
 	[6,6,6,6,0,0,0,0,0,0,0,0,0,0],
 	[6,6,6,7,0,0,0,7,0,0,0,0,0,0],
 	[6,6,7,0,0,0,6,6,6,6,0,0,0,0],
 	[6,7,7,0,0,0,0,0,0,0,0,0,0,0],
 	[6,7,0,0,0,0,0,0,0,0,0,0,6,6],
 	[6,0,6,6,0,0,0,0,0,0,0,0,0,0],
-	[6,0,0,0,0,0,0,7,7,0,0,0,0,0],
+	[6,0,0,0,0,0,0,7,7,'D',0,0,0,0],
 	[6,7,0,0,0,7,6,6,6,6,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,0,0],
 	[6,0,0,0,0,0,0,0,0,0,0,0,7,6],
