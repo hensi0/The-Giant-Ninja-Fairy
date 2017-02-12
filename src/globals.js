@@ -27,6 +27,10 @@ var TERMINAL_VELOCITY = 10.5;
 
 //gold
 var g_gold = 0;
+var g_skills = [];
+
+//audio
+var g_mute = true;
 
 //zoom in on screen to control camera movement
 var g_CameraZoom = 1.4;

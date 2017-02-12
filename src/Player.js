@@ -60,6 +60,8 @@ Player.prototype.state = {jumping: true, canJump: false, pushing: false,
 //generic variables
 Player.prototype.HP = 100;
 Player.prototype.maxhp = 100;
+Player.prototype.mana = 100;
+Player.prototype.maxMana = 100;
 Player.prototype.maxVelX = 3.9;
 Player.prototype.maxVelY = 6.5;
 Player.prototype.maxPushHeight = 120; 
@@ -152,6 +154,7 @@ Player.prototype.goDruid = function () {
 		this.cx = this.cx + this.hoverX;
 		this.cy = this.cy + this.hoverY;
 		this.resetStates();
+		this.updateStatus();
 };
 
 //what happens the first frame when jumping from ground
@@ -307,6 +310,15 @@ Player.prototype.update = function (du) {
 
 	this.updateStatus();
 	
+	if(this.form === 'druid'){ 
+		if(this.mana <= this.maxMana) this.mana += du*0.9;
+	} else this.mana -= du*0.7;
+	
+	if (this.mana <= 0) {
+		this.cy -= this.getSize().sizeY/1.5; 
+		this.goDruid(); 
+		this.SwapCD = 45;
+	}  
 	
 	var flySpeedScaler = 1;
 	if(this.form === 'fairy' && this.status.substring(0,5) === "inAir") 
@@ -322,18 +334,24 @@ Player.prototype.update = function (du) {
 
 //bassic rendering handled by the animation.js
 Player.prototype.render = function (ctx) {
-    g_sprites.FoW.scale = 8 + 4; //add camera zoom
+	var addOn = 0;
+	if(checkForUps("visionRange2")) addOn = 6;
+	else if(checkForUps("visionRange")) addOn = 3;
+	
+    g_sprites.FoW.scale = 11 + addOn; //add camera zoom
 	this.FoWrot += 0.04;
 	var mouseX = this.cx + 0.5*(g_mouseX2 - g_canvas.width/2);
 	var mouseY = this.cy + 0.5*(g_mouseY2 - g_canvas.height/2)
 	util.fillCircle(ctx, mouseX, mouseY, 1);
 	
 	g_sprites.FoW.drawCentredAt(ctx, this.cx, this.cy, this.FoWrot);
+	g_sprites.FoW.scale = 11 + (addOn/2); //add camera zoom
 	g_sprites.FoW.drawCentredAt(ctx, mouseX, mouseY, -this.FoWrot);
 	this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
 	this.drawHealthBar(ctx);
 	
 };
+
 
 //LMB functioning while in fairy form
 Player.prototype.shootZePlasmaBalls = function (du) {
@@ -358,7 +376,7 @@ Player.prototype.shootZeBoomerang = function () {
 		var vely = vMod*Math.sin(this.rotation + aMod);
 		var temp = 1;
 		if(g_mouseX2 <= g_canvas.width/2) temp *= -1;
-		entityManager.fireBullet(this.cx , this.cy - 5 + temp*vely, temp*velx, temp*vely, 10, 0, this, 'boomerang', 400);
+		entityManager.fireBullet(this.cx , this.cy - 5 + temp*vely, temp*velx, temp*vely, 6, 0, this, 'boomerang', 400);
 		this.rotation = 0;
 };
 

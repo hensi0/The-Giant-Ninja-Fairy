@@ -113,15 +113,11 @@ function renderSimulation(ctx) {
 			var dx = g_viewPort.x;
 			var dy = g_viewPort.y;
 		
-		var lvlLength;        
-		lvlLength = entityManager._world[0].blocks[0].length*(g_canvas.height/14) - g_canvas.width;
 		
 		//current background for the game. To be replaced with multi-layered background later
 		ctx.fillStyle = "black";	
 		ctx.fillRect(0,0,g_canvas.width,g_canvas.height);
 		ctx.fillStyle = "red";	
-		
-		
 		
 		var scale = g_CameraZoom;
 		ctx.scale(scale, scale);
@@ -135,6 +131,7 @@ function renderSimulation(ctx) {
 		
 		
 		entityManager.render(ctx);
+		
 		
 		
 		if (g_renderSpatialDebug) spatialManager.render(ctx);
@@ -195,11 +192,14 @@ function requestPreloads() {
 		
     };
 
-    imagesPreload(requiredImages, g_images, preloadDone);
+    imagesPreload(requiredImages, g_images, imagePreloadDone);
 }
 
 var g_sprites = {};
 var g_animations = {};
+var g_audio = {};
+var backgroundMusic;
+var backgroundMusic2;
 
 function makePlayerAnimationGoat(scale) {
     var Player = {};
@@ -335,6 +335,13 @@ function makeBombAnimation(scale) {
     return bomb;
 };
 
+function makePortalAnimation(scale) {
+    var portal = {};	
+	//image, frameX, frameY, frameWidth, frameHeight, numFrames, interval, scale
+    portal.portal = new Animation(g_images.blocks,257,62,64,3,100, scale, 64);	
+
+    return portal;
+};
 
 function makeBoomerangAnimation(scale) {
     var boomerang = {};	
@@ -342,6 +349,17 @@ function makeBoomerangAnimation(scale) {
     boomerang.boomerang = new Animation(g_images.druid,993,32,32,29,50, scale);	
 
     return boomerang;
+};
+
+function imagePreloadDone() {
+    var requiredAudio = {
+        intro1: "res/sounds/introPart1.wav",
+		intro2: "res/sounds/introPart2.wav",
+		intro3: "res/sounds/introPart3.wav"
+		//theme1: "res/sounds/part1.wav",
+        
+    }
+    audioPreload(requiredAudio, g_audio, preloadDone);
 };
 
 function preloadDone() {
@@ -376,6 +394,21 @@ function preloadDone() {
     entityManager.init();
 
     main.init();
+	
+	try {
+            g_audio.intro1.addEventListener('timeupdate', function(){
+                var buffer = .20
+                if(this.currentTime > this.duration - buffer){
+                    this.currentTime = 0
+                    util.playLoop(g_audio.intro2, 0.5)
+                }}, false);
+        } catch(err) {}
+		
+	backgroundMusic = g_audio.intro1;
+	backgroundMusic2 = g_audio.intro1;
+	backgroundMusic.volume = 0.5;
+    util.play(g_audio.intro1);
+	
 }
 
 // Kick it off

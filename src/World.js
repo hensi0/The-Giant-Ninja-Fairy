@@ -432,11 +432,11 @@ World.prototype.WhereIsTheExit = function(type, y, x, mY, mX){
 	
 	if(y > 0){
 		var t = this.map[y-1][x];
-		if(t==='I' || t==='R' || t==='K' || t==='q' || t==='T' || t==='p') 		dir += 'up';
+		if(t==='I' || t==='R' || t==='K' || t==='q' || t==='T' || t==='p') 		dir = 'up';
 	}
 	if(y < (mY -1)){
 		var t = this.map[y+1][x];
-		if(t==='I' || t==='R' || t==='K' || t==='J' || t==='W' || t==='L') 		dir += 'down';
+		if(t==='I' || t==='R' || t==='K' || t==='J' || t==='W' || t==='L') 		dir = 'down';
 	}
 	if(x > 0){ 		
 		var t = this.map[y][x-1];

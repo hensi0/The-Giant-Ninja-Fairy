@@ -131,6 +131,50 @@ fillBox: function (ctx, x, y, w, h, style) {
     ctx.fillStyle = style;
     ctx.fillRect(x, y, w, h);
     ctx.fillStyle = oldStyle;
+},
+
+//=======
+// AUDIO
+//=======
+
+play: function (audio) {
+    audio.pause();
+    audio.currentTime = 0;
+    if (!g_isMuted) audio.play();
+},
+
+playLoop: function (audio, sVol) {
+	if(g_mute) return;
+    backgroundMusic.pause();
+    backgroundMusic = audio;
+	backgroundMusic.volume = sVol;
+    backgroundMusic.currentTime = 0;
+    if (!g_isMuted) {
+        try {
+            backgroundMusic.addEventListener('timeupdate', function(){
+				var buffer = 0.40
+                if(this.currentTime > this.duration - buffer){
+                    this.currentTime = 0
+                    this.play();
+                }
+				backgroundMusic.volume = Math.min(0.5, backgroundMusic.volume + 0.04);
+				backgroundMusic2.volume = Math.max(0, backgroundMusic2.volume - 0.04);
+				if(backgroundMusic2.volume === 0) backgroundMusic2.pause();
+				}, false);
+            backgroundMusic.play();
+        } catch(err) {}
+    };
+},
+
+crossfadeLoop: function (audio) {
+	if(g_mute) return;
+	var time = backgroundMusic.currentTime;
+    backgroundMusic2 = backgroundMusic.cloneNode();
+	backgroundMusic2.volume =  0.5;
+	backgroundMusic2.currentTime = time + 0.24;
+	backgroundMusic2.play();
+	
+	this.playLoop(audio, 0.04);
 }
 
 };

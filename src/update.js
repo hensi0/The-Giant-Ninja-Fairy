@@ -52,12 +52,17 @@ function update(dt) {
 //
 var KEY_PAUSE = 'P'.charCodeAt(0);
 var KEY_STEP  = 'O'.charCodeAt(0);
+var KEY_Mute  = 'M'.charCodeAt(0);
 
 var g_isUpdatePaused = false;
 
 function shouldSkipUpdate() {
     if (eatKey(KEY_PAUSE)) {
         g_isUpdatePaused = !g_isUpdatePaused;
+    }
+	if (eatKey(KEY_Mute)) {
+        g_mute = !g_mute;
+		backgroundMusic.pause();
     }
     return g_isUpdatePaused && !eatKey(KEY_STEP);    
 }

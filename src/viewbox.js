@@ -130,23 +130,16 @@ viewBox.prototype.update = function(du){
 viewBox.prototype.render = function(ctx){
 	//renders inner and outer box if you press X, even though outer box might be hard to see 
 	
-	if (g_renderSpatialDebug){
-	
-		ctx.save();
-		ctx.beginPath();
-		ctx.strokeStyle = "blue";	
-		ctx.rect(this.cx-this.sizeX/2,this.cy-this.sizeY/2,this.sizeX,this.sizeY);
-		ctx.stroke();
-		/*
-		ctx.beginPath();
-		ctx.strokeStyle = "green";	
-		ctx.rect(this.screenX - g_canvas.width/2 ,this.cy - g_canvas.height/1.35,g_canvas.width,g_canvas.height);
-		ctx.stroke();
-		*/
-		ctx.restore();
-		ctx.beginPath();
+	var midX = g_viewPort.x + g_canvas.width/2;
+	var midY = g_viewPort.y + g_canvas.height/2;
+	var SSL = 1200 - 1*(g_canvas.width/2)*g_CameraZoom //scaledScreenLength
+	console.log(SSL);
 		
-	}
+		ctx.fillStyle = "white";
+		ctx.fillText("gold: " + g_gold,
+						midX - SSL,//((1 - scale)/scale)*0.1*g_canvas.width,
+						midY); //- g_canvas.width/2.2, this.cy - g_canvas.height/2.2);
+
 };
 
 viewBox.prototype.adjustZoom = function(val){

@@ -43,9 +43,15 @@ Block.prototype.update = function (du) {
 		if(this.enemySpawnTimer < 0)	{this.spwnRandomEnemy(); this.enemySpawnTimer = 2000 + 4000*Math.random()}
 		else if(this.enemySpawnTimer < 150)	this.sprite.sx = 192;
 		else this.sprite.sx = 128;
+	}	
+	if(du)this.enemySpawnTimer -= du;
+	if(this.animation) this.animation.update(du);
 		
-		if(du)this.enemySpawnTimer -= du;
-	}
+	if(this.type === 2) {this.rotation += 0.01; this.rotation2 -= 0.005;}
+	if(this.damageCD > 0) this.damageCD--;
+	
+	
+	
 };
 
 Block.prototype.spwnRandomEnemy = function () {
@@ -116,7 +122,8 @@ Block.prototype.renderPicker = function () {
 					this._isBreakable = true;
 		break;
 		
-		case 'E':	this.sprite = this.spritify(64,257,64,62);
+		case 'E':	this.animations = makePortalAnimation(0.8);
+					this.animation = this.animations['portal'];
 					this._isPassable = true;
 		break;
 		
@@ -229,9 +236,10 @@ Block.prototype.spritify = function (sx, sy, w, h) {
 
 
 Block.prototype.render = function (ctx,x,y,w,h) {
-	if(this._isDeadNow) return entityManager.KILL_ME_NOW;
-	if(this.type === 2) {this.rotation += 0.01; this.rotation2 -= 0.005;}
-	if(this.damageCD > 0) this.damageCD--;
+	if(this.animation){
+		this.animation.renderAt(ctx, x+w/2, y+h/2, this.rotation);
+		return;
+	}
 	var img_h = this.sprite.height;
 	var scale = h/img_h;
 	this.sprite.scale = scale;

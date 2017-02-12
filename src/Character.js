@@ -157,7 +157,17 @@ Character.prototype.drawHealthBar = function (ctx) {
     ctx.lineWidth = "5";
     ctx.lineTo(this.cx + this.getSize().sizeX/2, this.cy - this.getSize().sizeY/2 - 8);
     ctx.stroke();
-    ctx.beginPath();
+	if(this instanceof Player){
+		ctx.beginPath();
+		var q = this.mana/this.maxMana;
+		ctx.moveTo(this.cx - this.getSize().sizeX/2, this.cy - this.getSize().sizeY/2 - 5);
+		ctx.strokeStyle = "cyan";
+		ctx.lineWidth = "4";
+		ctx.lineTo(this.cx - this.getSize().sizeX/2 + q*this.getSize().sizeX, 
+									this.cy - this.getSize().sizeY/2 - 5);
+		ctx.stroke();
+	}
+	ctx.beginPath();
     var n = this.HP/this.maxhp;
     ctx.moveTo(this.cx - this.getSize().sizeX/2, this.cy - this.getSize().sizeY/2 - 8);
     ctx.strokeStyle = "green";
@@ -166,6 +176,7 @@ Character.prototype.drawHealthBar = function (ctx) {
 									this.cy - this.getSize().sizeY/2 - 8);
     ctx.stroke();
 	ctx.lineWidth = "1";
+	
 }
 
 Character.prototype.render = function (ctx) {
