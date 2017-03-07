@@ -16,12 +16,25 @@ function Node(descr) {
 	for (var property in descr) {
         this[property] = descr[property];
     }
+	var sprite = new Sprite(g_images.TreeIcons);
+		sprite.sx = 0 
+		sprite.sy = 0;
+		sprite.width  = 64;
+		sprite.height = 64;
+		sprite.scale = 1;
+		sprite.drawAt = function(ctx,x,y){
+			ctx.drawImage(this.image, this.sx, this.sy, this.width, this.height, x, y, this.width*this.scale, this.height*this.scale);
+		};
+	this.sprite = sprite;
+	
 	this.isInitialized = false;
 	this.angle = -(Math.PI/180)*144;
 };
 
 Node.prototype.x = 0;
 Node.prototype.y = 0;
+Node.prototype.iconX = 0;
+Node.prototype.iconY = 0;
 Node.prototype.parentX = 0;
 Node.prototype.parentY = 0;
 Node.prototype.price = 0;
@@ -44,6 +57,7 @@ Node.prototype.initialize = function() {
 	var angle = this.angle - aFixer;
 	if(this.level > 2) angle += aFixer;
 	var length = 160 - 50*Math.sqrt(Math.sqrt(this.level));
+	if(this.cost === 10)this.cost = (1 + this.level*this.level*this.level)* 5;
 	for(var i = 0; i < this.childNodes.length ; i++){
 		this.childNodes[i].x = this.x + length*Math.cos(angle);
 		this.childNodes[i].y = this.y + length*Math.sin(angle);
@@ -58,6 +72,8 @@ Node.prototype.initialize = function() {
 
 
 Node.prototype.render = function (ctx) {
+	var x = this.x - 32;
+	var y = this.y - 32;
 	if(this.isBought)
 		for(var i = 0; i < this.childNodes.length ; i++){
 			this.childNodes[i].render(ctx);
@@ -68,8 +84,26 @@ Node.prototype.render = function (ctx) {
 		ctx.moveTo(this.parentX,this.parentY);
 		ctx.lineTo(this.x, this.y);
 		ctx.stroke();
+		this.adjustSprite(128,0,64,64);	
+		this.sprite.drawAt(ctx, x, y);
 	}
-	util.fillCircle(ctx, this.x, this.y, this.radius);
+	
+	this.adjustSprite(this.iconX,this.iconY,64,64);
+	this.sprite.drawAt(ctx, x , y);
+	
+	if(this.isBought && this.level !== 0){ 	
+		this.adjustSprite(0,0,73,73);	
+		this.sprite.drawAt(ctx, x, y);
+	}
+	//util.fillCircle(ctx, x, y, this.radius);
+	
+};
+
+Node.prototype.adjustSprite = function(x,y,w,h){
+    this.sprite.sx = x;
+	this.sprite.sy = y;
+	this.sprite.width  = w;
+	this.sprite.height = h;
 };
 
 Node.prototype.getSize = function(){

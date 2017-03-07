@@ -56,7 +56,7 @@ KILL_ME_NOW : -1,
 //
 deferredSetup : function () {
     this._categories = [this._world, this._objects, this._particles,  this._collisionBlocks,
-						this._bullets, this._enemies, this._character, this._viewBox];
+						this._bullets, this._enemies, this._character, this._viewBox, this._audioBox];
 },
 
 resetAll : function () {
@@ -66,6 +66,7 @@ resetAll : function () {
 init: function() {
 	
     this.generatePlayer({});
+	this._audioBox = []
 },
 
 enterLevel: function(lvl) {
@@ -79,20 +80,29 @@ enterLevel: function(lvl) {
     this._world = [];
 	this._viewBox = [];
     this._collisionBlocks = [];
+	//this._audioBox = [];
 
     
 
     //lvl++;
 
 	if(this._viewBox.length === 0) this.generateViewBox();
+	if(this._audioBox.length === 0) this.generateAudioBox();
 	
     this._level = lvl;
+	if(this._level === 1){
+		this._character[0].checkForUpgrades()
+		if(checkForUps("headStart")) this._level += 2;
+		if(checkForUps("headStart2")) this._level += 2;
+	}
 	var x = Math.floor(2 + 0.5*lvl);
 	var y = Math.floor(2 + 0.3*lvl);
 	this.generateLevel({x: x, y: y});
 	
 	if(this._character.length === 0) this.generateCharacter({cx : 10, cy: 10 });
     this._character[0].reset();
+	this._viewBox[0].reset();
+	
 	
     this.deferredSetup();
 },
@@ -108,6 +118,24 @@ fireBullet: function(cx, cy, velX, velY, radius, rotation, shooter, type, lifesp
         rotation : rotation,
         shooter : shooter,
 		lifeSpan: lifespan
+    }));
+},
+
+spawnKFC: function(cx, cy, heal) {
+    this._bullets.push(new loot({
+        cx   : cx,
+        cy   : cy,
+		type : 1,
+		power: 8
+    }));
+},
+
+spawnGold: function(cx, cy, gold) {
+    this._bullets.push(new loot({
+        cx   : cx,
+        cy   : cy,
+		type : 2,
+		power: gold
     }));
 },
 
@@ -159,6 +187,10 @@ generateObject : function(descr) {
 
 generateViewBox : function(descr) {
     this._viewBox.push(new viewBox(descr));
+},
+
+generateAudioBox : function(descr) {
+    this._audioBox.push(new audioBox(descr));
 },
 
 // entities and centres have same dimensions, max 2

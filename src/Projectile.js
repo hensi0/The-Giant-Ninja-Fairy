@@ -60,12 +60,16 @@ function Projectile(descr) {
 		this.renderStyle = 'sprite';
 		this.rotation = Math.random()*3.14;
 		this.dmg = 5;
+		if(checkForUps("bombDmg")) this.dmg = 8;
+		if(this.radius === 4.5)      this.dmg = 20;
 	}
 	if(this.type === 'boomerang'){
 		this.animations = makeBoomerangAnimation(1);
 		this.animation = this.animations['boomerang'];
 		this.rendertype = 'animation';
-		this.dmg = 0.1;
+		this.dmg = 1.6;
+		if(checkForUps("boomerangDmg")) this.dmg *= 1.3;
+		
 	}
    
 	this.sprite = sprite || this.sprite;
@@ -113,14 +117,29 @@ Projectile.prototype.update = function (du) {
 		if(this.type === 'detector'){
 			if(this.shooter instanceof Player){
 				if(this.shooter.form === 'fairy' && (this.lifeSpan < (this.startinglifeSpan - 3))){ 
+					if(checkForUps("blinkBombs")){
+						entityManager.fireBullet(this.shooter.cx , this.shooter.cy, + 4, +4, 3, 0, this.shooter, 'bomb');
+						entityManager.fireBullet(this.shooter.cx , this.shooter.cy, - 4, +4, 3, 0, this.shooter, 'bomb');
+						entityManager.fireBullet(this.shooter.cx , this.shooter.cy, + 4, -4, 3, 0, this.shooter, 'bomb');
+						entityManager.fireBullet(this.shooter.cx , this.shooter.cy, - 4, -4, 3, 0, this.shooter, 'bomb');
+					}
 					entityManager.generateParticle(this.shooter.cx, this.shooter.cy, 0.5*this.radius, 0, 0 , 'flash', false);
 					this.shooter.cx = this.cx - 0.5*this.velX; 
 					this.shooter.cy = this.cy - 0.5*this.velY;
 					entityManager.generateParticle(this.shooter.cx, this.shooter.cy, 0.5*this.radius, 0, 0 , 'flash', false);
+					util.play(g_audio.blink);
+					if(checkForUps("blinkBombs2")){
+						entityManager.fireBullet(this.shooter.cx , this.shooter.cy, + 4, +4, 3, 0, this.shooter, 'bomb');
+						entityManager.fireBullet(this.shooter.cx , this.shooter.cy, - 4, +4, 3, 0, this.shooter, 'bomb');
+						entityManager.fireBullet(this.shooter.cx , this.shooter.cy, + 4, -4, 3, 0, this.shooter, 'bomb');
+						entityManager.fireBullet(this.shooter.cx , this.shooter.cy, - 4, -4, 3, 0, this.shooter, 'bomb');
+					}
 				}
 			}
+			if(this.shooter.form === 'fairy') return;
 		}														//x,	y,		radius,			angle,	  avgVel, type, shouldFade?
-		if(this.type === 'bomb') entityManager.generateParticle(this.cx + 0.5*this.velX, this.cy + 0.5*this.velY, this.radius, this.rotation, 0 , 'bomb', false);
+		if(this.type === 'bomb'){ entityManager.generateParticle(this.cx + 0.5*this.velX, this.cy + 0.5*this.velY, this.radius, this.rotation, 0 , 'bomb', false);
+									util.play(g_audio.bomb);}
 		
 		return entityManager.KILL_ME_NOW;
 	}
@@ -179,7 +198,7 @@ Projectile.prototype.update = function (du) {
 
     // (Re-)Register
     spatialManager.register(this);
-	if(this.type === 'detector' && this.shooter.form === 'fairy') this.update(du);
+	if(this.type === 'detector' && this.shooter.form === 'fairy' ){ this.update(du); return entityManager.KILL_ME_NOW;}
 };
 
 Projectile.prototype.getPos = function () {
@@ -223,10 +242,34 @@ Projectile.prototype.handleCollision = function(hitEntity, axis) {
     var walkingIntoSomething
 	
 	if(hitEntity instanceof Block && !hitEntity._isPassable) {
+		if(this.type === 'bomb' && checkForUps("BouncyBombs")){
+			// Lots of vars for type of collision: top, bottom, same column, same row, going by zelda center coordinate, left coordinate, right, etc.
+			var charCoords = entityManager._world[0].getBlockCoords(this.cx, this.cy); //This is going by char's center, which is her lower half. Upper half needs to be in i, j-1.
+			var charCoordsLeft = entityManager._world[0].getBlockCoords(this.cx-this.getSize().sizeX/2, this.cy); //This is going by char's bottom left corner
+			var charCoordsRight = entityManager._world[0].getBlockCoords(this.cx+this.getSize().sizeX/2, this.cy); //This is going by char's bottom right corner
+			var hitCoords = (hitEntity instanceof Block ? [hitEntity.i, hitEntity.j] : entityManager._world[0].getBlockCoords(hitEntity.cx+this.getSize().sizeX/2, hitEntity.cy));
+
+			var charAbove = (hitCoords[0] > charCoords[0]); // char block coordinates lower because y-axis points down.
+			var charBelow = (hitCoords[0] < charCoords[0]);
+			var charToLeft = (hitCoords[1] > charCoords[1]); // char column coords must be lower.
+			var charToRight = (hitCoords[1] < charCoords[1]);
+			var sameCol = (hitCoords[1] == charCoordsLeft[1] || hitCoords[1] == charCoordsRight[1]);
+			var sameRow = true;
+
+			lEdge = charToRight && sameRow;
+			rEdge = charToLeft && sameRow;
+			tEdge = charBelow && sameCol;
+			bEdge = charAbove && sameCol;
+			
+			if(lEdge || rEdge) this.velX *= -1;
+			if(tEdge || bEdge) this.velY *= -1;
+			this.takeHit(0.5);
+			return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};
+		}
 		if(!this.etherial)this.takeHit(1);
 		hitEntity.tryToBreak();
 		//makes boomerang turn around upon hitting a brick
-		if(this.boomerangScaler > -0.5) this.boomerangScaler = -0.5;
+		if(this.boomerangScaler > -0.5 && !checkForUps("boomerangEtherial")) this.boomerangScaler = -0.5;
 		if(this.type === 'arrow') entityManager.generateParticle(this.cx + 0.5*this.velX, this.cy + 0.5*this.velY, this.radius, this.rotation, 0 , 'arrow1', false);
 		
     }
@@ -238,7 +281,7 @@ Projectile.prototype.handleCollision = function(hitEntity, axis) {
     }
 	//catch the boomerang
 	else if(hitEntity instanceof Player && this.type === 'boomerang') {
-		if(this.lifeSpan < (this.startinglifeSpan - 3)){ this.takeHit(1000);
+		if(this.lifeSpan < (this.startinglifeSpan - 30)){ this.takeHit(1000);
 			if(hitEntity.boomerangs < hitEntity.maxboomerangs) hitEntity.boomerangs++;
 		}
     } 
@@ -258,6 +301,13 @@ Projectile.prototype.handleCollision = function(hitEntity, axis) {
     return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};
 	
 };
+
+Projectile.prototype.takeHit = function(dmg) {
+	if(!dmg) dmg = 1;
+	this.HP -= dmg;
+	if(this.HP <= 0) this._isDeadNow = true;
+	// skoppa burt frá spikes
+}
 
 Projectile.prototype.configureRotation = function() {
 	if(this.velX < 0){ 

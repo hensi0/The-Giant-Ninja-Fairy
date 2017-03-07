@@ -42,6 +42,7 @@ Character.prototype.cy = 500;
 Character.prototype.velX = 0;
 Character.prototype.velY = 0;
 Character.prototype.isAlive = true;
+Character.prototype._isPassable = true;
 
 
 //collision blocks 
@@ -63,7 +64,7 @@ Character.prototype.unregisterBlocks = function() {
 
 Character.prototype.updateProxBlocks = function(prevX, prevY, nextX, nextY) {
     this.unregisterBlocks();
-	if(this._isDeadNow) return;
+	if(this._isDeadNow && !(this instanceof Player)) return;
     this.findProxBlocks(prevX, prevY, nextX, nextY);
     this.registerBlocks();
 }
@@ -97,8 +98,16 @@ Character.prototype.knockBack = function(x,y) {
 Character.prototype.takeHit = function(dmg) {
 	if(!dmg) dmg = 1;
 	this.HP -= dmg;
+	if(Math.random() < 0.33) 		util.play(g_audio.beinbrotna1);
+	else if(Math.random() < 0.5) 	util.play(g_audio.beinbrotna2);
+	else 							util.play(g_audio.beinbrotna3);
 	if(this.HP <= 0) this._isDeadNow = true;
 	// skoppa burt frá spikes
+}
+
+Character.prototype.gainLife = function(hp) {
+	this.HP += hp;
+	if(this.HP > this.maxhp) this.HP = this.maxhp;
 }
 
 Character.prototype.handlePartialCollision = function(charX,charY,axis,callback){
@@ -144,7 +153,7 @@ Character.prototype.reset = function () {
 
 Character.prototype.update = function (du) {
 	if(this.hp <= 0) this.isAlive = false;
-	if(!this.isAlive) return entityManager.KILL_ME_NOW;
+	if(!this.isAlive && !(this instanceof Player)) return entityManager.KILL_ME_NOW;
 	
 	console.log("std unit update");
 	
@@ -168,7 +177,7 @@ Character.prototype.drawHealthBar = function (ctx) {
 		ctx.stroke();
 	}
 	ctx.beginPath();
-    var n = this.HP/this.maxhp;
+    var n = Math.max(0,this.HP/this.maxhp);
     ctx.moveTo(this.cx - this.getSize().sizeX/2, this.cy - this.getSize().sizeY/2 - 8);
     ctx.strokeStyle = "green";
     ctx.lineWidth = "5";

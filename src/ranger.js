@@ -50,9 +50,6 @@ ranger.prototype.update = function(du) {
 	var margin = this.getSize().sizeX; //margin outside of viewport we want to update
 	if(this.cx+this.getSize().sizeX/2 < g_viewPort.x-margin ||
 	   this.cx-this.getSize().sizeX/2 > g_viewPort.x+g_canvas.width+margin) return;
-	var margin = this.getSize().sizeY; //margin outside of viewport we want to update
-	if(this.cy+this.getSize().sizeY/2 < g_viewPort.y-margin ||
-	   this.cy-this.getSize().sizeY/2 > g_viewPort.y+g_canvas.height+margin) return;
 
 	this.updateProxBlocks(this.cx, this.cy, this.cx+this.velX*du, this.cy+this.velY*du);
     if(this._isDeadNow) return entityManager.KILL_ME_NOW;
@@ -195,12 +192,12 @@ ranger.prototype.handleSpecificRangerAction = function(du, dir) {
 	var py = player.cy;
 	
 	if(dir === "Left"){
-		if(px < this.cx && (px + 400) > this.cx && Math.abs(py - this.cy) < 220){
+		if(px < this.cx && (px + 500) > this.cx && Math.abs(py - this.cy) < 320){
 			this.angryCD = 150;
 			this.state['angry'] = true;
 		}
 	} else {
-		if(px > this.cx && (px - 400) < this.cx && Math.abs(py - this.cy) < 220){
+		if(px > this.cx && (px - 500) < this.cx && Math.abs(py - this.cy) < 320){
 			this.state['angry'] = true;
 			this.angryCD = 150;
 		}
@@ -273,7 +270,7 @@ ranger.prototype.handleCollision = function(hitEntity, axis) {
 				
 		} else if (hitEntity instanceof Player && this.damagePlayerCD <= 0 && hitEntity.state['dashing']){
 			this.knockBack(this.cx, this.cy)
-			this.takeHit(100);
+			this.takeHit(hitEntity.dashDmg);
 			this.damagePlayerCD = 60;
 		}
     return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};

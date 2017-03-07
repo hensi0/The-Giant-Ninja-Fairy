@@ -129,24 +129,23 @@ viewBox.prototype.update = function(du){
 
 viewBox.prototype.render = function(ctx){
 	//renders inner and outer box if you press X, even though outer box might be hard to see 
-	
+	var sprite = g_sprites.HUD;
 	var midX = g_viewPort.x + g_canvas.width/2;
 	var midY = g_viewPort.y + g_canvas.height/2;
-	var SSL = 1200 - 1*(g_canvas.width/2)*g_CameraZoom //scaledScreenLength
-	console.log(SSL);
+	var scale = 1/g_CameraZoom;
+	//sprite.scale = scale;
+	midX -= (scale/(1 - scale))*0.5*g_canvas.width;
+	midY += ((1 - scale)/scale)*0.5*g_canvas.height;
 		
-		ctx.fillStyle = "white";
-		ctx.fillText("gold: " + g_gold,
-						midX - SSL,//((1 - scale)/scale)*0.1*g_canvas.width,
-						midY); //- g_canvas.width/2.2, this.cy - g_canvas.height/2.2);
-
+	
+	//sprite.drawCentredAt(ctx, midX, midY, 0);
 };
 
 viewBox.prototype.adjustZoom = function(val){
 	//adjusts the zoom depending if you are moveing or not
 	if(val > 3){
 		vel = 0.0008*( Math.min(3, (val - 3)));
-		if(g_CameraZoom > 1.5) g_CameraZoom -= vel; 
+		if(g_CameraZoom > 1.5) g_CameraZoom -= vel;
 	} else {
 		vel = 0.0010*(3-val);
 		if(g_CameraZoom < 2) g_CameraZoom += vel;

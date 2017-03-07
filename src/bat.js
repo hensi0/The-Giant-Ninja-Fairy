@@ -46,17 +46,17 @@ Bat.prototype.state = {
 Bat.prototype.update = function(du) {
 	spatialManager.unregister(this);
 	
-	var Player = entityManager._character[0];
-	
-	if(this.angryCD > 0) {this.angryCD -= du; this.configureRotation()}
-	else this.state['angry'] = false;
-	
-	//check if this is inside the viewport
 	var margin = this.getSize().sizeX; //margin outside of viewport we want to update
 	if(this.cx+this.getSize().sizeX/2 < g_viewPort.x-margin ||
 	   this.cx-this.getSize().sizeX/2 > g_viewPort.x+g_canvas.width+margin) return;
 	   
 	
+	var Player = entityManager._character[0];
+	
+	if(this.angryCD > 0) {this.angryCD -= du; this.configureRotation()}
+	else this.state['angry'] = false;
+	
+	//check if this is inside the v
 
 	this.updateProxBlocks(this.cx, this.cy, this.cx+this.velX*du, this.cy+this.velY*du);
     if(this._isDeadNow) return entityManager.KILL_ME_NOW;
@@ -256,11 +256,11 @@ Bat.prototype.handleCollision = function(hitEntity, axis) {
 				
 		} else if (hitEntity instanceof Player && hitEntity.state['dashing']){
 			this.knockBack(this.cx, this.cy)
-			this.takeHit(100);
+			this.takeHit(hitEntity.dashDmg);
 			
 		} else if (hitEntity instanceof Player && this.damagePlayerCD <= 0 && !hitEntity.state['dashing']){
 			this.knockBack(this.cx, this.cy)
-			hitEntity.takeHit(3);
+			hitEntity.takeHit(5);
 			this.damagePlayerCD = 20;
 		}
     return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};

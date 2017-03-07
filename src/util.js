@@ -140,7 +140,7 @@ fillBox: function (ctx, x, y, w, h, style) {
 play: function (audio) {
     audio.pause();
     audio.currentTime = 0;
-    if (!g_isMuted) audio.play();
+    if (!g_mute) try {audio.play(); } catch(err) {}
 },
 
 playLoop: function (audio, sVol) {
@@ -157,8 +157,8 @@ playLoop: function (audio, sVol) {
                     this.currentTime = 0
                     this.play();
                 }
-				backgroundMusic.volume = Math.min(0.5, backgroundMusic.volume + 0.04);
-				backgroundMusic2.volume = Math.max(0, backgroundMusic2.volume - 0.04);
+				backgroundMusic.volume = Math.min(0.5, backgroundMusic.volume + 0.06);
+				backgroundMusic2.volume = Math.max(0, backgroundMusic2.volume - 0.06);
 				if(backgroundMusic2.volume === 0) backgroundMusic2.pause();
 				}, false);
             backgroundMusic.play();
@@ -175,6 +175,22 @@ crossfadeLoop: function (audio) {
 	backgroundMusic2.play();
 	
 	this.playLoop(audio, 0.04);
-}
+},
 
+drawHUD: function (ctx, x, y) {
+	var P = entityManager._character[0];
+	var hp = Math.max(0,P.HP / P.maxhp);
+	var mana = Math.max(0, P.mana / P.maxMana); 
+	var s = g_canvas.width/10;
+	var t = g_canvas.height/10;
+	g_sprites.charIcons.drawAt(ctx, x - 4.77*s, y - 4.53*t);	
+	g_sprites.HUD.drawBarsAt(ctx,x- 4.1*s,y - 5*t, 296, hp*187,40);
+	g_sprites.HUD.drawBarsAt(ctx,x- 4.1*s,y - 4.6*t, 353, mana*183,40);
+	g_sprites.HUD.drawAt(ctx, x - 5*s, y - 5*t, 0);
+	ctx.font = "30px Comic Sans MS";
+	ctx.fillStyle = "yellow";
+	ctx.textAlign = "left";
+	ctx.fillText("" + g_gold,x- 3.5*s, y - 3.7*t)
+	
+}
 };

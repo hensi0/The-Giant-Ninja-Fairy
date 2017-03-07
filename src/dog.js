@@ -240,7 +240,7 @@ Dog.prototype.handleCollision = function(hitEntity, axis) {
 		} else if (hitEntity instanceof Player && this.state['biting'] && this.damagePlayerCD <= 0){
 			hitEntity.knockBack(this.cx, this.cy)
 			if(!hitEntity.state['dashing']) hitEntity.takeHit(15);
-			else this.takeHit(25);
+			else this.takeHit(hitEntity.dashDmg);
 			this.damagePlayerCD = 60;
 		}
     return {standingOnSomething: standingOnSomething, walkingIntoSomething: walkingIntoSomething};

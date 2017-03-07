@@ -40,13 +40,13 @@ Block.prototype.update = function (du) {
 	if(this._isDeadNow) return entityManager.KILL_ME_NOW;
 	if(!this._isInitialized) this.initialize();
 	if(this.type === 'D'){	
-		if(this.enemySpawnTimer < 0)	{this.spwnRandomEnemy(); this.enemySpawnTimer = 2000 + 4000*Math.random()}
+		if(this.enemySpawnTimer < 0)	{this.spwnRandomEnemy(); this.enemySpawnTimer = 2000 + 2000*Math.random()}
 		else if(this.enemySpawnTimer < 150)	this.sprite.sx = 192;
 		else this.sprite.sx = 128;
 	}	
 	if(du)this.enemySpawnTimer -= du;
-	if(this.animation) this.animation.update(du);
-		
+	if(this.animation) if(du) this.animation.update(du);
+	
 	if(this.type === 2) {this.rotation += 0.01; this.rotation2 -= 0.005;}
 	if(this.damageCD > 0) this.damageCD--;
 	
@@ -122,7 +122,7 @@ Block.prototype.renderPicker = function () {
 					this._isBreakable = true;
 		break;
 		
-		case 'E':	this.animations = makePortalAnimation(0.8);
+		case 'E':	this.animations = makePortalAnimation(0.6);
 					this.animation = this.animations['portal'];
 					this._isPassable = true;
 		break;
@@ -236,6 +236,7 @@ Block.prototype.spritify = function (sx, sy, w, h) {
 
 
 Block.prototype.render = function (ctx,x,y,w,h) {
+	if(this._isDeadNow) return;
 	if(this.animation){
 		this.animation.renderAt(ctx, x+w/2, y+h/2, this.rotation);
 		return;
@@ -283,8 +284,29 @@ Block.prototype.activate = function (Char, direction) {
 		break;
 		
 		case 'T':	//this._isDeadNow = true;
-					this.sprite.sx = 200;
+					if(this.sprite.sx === 100 && Char instanceof Player){
 					//get treasure
+					var location = entityManager._world[0].getLocation(this.i,this.j);
+					var x = location[0];
+					var y = location[1];
+					if(checkForUps("megaLoot") && Math.random() < 0.1){
+							util.play(g_audio.findStuff2);
+							entityManager.spawnGold(x, y, entityManager._level);
+							entityManager.spawnGold(x, y, entityManager._level);
+							entityManager.spawnGold(x, y, entityManager._level);
+							entityManager.spawnGold(x, y, entityManager._level);
+							entityManager.spawnKFC(x, y);
+							entityManager.spawnKFC(x, y);
+							entityManager.spawnKFC(x, y);
+					} else util.play(g_audio.findStuff);
+					for(var i = 0 ; i < 1 + Math.floor(Math.sqrt(entityManager._level)); i++){
+						if(Math.random() < 0.5)
+							entityManager.spawnGold(x, y, entityManager._level);
+						if(Math.random() < 0.5) entityManager.spawnKFC(x, y);
+					}
+					this.sprite.sx = 200;
+					} else return;
+					
 		break;
 		
 		default: 

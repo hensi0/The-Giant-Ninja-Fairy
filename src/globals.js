@@ -30,7 +30,7 @@ var g_gold = 0;
 var g_skills = [];
 
 //audio
-var g_mute = true;
+var g_mute = false;
 
 //zoom in on screen to control camera movement
 var g_CameraZoom = 1.4;

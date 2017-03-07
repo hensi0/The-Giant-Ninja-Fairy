@@ -123,6 +123,25 @@ Enemy.prototype.handleSpecificEnemyAction = function(du) {
 	// To be implemented in subclasses.
 }
 
+Enemy.prototype.takeHit = function(dmg) {
+	if(!dmg) dmg = 1;
+	this.HP -= dmg;
+	if(Math.random() < 0.33) 		util.play(g_audio.beinbrotna1);
+	else if(Math.random() < 0.5) 	util.play(g_audio.beinbrotna2);
+	else 							util.play(g_audio.beinbrotna3);
+	if(this.HP <= 0) {
+		this._isDeadNow = true;
+		if(Math.random() < 0.18) 							entityManager.spawnGold(this.cx, this.cy, entityManager._level)
+		if(checkForUps("mobGold") && Math.random() < 0.3) 	entityManager.spawnGold(this.cx, this.cy, entityManager._level)
+		var temp = 0.2;
+		if(checkForUps("morePickups")) temp += 0.3;
+		if(Math.random() < temp) 
+			if(checkForUps("betterPickups")) entityManager.spawnKFC(this.cx, this.cy, 15 + entityManager._level);
+			else 							 entityManager.spawnKFC(this.cx, this.cy, 5 + entityManager._level)
+	}
+	// skoppa burt frá spikes
+}
+
 
 Enemy.prototype.handleCollision = function(hitEntity, axis) {
     var bEdge,lEdge,rEdge,tEdge;

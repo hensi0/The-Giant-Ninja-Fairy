@@ -95,14 +95,15 @@ Player.prototype.lastWallGrabX = 0;
 Player.prototype.maxboomerangs = 1;
 Player.prototype.boomerangs = 1;
 Player.prototype.dashCD = 1;
-
+Player.prototype.dashDmg = 20;
 
 Character.prototype.reset = function () {
-	this.HP = this.maxhp;
+	//this.HP = this.maxhp;
 	var pos = entityManager._world[0].returnStartLocation();
     this.setPos(pos.x, pos.y);
 	this._isDeadNow = false;
-	this.isAlive = true;
+	this.boomerangs = this.maxboomerangs;
+	//this.isAlive = true;
 };
 
 //to be used when spawning/swithcing forms
@@ -112,6 +113,17 @@ Player.prototype.resetStates = function () {
 							onGround: false, idle: false, flying: false, 
 							facingRight: true, inWater: false, fairyFire: false,
 							spawning: true, holdingWall: false, dashing: false}
+};
+
+Player.prototype.checkForUpgrades = function () {
+       if(checkForUps("dashDmg")) this.dashDmg = 35;
+	   if(checkForUps("dashDmg2"))  this.dashDmg = 50;
+	   if(checkForUps("additionalBoomerang"))  this.maxboomerangs = 2;
+	   if(checkForUps("additionalBoomerang2"))  this.maxboomerangs = 3;
+	   if(checkForUps("moreHP"))  this.maxhp = 130;
+	   if(checkForUps("moreHP2"))  this.maxhp = 160;
+	   if(checkForUps("moreHP3"))  this.maxhp = 200;
+	   this.HP = this.maxhp;
 };
 
 
@@ -172,6 +184,8 @@ Player.prototype.handleJump = function () {
 		if(this.form === 'druid'){
 			this.velY = -2;
 			this.tempMaxJumpHeight = this.cy - this.maxPushHeight;
+			if(checkForUps("druidMaxJump")) this.tempMaxJumpHeight -= 20; 
+			util.play(g_audio.jump);
 		} else if(this.form === 'goat'){
 			this.velY = -2;
 			this.tempMaxJumpHeight = this.cy - 0.6*this.maxPushHeight; 
@@ -223,7 +237,7 @@ Player.prototype.update = function (du) {
 	if(this.cy === undefined) this.cy = 300;
 	
 	if(this.HP <= 0) this.isAlive = false;
-	if(!this.isAlive){
+	if(!this.isAlive && false){
 		entityManager.enterLevel(1);
 	}
 	
@@ -242,7 +256,11 @@ Player.prototype.update = function (du) {
 	
 	if(this.SwapCD > 0)this.SwapCD--;
 	if (keys[this.KEY_SWAP1]) {
-			this.swap(true);
+			if(this._isDeadNow){
+				g_MenuScreenOn = true;
+				g_menu.buttonTranslator("mainMenu")
+			}
+			else this.swap(true);
 	}
 		/* Maybe use later, gameplay seems more fun with swap only going one way
 		if (keys[this.KEY_SWAP2]) {
@@ -260,6 +278,7 @@ Player.prototype.update = function (du) {
 	var nextX = this.cx + this.velX*du;
 	var nextY = this.cy + this.velY*du;
 	var bEdge;
+	
 	
 	//check left/right collisions first and then top/bottom
     if(this.handlePartialCollision(nextX,prevY,"x")){
@@ -280,6 +299,7 @@ Player.prototype.update = function (du) {
 					this.state['holdingWall'] = true;
 					this.velY = 0;
 					this.state['dashing'] = false;
+					if(this.holdStateBuffer === 0)util.play(g_audio.jump);
 					this.holdStateBuffer++;
 					if(this.state['facingRight']){ 
 						this.velX = 1;
@@ -302,17 +322,19 @@ Player.prototype.update = function (du) {
 	
 	this.state['canJump'] = (!this.state['jumping'] && !keys[this.KEY_JUMP]) || this.state['flying'] || this.state['holdingWall'];
 	
+	if(this._isDeadNow) {this.velX = 0; this.velY = Math.max(0, this.velY)}
 	if(this.state['fairyFire'] && this.state['jumping']){ this.shootZePlasmaBalls(du); this.updateLocation(du*0.18); } 
 	else if(this.state['holdingWall'])	this.updateLocation(0);
 	else 								this.updateLocation(du);
-	
+
     this.updateJump(bEdge);
 
 	this.updateStatus();
 	
 	if(this.form === 'druid'){ 
 		if(this.mana <= this.maxMana) this.mana += du*0.9;
-	} else this.mana -= du*0.7;
+	} else if(checkForUps("LessEnergy"))this.mana -= du*0.45;
+	else this.mana -= du*0.65;
 	
 	if (this.mana <= 0) {
 		this.cy -= this.getSize().sizeY/1.5; 
@@ -326,11 +348,24 @@ Player.prototype.update = function (du) {
 	
 	
 	if(this.animation.update(du*flySpeedScaler) === 1) 
-		{this.state['spawning'] = false; this.state['dashing'] = false; this.updateStatus();}
+		{if(this.status.substring(0,3) === "dyin") this.status = "deadRight"; this.state['spawning'] = false; this.state['dashing'] = false; this.updateStatus();}
 
 	spatialManager.register(this);
 	
 };
+
+
+Character.prototype.takeHit = function(dmg) {
+	if(this._isDeadNow) return;
+	if(!dmg) dmg = 1;
+	this.HP -= dmg;
+	if(this.HP <= 0){
+		this._isDeadNow = true;
+		this.goDruid();
+	}
+	// skoppa burt frá spikes
+}
+
 
 //bassic rendering handled by the animation.js
 Player.prototype.render = function (ctx) {
@@ -348,7 +383,6 @@ Player.prototype.render = function (ctx) {
 	g_sprites.FoW.scale = 11 + (addOn/2); //add camera zoom
 	g_sprites.FoW.drawCentredAt(ctx, mouseX, mouseY, -this.FoWrot);
 	this.animation.renderAt(ctx, this.cx, this.cy, this.rotation);
-	this.drawHealthBar(ctx);
 	
 };
 
@@ -356,13 +390,24 @@ Player.prototype.render = function (ctx) {
 //LMB functioning while in fairy form
 Player.prototype.shootZePlasmaBalls = function (du) {
     if(this.plasmaTimer <= 0){ 
-		var vMod = 5;
+		var vMod = 4;
+		if(checkForUps("bombSpeed")) vMod = 6;
 		var aMod = Math.PI/20 - Math.random()*(Math.PI/10) 
+		if(checkForUps("bombAcc")) aMod /= 2;
 		var velx = vMod*Math.cos(this.rotation + aMod);
 		var vely = vMod*Math.sin(this.rotation + aMod);
 		var temp = 1;
 		if(g_mouseX2 <= g_canvas.width/2) temp *= -1;
-		entityManager.fireBullet(this.cx + 2*temp*velx, this.cy - 5 + temp*vely, temp*velx, temp*vely, 3, 0, this, 'bomb');
+		if(checkForUps("BBchance") && Math.random() < 0.1)
+			entityManager.fireBullet(this.cx + 2*temp*velx, this.cy - 5 + temp*vely, temp*velx, temp*vely, 4.5, 0, this, 'bomb');
+		else
+			entityManager.fireBullet(this.cx + 2*temp*velx, this.cy - 5 + temp*vely, temp*velx, temp*vely, 3, 0, this, 'bomb');
+		if(Math.random() < 0.2) 		util.play(g_audio.shooting1);
+		else if(Math.random() < 0.25) 	util.play(g_audio.shooting2);
+		else if(Math.random() < 0.33) 	util.play(g_audio.shooting3);
+		else if(Math.random() < 0.5) 	util.play(g_audio.shooting4);
+		else 							util.play(g_audio.shooting5);
+		
 		this.plasmaTimer = 10;
 	}else this.plasmaTimer -= du;	
 };
@@ -370,7 +415,8 @@ Player.prototype.shootZePlasmaBalls = function (du) {
 //LMB functioning while in druid form
 Player.prototype.shootZeBoomerang = function () {
 		this.configureRotation();
-		var vMod = 40;
+		var vMod = 25;
+		if(checkForUps("boomerangSpeed")) vMod = 35;
 		var aMod = 0;//Math.PI/20 - Math.random()*(Math.PI/10) 
 		var velx = vMod*Math.cos(this.rotation + aMod);
 		var vely = vMod*Math.sin(this.rotation + aMod);
@@ -424,6 +470,7 @@ Player.prototype.stopZeShootin = function () {
 
 //LMB handling for player
 Player.prototype.LMB = function (bool) {
+	if(this._isDeadNow) return;
 	//left mouse Button has been pressed
 	if(this.form === 'fairy') this.state['fairyFire'] = true;
 	if(this.form === 'druid' && this.oneXPerMouseStuff && this.boomerangs > 0){
@@ -435,6 +482,7 @@ Player.prototype.LMB = function (bool) {
 
 //RMB handling for the player
 Player.prototype.RMB = function (bool) {
+	if(this._isDeadNow) return;
 	//right mouse button
 	if(!g_mouseLocked) return;
 	if(this.form === 'fairy' && !this.state['spawning'] && this.teleportCD <= 0) this.teleport();
@@ -449,29 +497,38 @@ Player.prototype.teleport = function () {
 	var velx = vMod*Math.cos(this.rotation);
 	var vely = vMod*Math.sin(this.rotation);
 	var temp = 1;
+	var LS = 400;
+	if(checkForUps("blinkRange")) LS = 600;
 	if(g_mouseX2 <= g_canvas.width/2) temp *= -1;
-		entityManager.fireBullet(this.cx, this.cy -1, temp*velx, temp*vely, 10, 0, this, 'detector', 600);
+		entityManager.fireBullet(this.cx, this.cy -1, temp*velx, temp*vely, 10, 0, this, 'detector', LS);
 	this.rotation = 0;
 	this.state['spawning'] = true;
 	this.velY = 0;
 	this.velX = 0;
-	this.teleportCD = 100;
+	this.teleportCD = 120;
+	if(checkForUps("blinkCD"))  this.teleportCD = 90;
+	if(checkForUps("blinkCD2")) this.teleportCD = 60;
+
 };
 
 //Special ability in fairy form
 Player.prototype.dash = function () {
-	var vMod = 25;
+	var vMod = 15;
+	if(checkForUps("dashSpeed")) vMod = 30;
 	this.configureRotation();
 	var velx = vMod*Math.cos(this.rotation);
 	var vely = vMod*Math.sin(this.rotation);
 	var temp = 1;
 	if(g_mouseX2 <= g_canvas.width/2) temp *= -1;
+	if(!this.state['jumping']) vely = temp*Math.min(-2 , vely*temp);
+	
 		entityManager.fireBullet(this.cx, this.cy, temp*velx, temp*vely, this._scale, 0, this, 'detector', 30);
 	//this.rotation = 0;
 	//this.state['dashing'] = true;
 	this.velY = 0;
 	this.velX = 0;
 	this.dashCD = 100;
+	if(checkForUps("dashCD1")) this.dashCD = 80;
 	this.state['dashing'] = true;
 	this.state['jumping'] = true;
 };
@@ -522,6 +579,7 @@ Player.prototype.handleCollision = function(hitEntity, axis) {
                     this.tempMaxJumpHeight = this.cy - this.maxPushHeight; 
                     var groundY = entityManager._world[0].getLocation((hitEntity.i), (hitEntity.j))[1] // block top y coordinate
                     this.putToGround(groundY);
+					if(this.form === 'druid')util.play(g_audio.jump);
 					this.lastWallGrabX = 0;
 					this.state['dashing'] = false;
                     dir = 4;
@@ -613,7 +671,11 @@ Player.prototype.updateStatus = function() {
 		if(this.velY >= 0) 	nextStatus += "Down";
 		else 			 	nextStatus += "Up";
 	}
-	
+	if(this._isDeadNow)
+		if(this.status.substring(0,3) !== "dead")
+			nextStatus = "dead" + dir;
+		else nextStatus = "dyin" + dir;
+		
     // Update animation
     if(nextStatus!==this.status){
 		if(this.status)

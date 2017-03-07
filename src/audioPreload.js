@@ -78,7 +78,7 @@ function audioPreload(requiredAudio,
     //
     preloadHandler = function () {
         loadedAudio[this.name] = this;
-
+		
         if (0 === this.duration) {
             console.log("loading failed for", this.name);
         }

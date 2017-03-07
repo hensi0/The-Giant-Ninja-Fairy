@@ -181,15 +181,23 @@ World.prototype.isSafeToTransform = function ( x, y) {
 
 World.prototype.render = function(ctx) {
 	ctx.save();
+	var Player = entityManager._character[0];
 	
+	var coords = this.getBlockCoords(Player.cx, Player.cy)
+
 	for(var i = 0; i < this.map.length; i++) {
 		for(var j = 0; j < this.map[i].length; j++) {
 			this.drawBGAt(ctx, (7+(j*14))*this.blockDim, (7+(i*14))*this.blockDim);
 		}
 	}
 	
-	for(var i = 0; i < this.world.length; i++) {
-		for(var j = 0; j < this.world[i].length; j++) {
+	var xL = Math.max(0, coords[1] -18);
+	var xR = Math.min(this.world[0].length, coords[1] +18);
+	var yT = Math.max(0, coords[0] -18);
+	var yB = Math.min(this.world.length, coords[0] +18);
+	
+	for(var i = yT; i < yB; i++) {
+		for(var j = xL; j < xR; j++) {
 			var block = this.blocks[i][j];
 			if(block != null) {
 				var coords = this.getLocation(i,j)

@@ -123,7 +123,6 @@ function renderSimulation(ctx) {
 		ctx.scale(scale, scale);
 		ctx.translate(((1 - scale)/scale)*0.5*g_canvas.width, ((1 - scale)/scale)*0.5*g_canvas.height);
 		
-		 
 		ctx.translate(-dx,-dy);
 		
 		//here we handle the zoom
@@ -132,9 +131,14 @@ function renderSimulation(ctx) {
 		
 		entityManager.render(ctx);
 		
+		if (!g_renderSpatialDebug){
+			ctx.translate(dx,dy);
+			ctx.scale(1/scale, 1/scale);
+			var Sx = g_canvas.width/2 -(1-g_CameraZoom)*g_canvas.width*0.5; 
+			var Sy = g_canvas.height/2 -(1-g_CameraZoom)*g_canvas.height*0.5; 
+			util.drawHUD(ctx, Sx, Sy)
 		
-		
-		if (g_renderSpatialDebug) spatialManager.render(ctx);
+		} else  spatialManager.render(ctx);
 		
 	} else g_menu.render(ctx);
 		
@@ -183,6 +187,9 @@ function requestPreloads() {
 		menu1:			"res/images/menu/title.png",
 		menuMain:		"res/images/menu/main.png",
 		menuTree:		"res/images/menu/titleTree.png",
+		HUD:			"res/images/menu/HUD.png",
+		TreeIcons:		"res/images/menu/TreeIcons.png",
+		charIcons:		"res/images/menu/charIcons.png",
 
 		
 		
@@ -244,6 +251,10 @@ function makePlayerAnimationDruid(scale) {
 	Player.holdingWallLeft  = new Animation(g_images.druid,698,81,130,2,150, scale);
 	Player.holdingWall2Right = new Animation(g_images.druid,698,81,130,2,350, -scale, 162);
 	Player.holdingWall2Left  = new Animation(g_images.druid,698,81,130,2,350, scale,  162);
+	Player.dyinRight  = new Animation(g_images.druid,0,70,140,2,200, scale);
+	Player.dyinLeft   = new Animation(g_images.druid,0,70,140,2,200, scale);
+	Player.deadRight  = new Animation(g_images.druid,0,80,140,1,350, scale, 210);
+	Player.deadLeft   = new Animation(g_images.druid,0,80,140,1,350, scale, 210);
 	
 	
     return Player;
@@ -263,8 +274,8 @@ function makePlayerAnimationFairy(scale) {
 	Player.walkingLeft  = new Animation(g_images.pixie,0,72,69,6,100, -scale);
 	//Player.spawningRight = new Animation(g_images.pixie,210,72,69,4,80, scale);
 	//Player.spawningLeft  = new Animation(g_images.pixie,210,72,69,4,80, -scale);
-	Player.spawningRight = new Animation(g_images.pixie,474,72,82,4,70, scale);
-	Player.spawningLeft  = new Animation(g_images.pixie,474,72,82,4,70, -scale);
+	Player.spawningRight = new Animation(g_images.pixie,474,72,82,4,70, scale, 216);
+	Player.spawningLeft  = new Animation(g_images.pixie,474,72,82,4,70, -scale, 216);
 	
     return Player;
 };
@@ -338,7 +349,7 @@ function makeBombAnimation(scale) {
 function makePortalAnimation(scale) {
     var portal = {};	
 	//image, frameX, frameY, frameWidth, frameHeight, numFrames, interval, scale
-    portal.portal = new Animation(g_images.blocks,257,62,64,3,100, scale, 64);	
+    portal.portal = new Animation(g_images.blocks,257,62,64,3,150, scale, 64);	
 
     return portal;
 };
@@ -353,9 +364,39 @@ function makeBoomerangAnimation(scale) {
 
 function imagePreloadDone() {
     var requiredAudio = {
-        intro1: "res/sounds/introPart1.wav",
-		intro2: "res/sounds/introPart2.wav",
-		intro3: "res/sounds/introPart3.wav"
+        //menusongs
+		intro1: "res/sounds/introPart1.ogg",
+		intro2: "res/sounds/introPart2.ogg",
+		intro3: "res/sounds/introPart3.ogg",
+		intro4: "res/sounds/introPart4.ogg",
+		
+		//in-game-music
+		flute: "res/sounds/music/flute.ogg",
+		flute2: "res/sounds/music/flute2.ogg",
+		klukkuspil: "res/sounds/music/klukkuspil.ogg",
+		drums: "res/sounds/music/drums.ogg",
+		tribal: "res/sounds/music/tribalDrums.ogg",
+		violins: "res/sounds/music/violins.ogg",
+		action: "res/sounds/music/actionMelody.ogg",
+		ambience: "res/sounds/FX/ambience.ogg",
+		
+		//SFX
+		beinbrotna1:  "res/sounds/FX/beinbrotna1.ogg",
+		beinbrotna2: "res/sounds/FX/beinbrotna2.ogg",
+		beinbrotna3: "res/sounds/FX/beinbrotna3.ogg",
+		blink: "res/sounds/FX/blink1.ogg",
+		bomb: "res/sounds/FX/bombs.ogg",
+		findStuff: "res/sounds/FX/findStuff.ogg",
+		findStuff2: "res/sounds/FX/findStuff2.ogg",
+		hurd: "res/sounds/FX/hurdOpnast.ogg",
+		jump: "res/sounds/FX/jump.ogg",
+		shooting1: "res/sounds/FX/shooting1.ogg",
+		shooting2: "res/sounds/FX/shooting2.ogg",
+		shooting3: "res/sounds/FX/shooting3.ogg",
+		shooting4: "res/sounds/FX/shooting4.ogg",
+		shooting5: "res/sounds/FX/shooting5.ogg"
+		
+		
 		//theme1: "res/sounds/part1.wav",
         
     }
@@ -371,6 +412,7 @@ function preloadDone() {
 	g_sprites.wall    = new Sprite(g_images.door),
 	g_sprites.loot    = new Sprite(g_images.loot),
 	g_sprites.skybox  = new Sprite(g_images.skyBox),
+
 	
 	
 	//tileset-mud
@@ -384,6 +426,22 @@ function preloadDone() {
 	g_sprites.menu1  		= new Sprite(g_images.menu1),
 	g_sprites.menuMain  	= new Sprite(g_images.menuMain),
 	g_sprites.menuTree  	= new Sprite(g_images.menuTree),
+	
+	//extra cause lazy
+	
+	g_sprites.HUD 	  = new Sprite(g_images.HUD),
+	g_sprites.HUD.drawAt = function(ctx,x,y){
+			ctx.drawImage(this.image, 0, 0, 342, 280, x, y, 342*this.scale, 280*this.scale);
+		};
+	g_sprites.HUD.drawBarsAt = function(ctx,x,y, s, w,h){
+			ctx.drawImage(this.image, 0, s, w, h, x, y, w*this.scale, h*this.scale);
+		};
+		
+	g_sprites.charIcons 	= new Sprite(g_images.charIcons),
+	g_sprites.charIcons.sx = 0;
+	g_sprites.charIcons.drawAt = function(ctx,x,y){
+			ctx.drawImage(this.image, this.sx, 0, 96, 96, x, y, 96*this.scale, 96*this.scale);
+		};
 
 	
 	
